@@ -9,9 +9,10 @@ export default function OnboardingPlan({ instanceId, onBack }) {
   const [completions, setCompletions] = useState({})
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchPlan()
-  }, [instanceId])
+// eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => {
+  fetchPlan()
+}, [instanceId])
 
   async function fetchPlan() {
     const { data, error } = await supabase
