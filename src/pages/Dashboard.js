@@ -14,15 +14,16 @@ function getPhase(hireDate) {
   return '90 Day'
 }
 
-export default function Dashboard({ session, onStartOnboarding }) {
+export default function Dashboard({ session, onStartOnboarding, onViewOnboarding, refreshKey }) {
   const [onboardings, setOnboardings] = useState([])
   const [roles, setRoles] = useState([])
   const [selectedRole, setSelectedRole] = useState('')
 
-  useEffect(() => {
-    fetchOnboardings()
-    fetchRoles()
-  }, [])
+useEffect(() => {
+  console.log('refreshing with key', refreshKey)
+  fetchOnboardings()
+  fetchRoles()
+}, [refreshKey])
 
   async function fetchOnboardings() {
     const { data, error } = await supabase
@@ -75,7 +76,7 @@ export default function Dashboard({ session, onStartOnboarding }) {
             const name = o.employees.full_name
             const phase = getPhase(o.employees.hire_date)
             return (
-              <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0', borderBottom: '0.5px solid #f5f5f5', cursor: 'pointer' }}>
+              <div key={o.id} onClick={() => onViewOnboarding(o.id)} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0', borderBottom: '0.5px solid #f5f5f5', cursor: 'pointer' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#f0f7ff', color: '#0070CA', fontSize: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {getInitials(name)}
                 </div>
