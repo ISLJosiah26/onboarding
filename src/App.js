@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient'
 import Dashboard from './pages/Dashboard'
 import NewOnboarding from './pages/NewOnboarding'
 import OnboardingPlan from './pages/OnboardingPlan'
+import Admin from './pages/Admin'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -69,6 +70,12 @@ function App() {
     )
   }
 
+  if (page === 'admin') {
+    return (
+      <Admin onBack={() => { setRefreshKey(k => k + 1); setPage('dashboard') }} />
+    )
+  }
+
   return (
     <Dashboard
       session={session}
@@ -81,6 +88,7 @@ function App() {
         setActiveInstanceId(instanceId)
         setPage('plan')
       }}
+      onAdmin={() => setPage('admin')}
     />
   )
 }

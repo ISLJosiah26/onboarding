@@ -14,7 +14,7 @@ function getPhase(hireDate) {
   return '90 Day'
 }
 
-export default function Dashboard({ session, onStartOnboarding, onViewOnboarding, refreshKey }) {
+export default function Dashboard({ session, onStartOnboarding, onViewOnboarding, refreshKey, onAdmin }) {
   const [onboardings, setOnboardings] = useState([])
   const [roles, setRoles] = useState([])
   const [selectedRole, setSelectedRole] = useState('')
@@ -58,6 +58,7 @@ useEffect(() => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#999' }}>
           <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#0070CA', color: '#fff', fontSize: '10px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>HR</div>
           {session.user.email}
+          <button onClick={onAdmin} style={{ fontSize: '12px', color: '#999', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Admin</button>
           <button onClick={() => supabase.auth.signOut()} style={{ marginLeft: '8px', fontSize: '12px', color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Sign out</button>
         </div>
       </div>
