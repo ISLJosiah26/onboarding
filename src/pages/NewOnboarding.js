@@ -1,21 +1,24 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
+import Layout from '../components/Layout'
 
-export default function NewOnboarding({ roleId, roleName, onBack, onComplete }) {
+export default function NewOnboarding({ session, roleId, roleName, onBack, onNavigate, onComplete }) {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [hireDate, setHireDate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const input = {
-    width: '100%', background: '#fff', border: '0.5px solid #e5e5e5',
-    borderRadius: '10px', padding: '10px 14px', fontSize: '14px',
-    color: '#111', fontFamily: 'inherit', outline: 'none', marginBottom: '16px', display: 'block'
-  }
-
-  const label = {
-    fontSize: '12px', color: '#999', marginBottom: '6px', display: 'block'
+  const styles = {
+    header: { padding: '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #ebebe8' },
+    title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.4px' },
+    sub: { fontSize: '13px', color: '#8a8a86', marginTop: '2px' },
+    content: { padding: '40px', maxWidth: '480px' },
+    label: { fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' },
+    input: { width: '100%', background: '#fff', border: '1px solid #ebebe8', borderRadius: '7px', padding: '10px 14px', fontSize: '13px', color: '#1a1a1a', fontFamily: 'inherit', outline: 'none', marginBottom: '20px', display: 'block' },
+    btnPrimary: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+    btnSecondary: { background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginRight: '8px' },
+    error: { fontSize: '12px', color: '#c74848', marginBottom: '16px' }
   }
 
   async function handleCreate() {
@@ -23,10 +26,13 @@ export default function NewOnboarding({ roleId, roleName, onBack, onComplete }) 
     setLoading(true)
     setError('')
 
-    const { data: employee, error: empError } = await supabase
-      .from('employees')
-      .insert({ full_name: fullName, email, role_id: roleId, hire_date: hireDate, brand: 'ISL' })
-      .select().single()
+const { data: roleData } = await supabase.from('roles').select('brand').eq('id', roleId).single()
+const brand = roleData?.brand || 'ISL'
+
+const { data: employee, error: empError } = await supabase
+  .from('employees')
+  .insert({ full_name: fullName, email, role_id: roleId, hire_date: hireDate, brand })
+  .select().single()
 
     if (empError) { setError(empError.message); setLoading(false); return }
 
@@ -53,38 +59,33 @@ export default function NewOnboarding({ roleId, roleName, onBack, onComplete }) 
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif' }}>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', height: '54px', borderBottom: '0.5px solid #f0f0f0' }}>
-        <div style={{ fontSize: '15px', fontWeight: '600', color: '#0070CA', letterSpacing: '-0.3px' }}>
-          Integrated <span style={{ color: '#111', fontWeight: '500' }}>Launch</span>
-        </div>
-        <button onClick={onBack} style={{ fontSize: '13px', color: '#999', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Back to dashboard</button>
-      </div>
-
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: '400px', padding: '0 24px' }}>
-          <div style={{ fontSize: '22px', fontWeight: '600', color: '#111', letterSpacing: '-0.4px', marginBottom: '4px' }}>New onboarding</div>
-          <div style={{ fontSize: '13px', color: '#999', marginBottom: '32px' }}>Role: {roleName}</div>
-
-          {error && <div style={{ fontSize: '13px', color: 'red', marginBottom: '16px' }}>{error}</div>}
-
-          <span style={label}>Full name</span>
-          <input style={input} type="text" placeholder="Jane Smith" value={fullName} onChange={e => setFullName(e.target.value)} />
-
-          <span style={label}>Email address</span>
-          <input style={input} type="email" placeholder="jane@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)} />
-
-          <span style={label}>Start date</span>
-          <input style={{ ...input, marginBottom: '24px' }} type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
-
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <button onClick={handleCreate} disabled={loading} style={{ background: '#f0f0f0', color: '#444', border: 'none', borderRadius: '10px', padding: '10px 40px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', fontFamily: 'inherit' }}>
-              {loading ? 'Creating...' : 'Create onboarding plan'}
-            </button>
-          </div>
+    <Layout session={session} currentPage="active" onNavigate={onNavigate}>
+      <div style={styles.header}>
+        <div>
+          <div style={styles.title}>New onboarding</div>
+          <div style={styles.sub}>Role: {roleName}</div>
         </div>
       </div>
-    </div>
+
+      <div style={styles.content}>
+        {error && <div style={styles.error}>{error}</div>}
+
+        <span style={styles.label}>Full name</span>
+        <input style={styles.input} type="text" placeholder="Jane Smith" value={fullName} onChange={e => setFullName(e.target.value)} />
+
+        <span style={styles.label}>Email address</span>
+        <input style={styles.input} type="email" placeholder="jane@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)} />
+
+        <span style={styles.label}>Start date</span>
+        <input style={{ ...styles.input, marginBottom: '28px' }} type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
+
+        <div style={{ display: 'flex' }}>
+          <button style={styles.btnSecondary} onClick={onBack}>Cancel</button>
+          <button style={styles.btnPrimary} onClick={handleCreate} disabled={loading}>
+            {loading ? 'Creating...' : 'Create onboarding plan'}
+          </button>
+        </div>
+      </div>
+    </Layout>
   )
 }

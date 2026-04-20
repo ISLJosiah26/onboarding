@@ -1,10 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
+import Layout from '../components/Layout'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 
-export default function OnboardingPlan({ instanceId, onBack }) {
+export default function OnboardingPlan({ session, instanceId, onBack, onNavigate }) {
   const [instance, setInstance] = useState(null)
   const [tasksByPhase, setTasksByPhase] = useState({})
   const [completions, setCompletions] = useState({})
@@ -23,7 +24,7 @@ export default function OnboardingPlan({ instanceId, onBack }) {
       .from('onboarding_instances')
       .select(`
         id, status,
-        employees (id, full_name, hire_date, roles (name)),
+        employees (id, full_name, email, hire_date, roles (name)),
         task_completions (
           id, completed, completed_at, notes,
           onboarding_templates (id, task_name, phase, owner)
@@ -78,11 +79,10 @@ export default function OnboardingPlan({ instanceId, onBack }) {
   async function toggleTask(completionId, current) {
     const newVal = !current
     setCompletions(prev => ({ ...prev, [completionId]: newVal }))
-    const { error } = await supabase
+    await supabase
       .from('task_completions')
       .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
       .eq('id', completionId)
-    if (error) console.log('update error:', error.message)
   }
 
   async function toggleDocument(docId) {
@@ -111,119 +111,116 @@ export default function OnboardingPlan({ instanceId, onBack }) {
     setUploading(true)
 
     const filePath = `documents/${Date.now()}_${file.name}`
-    const { error: uploadError } = await supabase.storage
-      .from('documents')
-      .upload(filePath, file)
+    const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
 
     if (uploadError) { console.error(uploadError.message); setUploading(false); return }
 
     const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath)
-
-    await supabase.from('documents').insert({
-      name: file.name,
-      file_url: urlData.publicUrl
-    })
-
+    await supabase.from('documents').insert({ name: file.name, file_url: urlData.publicUrl })
     await fetchDocuments()
     setUploading(false)
   }
 
   async function handleMarkComplete() {
     if (!window.confirm('Mark this onboarding as complete?')) return
-    await supabase
-      .from('onboarding_instances')
-      .update({ status: 'completed' })
-      .eq('id', instanceId)
+    await supabase.from('onboarding_instances').update({ status: 'completed' }).eq('id', instanceId)
     onBack()
   }
 
   async function handleArchive() {
-    if (!window.confirm('Archive this onboarding? This will remove it from active onboardings.')) return
-    await supabase
-      .from('onboarding_instances')
-      .update({ status: 'archived' })
-      .eq('id', instanceId)
+    if (!window.confirm('Archive this onboarding?')) return
+    await supabase.from('onboarding_instances').update({ status: 'archived' }).eq('id', instanceId)
     onBack()
   }
 
   function totalTasks() { return Object.values(tasksByPhase).flat().length }
-  function completedTasks() { return Object.values(completions).filter(Boolean).length }
+  function completedTasksCount() { return Object.values(completions).filter(Boolean).length }
   function pct() {
     const t = totalTasks()
-    return t > 0 ? Math.round((completedTasks() / t) * 100) : 0
+    return t > 0 ? Math.round((completedTasksCount() / t) * 100) : 0
+  }
+
+  const styles = {
+    header: { padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' },
+    backLink: { fontSize: '12px', color: '#8a8a86', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px' },
+    title: { fontSize: '22px', fontWeight: 600, letterSpacing: '-0.4px' },
+    sub: { fontSize: '13px', color: '#8a8a86', marginTop: '3px' },
+    progressRow: { marginTop: '20px', display: 'flex', alignItems: 'center', gap: '16px' },
+    progressTrack: { flex: 1, maxWidth: '320px', height: '4px', background: '#ebebe8', borderRadius: '2px', overflow: 'hidden' },
+    progressFill: { height: '100%', background: '#0070CA', transition: 'width 0.3s ease' },
+    progressText: { fontSize: '12px', color: '#8a8a86' },
+    progressPct: { fontSize: '12px', fontWeight: 500, color: '#0070CA' },
+    content: { padding: '32px 40px', maxWidth: '780px' },
+    sectionLabel: { fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+    uploadLink: { fontSize: '12px', color: '#0070CA', cursor: 'pointer', fontWeight: 500, textTransform: 'none', letterSpacing: 0 },
+    taskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efeb', cursor: 'pointer' },
+    checkbox: (checked) => ({
+      width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0,
+      border: checked ? 'none' : '1.5px solid #d4d3cf',
+      background: checked ? '#0070CA' : '#fff',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      transition: 'all 0.15s'
+    }),
+    taskName: (checked) => ({
+      fontSize: '13px',
+      color: checked ? '#a8a8a4' : '#1a1a1a',
+      textDecoration: checked ? 'line-through' : 'none',
+      flex: 1
+    }),
+    owner: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f4f3f1', color: '#8a8a86', fontWeight: 500 },
+    section: { marginBottom: '36px' },
+    footer: { borderTop: '1px solid #ebebe8', padding: '24px 40px', display: 'flex', gap: '8px' },
+    btnPrimary: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+    btnSecondary: { background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif', color: '#bbb' }}>
-      Loading...
-    </div>
+    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+      <div style={{ padding: '80px 40px', color: '#a8a8a4', fontSize: '13px' }}>Loading...</div>
+    </Layout>
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif' }}>
+    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', height: '54px', borderBottom: '0.5px solid #f0f0f0' }}>
-        <div style={{ fontSize: '15px', fontWeight: '600', color: '#0070CA', letterSpacing: '-0.3px' }}>
-          Integrated <span style={{ color: '#111', fontWeight: '500' }}>Launch</span>
+      <div style={styles.header}>
+        <button style={styles.backLink} onClick={onBack}>
+          <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 2L4 7l5 5"/></svg>
+          Back to dashboard
+        </button>
+        <div style={styles.title}>{instance.employees.full_name}</div>
+        <div style={styles.sub}>
+          {instance.employees.roles.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
         </div>
-        <button onClick={onBack} style={{ fontSize: '13px', color: '#999', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Back to dashboard</button>
+        <div style={styles.progressRow}>
+          <span style={styles.progressText}>{completedTasksCount()} of {totalTasks()} tasks complete</span>
+          <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct()}%` }}></div></div>
+          <span style={styles.progressPct}>{pct()}%</span>
+        </div>
       </div>
 
-      <div style={{ maxWidth: '680px', width: '100%', margin: '0 auto', padding: '40px 24px' }}>
+      <div style={styles.content}>
 
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '24px', fontWeight: '600', color: '#111', letterSpacing: '-0.4px' }}>
-            {instance.employees.full_name}
-          </div>
-          <div style={{ fontSize: '13px', color: '#999', marginTop: '4px' }}>
-            {instance.employees.roles.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
-          </div>
-          <div style={{ marginTop: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '12px', color: '#bbb' }}>{completedTasks()} of {totalTasks()} tasks complete</span>
-              <span style={{ fontSize: '12px', fontWeight: '500', color: '#0070CA' }}>{pct()}%</span>
-            </div>
-            <div style={{ height: '4px', background: '#f5f5f5', borderRadius: '2px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${pct()}%`, background: '#0070CA', borderRadius: '2px', transition: 'width 0.3s ease' }}></div>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '40px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <span style={{ fontSize: '11px', fontWeight: '600', color: '#ccc', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Documents</span>
-            <label style={{ fontSize: '12px', color: '#0070CA', cursor: 'pointer' }}>
+        <div style={styles.section}>
+          <div style={styles.sectionLabel}>
+            <span>Documents</span>
+            <label style={styles.uploadLink}>
               {uploading ? 'Uploading...' : '+ Upload document'}
               <input type="file" style={{ display: 'none' }} onChange={handleUploadDocument} accept=".pdf,.doc,.docx" />
             </label>
           </div>
           {documents.length === 0 && (
-            <p style={{ fontSize: '13px', color: '#ccc' }}>No documents uploaded yet.</p>
+            <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '12px 0' }}>No documents in the library yet.</div>
           )}
           {documents.map(doc => {
-            const dc = docCompletions[doc.id]
-            const signed = dc?.signed || false
+            const signed = docCompletions[doc.id]?.signed || false
             return (
-              <div key={doc.id} onClick={() => toggleDocument(doc.id)} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 0', borderBottom: '0.5px solid #f5f5f5', cursor: 'pointer' }}>
-                <div style={{
-                  width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
-                  border: signed ? 'none' : '0.5px solid #ddd',
-                  background: signed ? '#0070CA' : '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.15s'
-                }}>
-                  {signed && (
-                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
+              <div key={doc.id} style={styles.taskRow} onClick={() => toggleDocument(doc.id)}>
+                <div style={styles.checkbox(signed)}>
+                  {signed && <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </div>
-                <div style={{ flex: 1, fontSize: '14px', color: signed ? '#bbb' : '#111', textDecoration: signed ? 'line-through' : 'none' }}>
-                  {doc.name}
-                </div>
-                <a href={doc.file_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>
-                  View
-                </a>
+                <div style={styles.taskName(signed)}>{doc.name}</div>
+                <a href={doc.file_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>View</a>
               </div>
             )
           })}
@@ -234,48 +231,30 @@ export default function OnboardingPlan({ instanceId, onBack }) {
           if (tasks.length === 0) return null
           const phaseComplete = tasks.every(t => completions[t.id])
           return (
-            <div key={phase} style={{ marginBottom: '32px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '11px', fontWeight: '600', color: phaseComplete ? '#0070CA' : '#ccc', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{phase}</span>
-                {phaseComplete && <span style={{ fontSize: '11px', color: '#0070CA' }}>Complete</span>}
+            <div key={phase} style={styles.section}>
+              <div style={styles.sectionLabel}>
+                <span style={{ color: phaseComplete ? '#0070CA' : '#a8a8a4' }}>{phase}</span>
+                {phaseComplete && <span style={{ fontSize: '11px', color: '#0070CA', textTransform: 'none', letterSpacing: 0 }}>Complete</span>}
               </div>
               {tasks.map(tc => (
-                <div key={tc.id} onClick={() => toggleTask(tc.id, completions[tc.id])} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 0', borderBottom: '0.5px solid #f5f5f5', cursor: 'pointer' }}>
-                  <div style={{
-                    width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
-                    border: completions[tc.id] ? 'none' : '0.5px solid #ddd',
-                    background: completions[tc.id] ? '#0070CA' : '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.15s'
-                  }}>
-                    {completions[tc.id] && (
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
+                <div key={tc.id} style={styles.taskRow} onClick={() => toggleTask(tc.id, completions[tc.id])}>
+                  <div style={styles.checkbox(completions[tc.id])}>
+                    {completions[tc.id] && <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                   </div>
-                  <div style={{ flex: 1, fontSize: '14px', color: completions[tc.id] ? '#bbb' : '#111', textDecoration: completions[tc.id] ? 'line-through' : 'none', transition: 'all 0.15s' }}>
-                    {tc.onboarding_templates.task_name}
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#ccc', flexShrink: 0 }}>
-                    {tc.onboarding_templates.owner}
-                  </div>
+                  <div style={styles.taskName(completions[tc.id])}>{tc.onboarding_templates.task_name}</div>
+                  <div style={styles.owner}>{tc.onboarding_templates.owner}</div>
                 </div>
               ))}
             </div>
           )
         })}
-
-        <div style={{ borderTop: '0.5px solid #f0f0f0', paddingTop: '32px', marginTop: '16px', display: 'flex', gap: '12px' }}>
-          <button onClick={handleMarkComplete} style={{ background: '#f0f0f0', color: '#444', border: 'none', borderRadius: '10px', padding: '10px 24px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', fontFamily: 'inherit' }}>
-            Mark as complete
-          </button>
-          <button onClick={handleArchive} style={{ background: 'none', color: '#ccc', border: '0.5px solid #eee', borderRadius: '10px', padding: '10px 24px', fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit' }}>
-            Archive
-          </button>
-        </div>
-
       </div>
-    </div>
+
+      <div style={styles.footer}>
+        <button style={styles.btnPrimary} onClick={handleMarkComplete}>Mark as complete</button>
+        <button style={styles.btnSecondary} onClick={handleArchive}>Archive</button>
+      </div>
+
+    </Layout>
   )
 }
