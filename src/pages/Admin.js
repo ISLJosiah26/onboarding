@@ -79,13 +79,13 @@ export default function Admin({ onBack }) {
     fetchDocuments()
   }
 
-  const tabStyle = (t) => ({
-    fontSize: '13px', fontWeight: '500', cursor: 'pointer', padding: '6px 0',
-    color: tab === t ? '#111' : '#bbb',
-    borderBottom: tab === t ? '1.5px solid #111' : '1.5px solid transparent',
-    background: 'none', border: 'none', borderBottom: tab === t ? '1.5px solid #111' : '1.5px solid transparent',
-    fontFamily: 'inherit', marginRight: '24px'
-  })
+const tabStyle = (t) => ({
+  fontSize: '13px', fontWeight: '500', cursor: 'pointer', padding: '6px 0',
+  color: tab === t ? '#111' : '#bbb',
+  borderBottom: tab === t ? '1.5px solid #111' : '1.5px solid transparent',
+  background: 'none', border: 'none',
+  fontFamily: 'inherit', marginRight: '24px'
+})
 
   const input = {
     border: '0.5px solid #e5e5e5', borderRadius: '8px', padding: '8px 12px',
