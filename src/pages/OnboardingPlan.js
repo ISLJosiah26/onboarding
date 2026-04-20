@@ -9,6 +9,8 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   const [instance, setInstance] = useState(null)
   const [tasksByPhase, setTasksByPhase] = useState({})
   const [completions, setCompletions] = useState({})
+  const [notes, setNotes] = useState({})
+  const [expanded, setExpanded] = useState(null)
   const [documents, setDocuments] = useState([])
   const [docCompletions, setDocCompletions] = useState({})
   const [loading, setLoading] = useState(true)
@@ -39,16 +41,19 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
 
     const byPhase = {}
     const comp = {}
+    const nts = {}
     PHASES.forEach(p => byPhase[p] = [])
 
     data.task_completions.forEach(tc => {
       const phase = tc.onboarding_templates.phase
       if (byPhase[phase]) byPhase[phase].push(tc)
       comp[tc.id] = tc.completed
+      nts[tc.id] = tc.notes || ''
     })
 
     setTasksByPhase(byPhase)
     setCompletions(comp)
+    setNotes(nts)
     setLoading(false)
   }
 
@@ -76,7 +81,8 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
     setDocCompletions(map)
   }
 
-  async function toggleTask(completionId, current) {
+  async function toggleTask(completionId, current, e) {
+    e.stopPropagation()
     const newVal = !current
     setCompletions(prev => ({ ...prev, [completionId]: newVal }))
     await supabase
@@ -85,7 +91,16 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
       .eq('id', completionId)
   }
 
-  async function toggleDocument(docId) {
+  async function saveNote(completionId, value) {
+    setNotes(prev => ({ ...prev, [completionId]: value }))
+    await supabase
+      .from('task_completions')
+      .update({ notes: value })
+      .eq('id', completionId)
+  }
+
+  async function toggleDocument(docId, e) {
+    e.stopPropagation()
     const employeeId = instance.employees.id
     const existing = docCompletions[docId]
 
@@ -159,7 +174,8 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
       border: checked ? 'none' : '1.5px solid #d4d3cf',
       background: checked ? '#0070CA' : '#fff',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      transition: 'all 0.15s'
+      transition: 'all 0.15s',
+      cursor: 'pointer'
     }),
     taskName: (checked) => ({
       fontSize: '13px',
@@ -169,6 +185,11 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
     }),
     owner: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f4f3f1', color: '#8a8a86', fontWeight: 500 },
     section: { marginBottom: '36px' },
+    expandedPanel: { background: '#fafaf9', border: '1px solid #ebebe8', borderRadius: '8px', padding: '14px', marginTop: '2px', marginBottom: '12px' },
+    noteLabel: { fontSize: '11px', color: '#8a8a86', marginBottom: '6px', fontWeight: 500 },
+    noteInput: { width: '100%', border: '1px solid #ebebe8', borderRadius: '6px', padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#1a1a1a', resize: 'vertical', minHeight: '60px', boxSizing: 'border-box' },
+    noteHint: { fontSize: '11px', color: '#a8a8a4', marginTop: '6px' },
+    noteIndicator: { fontSize: '11px', color: '#0070CA', marginLeft: '4px' },
     footer: { borderTop: '1px solid #ebebe8', padding: '24px 40px', display: 'flex', gap: '8px' },
     btnPrimary: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
     btnSecondary: { background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }
@@ -215,7 +236,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
           {documents.map(doc => {
             const signed = docCompletions[doc.id]?.signed || false
             return (
-              <div key={doc.id} style={styles.taskRow} onClick={() => toggleDocument(doc.id)}>
+              <div key={doc.id} style={styles.taskRow} onClick={(e) => toggleDocument(doc.id, e)}>
                 <div style={styles.checkbox(signed)}>
                   {signed && <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </div>
@@ -236,15 +257,39 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
                 <span style={{ color: phaseComplete ? '#0070CA' : '#a8a8a4' }}>{phase}</span>
                 {phaseComplete && <span style={{ fontSize: '11px', color: '#0070CA', textTransform: 'none', letterSpacing: 0 }}>Complete</span>}
               </div>
-              {tasks.map(tc => (
-                <div key={tc.id} style={styles.taskRow} onClick={() => toggleTask(tc.id, completions[tc.id])}>
-                  <div style={styles.checkbox(completions[tc.id])}>
-                    {completions[tc.id] && <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              {tasks.map(tc => {
+                const isExpanded = expanded === tc.id
+                const hasNote = notes[tc.id] && notes[tc.id].trim().length > 0
+                return (
+                  <div key={tc.id}>
+                    <div style={styles.taskRow} onClick={() => setExpanded(isExpanded ? null : tc.id)}>
+                      <div style={styles.checkbox(completions[tc.id])} onClick={(e) => toggleTask(tc.id, completions[tc.id], e)}>
+                        {completions[tc.id] && <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
+                      <div style={styles.taskName(completions[tc.id])}>
+                        {tc.onboarding_templates.task_name}
+                        {hasNote && !isExpanded && (
+                          <span style={styles.noteIndicator}>· note</span>
+                        )}
+                      </div>
+                      <div style={styles.owner}>{tc.onboarding_templates.owner}</div>
+                    </div>
+                    {isExpanded && (
+                      <div style={styles.expandedPanel} onClick={e => e.stopPropagation()}>
+                        <div style={styles.noteLabel}>Note</div>
+                        <textarea
+                          style={styles.noteInput}
+                          value={notes[tc.id] || ''}
+                          onChange={e => setNotes(prev => ({ ...prev, [tc.id]: e.target.value }))}
+                          onBlur={e => saveNote(tc.id, e.target.value)}
+                          placeholder="Add a note about this task..."
+                        />
+                        <div style={styles.noteHint}>Note saves automatically when you click away.</div>
+                      </div>
+                    )}
                   </div>
-                  <div style={styles.taskName(completions[tc.id])}>{tc.onboarding_templates.task_name}</div>
-                  <div style={styles.owner}>{tc.onboarding_templates.owner}</div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )
         })}
