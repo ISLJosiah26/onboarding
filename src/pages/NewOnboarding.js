@@ -26,13 +26,13 @@ export default function NewOnboarding({ session, roleId, roleName, onBack, onNav
     setLoading(true)
     setError('')
 
-const { data: roleData } = await supabase.from('roles').select('brand').eq('id', roleId).single()
-const brand = roleData?.brand || 'ISL'
+    const { data: roleData } = await supabase.from('roles').select('brand').eq('id', roleId).single()
+    const brand = roleData?.brand || 'ISL'
 
-const { data: employee, error: empError } = await supabase
-  .from('employees')
-  .insert({ full_name: fullName, email, role_id: roleId, hire_date: hireDate, brand })
-  .select().single()
+    const { data: employee, error: empError } = await supabase
+      .from('employees')
+      .insert({ full_name: fullName, email, role_id: roleId, hire_date: hireDate, brand })
+      .select().single()
 
     if (empError) { setError(empError.message); setLoading(false); return }
 
@@ -54,8 +54,54 @@ const { data: employee, error: empError } = await supabase
       )
     }
 
+    await sendOnboardingStartedEmails(fullName, email, roleName, hireDate)
+
     setLoading(false)
     onComplete(instance.id)
+  }
+
+  async function sendOnboardingStartedEmails(name, employeeEmail, role, startDate) {
+    const startFormatted = new Date(startDate).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+
+    if (employeeEmail) {
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: employeeEmail,
+          subject: `Welcome to Integrated Staffing, ${name.split(' ')[0]}`,
+          html: `
+            <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
+              <h1 style="font-size: 22px; font-weight: 600; letter-spacing: -0.4px; margin-bottom: 16px;">Welcome aboard, ${name.split(' ')[0]}</h1>
+              <p style="font-size: 15px; line-height: 1.6; color: #444;">We're excited to have you joining as a <strong>${role}</strong>, starting <strong>${startFormatted}</strong>.</p>
+              <p style="font-size: 15px; line-height: 1.6; color: #444;">Our HR team has prepared your onboarding plan and will be in touch shortly with next steps, required paperwork, and training schedule.</p>
+              <p style="font-size: 15px; line-height: 1.6; color: #444;">If you have any questions before your start date, please reach out.</p>
+              <p style="font-size: 15px; line-height: 1.6; color: #444; margin-top: 32px;">Welcome to the team.</p>
+              <p style="font-size: 13px; color: #888; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">Integrated Staffing Limited</p>
+            </div>
+          `
+        }
+      })
+      console.log('Employee email result:', { data, error })
+    }
+
+    const { data: data2, error: error2 } = await supabase.functions.invoke('send-email', {
+      body: {
+        to: 'josiah@integratedstaffing.ca',
+        subject: `New onboarding started: ${name}`,
+        html: `
+          <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
+            <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">New onboarding plan created</h2>
+            <table style="font-size: 14px; color: #444;">
+              <tr><td style="padding: 4px 16px 4px 0; color: #888;">Employee</td><td>${name}</td></tr>
+              <tr><td style="padding: 4px 16px 4px 0; color: #888;">Email</td><td>${employeeEmail || 'not provided'}</td></tr>
+              <tr><td style="padding: 4px 16px 4px 0; color: #888;">Role</td><td>${role}</td></tr>
+              <tr><td style="padding: 4px 16px 4px 0; color: #888;">Start date</td><td>${startFormatted}</td></tr>
+            </table>
+            <p style="font-size: 13px; color: #888; margin-top: 32px;">Sent by Integrated Launch</p>
+          </div>
+        `
+      }
+    })
+    console.log('HR email result:', { data: data2, error: error2 })
   }
 
   return (
