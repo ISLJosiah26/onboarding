@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
+import ConfirmModal from '../components/ConfirmModal'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 
@@ -15,6 +16,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   const [docCompletions, setDocCompletions] = useState({})
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [modal, setModal] = useState(null)
 
   useEffect(() => {
     fetchPlan()
@@ -137,37 +139,51 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   }
 
 async function handleMarkComplete() {
-  if (!window.confirm('Mark this onboarding as complete?')) return
-  await supabase.from('onboarding_instances').update({ status: 'completed' }).eq('id', instanceId)
-
-  await supabase.functions.invoke('send-email', {
-    body: {
-      to: 'josiah@integratedstaffing.ca',
-      subject: `Onboarding complete: ${instance.employees.full_name}`,
-      html: `
-        <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
-          <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Onboarding marked complete</h2>
-          <p style="font-size: 14px; color: #444; line-height: 1.6;"><strong>${instance.employees.full_name}</strong> has completed their onboarding plan.</p>
-          <table style="font-size: 14px; color: #444; margin-top: 16px;">
-            <tr><td style="padding: 4px 16px 4px 0; color: #888;">Role</td><td>${instance.employees.roles.name}</td></tr>
-            <tr><td style="padding: 4px 16px 4px 0; color: #888;">Started</td><td>${new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</td></tr>
-            <tr><td style="padding: 4px 16px 4px 0; color: #888;">Completed</td><td>${new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</td></tr>
-            <tr><td style="padding: 4px 16px 4px 0; color: #888;">Tasks completed</td><td>${completedTasksCount()} of ${totalTasks()}</td></tr>
-          </table>
-          <p style="font-size: 13px; color: #888; margin-top: 32px;">Sent by Integrated Launch</p>
-        </div>
-      `
+  setModal({
+    title: 'Mark as complete',
+    message: `This will mark ${instance.employees.full_name}'s onboarding as complete and remove it from the active list.`,
+    confirmLabel: 'Mark complete',
+    confirmDanger: false,
+    onConfirm: async () => {
+      await supabase.from('onboarding_instances').update({ status: 'completed' }).eq('id', instanceId)
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: 'josiah@integratedstaffing.ca',
+          subject: `Onboarding complete: ${instance.employees.full_name}`,
+          html: `
+            <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
+              <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Onboarding marked complete</h2>
+              <p style="font-size: 14px; color: #444; line-height: 1.6;"><strong>${instance.employees.full_name}</strong> has completed their onboarding plan.</p>
+              <table style="font-size: 14px; color: #444; margin-top: 16px;">
+                <tr><td style="padding: 4px 16px 4px 0; color: #888;">Role</td><td>${instance.employees.roles.name}</td></tr>
+                <tr><td style="padding: 4px 16px 4px 0; color: #888;">Started</td><td>${new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</td></tr>
+                <tr><td style="padding: 4px 16px 4px 0; color: #888;">Completed</td><td>${new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</td></tr>
+                <tr><td style="padding: 4px 16px 4px 0; color: #888;">Tasks completed</td><td>${completedTasksCount()} of ${totalTasks()}</td></tr>
+              </table>
+              <p style="font-size: 13px; color: #888; margin-top: 32px;">Sent by Integrated Launch</p>
+            </div>
+          `
+        }
+      })
+      setModal(null)
+      onBack()
     }
   })
-
-  onBack()
 }
 
-  async function handleArchive() {
-    if (!window.confirm('Archive this onboarding?')) return
-    await supabase.from('onboarding_instances').update({ status: 'archived' }).eq('id', instanceId)
-    onBack()
-  }
+async function handleArchive() {
+  setModal({
+    title: 'Archive onboarding',
+    message: `This will archive ${instance.employees.full_name}'s onboarding and remove it from the active list. You can still view it in History.`,
+    confirmLabel: 'Archive',
+    confirmDanger: true,
+    onConfirm: async () => {
+      await supabase.from('onboarding_instances').update({ status: 'archived' }).eq('id', instanceId)
+      setModal(null)
+      onBack()
+    }
+  })
+}
 
   function totalTasks() { return Object.values(tasksByPhase).flat().length }
   function completedTasksCount() { return Object.values(completions).filter(Boolean).length }
@@ -320,7 +336,16 @@ async function handleMarkComplete() {
         <button style={styles.btnPrimary} onClick={handleMarkComplete}>Mark as complete</button>
         <button style={styles.btnSecondary} onClick={handleArchive}>Archive</button>
       </div>
-
+{modal && (
+        <ConfirmModal
+          title={modal.title}
+          message={modal.message}
+          confirmLabel={modal.confirmLabel}
+          confirmDanger={modal.confirmDanger}
+          onConfirm={modal.onConfirm}
+          onCancel={() => setModal(null)}
+        />
+      )}
     </Layout>
   )
 }

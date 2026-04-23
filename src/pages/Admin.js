@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
+import ConfirmModal from '../components/ConfirmModal'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 const OWNERS = ['HR', 'Manager', 'IT']
@@ -21,6 +22,7 @@ export default function Admin({ session, initialTab, onBack, onNavigate, onStart
   const [newRoleBrand, setNewRoleBrand] = useState('ISL')
 
   const [pickedRoleId, setPickedRoleId] = useState('')
+  const [modal, setModal] = useState(null)
 
   useEffect(() => { fetchRoles() }, [])
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
@@ -55,13 +57,21 @@ async function addRole() {
     fetchRoles()
   }
 
-  async function deleteRole(id) {
-    if (!window.confirm('Delete this role and all its tasks?')) return
-    await supabase.from('onboarding_templates').delete().eq('role_id', id)
-    await supabase.from('roles').delete().eq('id', id)
-    if (selectedRole?.id === id) setSelectedRole(null)
-    fetchRoles()
-  }
+async function deleteRole(id, name) {
+  setModal({
+    title: 'Delete role',
+    message: `This will permanently delete the "${name}" role and all its task templates. This cannot be undone.`,
+    confirmLabel: 'Delete role',
+    confirmDanger: true,
+    onConfirm: async () => {
+      await supabase.from('onboarding_templates').delete().eq('role_id', id)
+      await supabase.from('roles').delete().eq('id', id)
+      if (selectedRole?.id === id) setSelectedRole(null)
+      setModal(null)
+      fetchRoles()
+    }
+  })
+}
 
   async function addTask() {
     if (!newTaskName.trim() || !selectedRole) return
@@ -72,10 +82,19 @@ async function addRole() {
     fetchTemplates(selectedRole.id)
   }
 
-  async function deleteTask(id) {
-    await supabase.from('onboarding_templates').delete().eq('id', id)
-    fetchTemplates(selectedRole.id)
-  }
+async function deleteTask(id, name) {
+  setModal({
+    title: 'Remove task',
+    message: `Remove "${name}" from this role's template? This won't affect onboardings already in progress.`,
+    confirmLabel: 'Remove task',
+    confirmDanger: true,
+    onConfirm: async () => {
+      await supabase.from('onboarding_templates').delete().eq('id', id)
+      setModal(null)
+      fetchTemplates(selectedRole.id)
+    }
+  })
+}
 
   async function deleteDocument(id) {
     await supabase.from('documents').delete().eq('id', id)
@@ -183,6 +202,16 @@ if (initialTab === 'new-onboarding-select') {
             </div>
           ))}
         </div>
+        {modal && (
+  <ConfirmModal
+    title={modal.title}
+    message={modal.message}
+    confirmLabel={modal.confirmLabel}
+    confirmDanger={modal.confirmDanger}
+    onConfirm={modal.onConfirm}
+    onCancel={() => setModal(null)}
+  />
+)}
       </Layout>
     )
   }
@@ -212,13 +241,23 @@ if (initialTab === 'new-onboarding-select') {
       {brandRoles.map(r => (
         <div key={r.id} style={styles.row}>
           <span style={styles.rowName}>{r.name}</span>
-          <button style={styles.btnGhost} onClick={() => deleteRole(r.id)}>Remove</button>
+          <button style={styles.btnGhost} onClick={() => deleteRole(r.id, r.name)}>Remove</button>
         </div>
       ))}
     </div>
   )
 })}
         </div>
+        {modal && (
+  <ConfirmModal
+    title={modal.title}
+    message={modal.message}
+    confirmLabel={modal.confirmLabel}
+    confirmDanger={modal.confirmDanger}
+    onConfirm={modal.onConfirm}
+    onCancel={() => setModal(null)}
+  />
+)}
       </Layout>
     )
   }
@@ -267,7 +306,7 @@ if (initialTab === 'new-onboarding-select') {
                           <span style={styles.rowName}>{t.task_name}</span>
                           <span style={{ ...styles.pill, marginLeft: '10px' }}>{t.owner}</span>
                         </div>
-                        <button style={styles.btnGhost} onClick={() => deleteTask(t.id)}>Remove</button>
+                        <button style={styles.btnGhost} onClick={() => deleteTask(t.id, t.task_name)}>Remove</button>
                       </div>
                     ))}
                   </div>
@@ -276,6 +315,16 @@ if (initialTab === 'new-onboarding-select') {
             </>
           )}
         </div>
+        {modal && (
+  <ConfirmModal
+    title={modal.title}
+    message={modal.message}
+    confirmLabel={modal.confirmLabel}
+    confirmDanger={modal.confirmDanger}
+    onConfirm={modal.onConfirm}
+    onCancel={() => setModal(null)}
+  />
+)}
       </Layout>
     )
   }
@@ -301,6 +350,17 @@ if (initialTab === 'new-onboarding-select') {
             </div>
           ))}
         </div>
+
+          {modal && (
+  <ConfirmModal
+    title={modal.title}
+    message={modal.message}
+    confirmLabel={modal.confirmLabel}
+    confirmDanger={modal.confirmDanger}
+    onConfirm={modal.onConfirm}
+    onCancel={() => setModal(null)}
+  />
+)}
       </Layout>
     )
   }
