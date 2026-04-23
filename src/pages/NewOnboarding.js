@@ -26,13 +26,29 @@ export default function NewOnboarding({ session, roleId, roleName, onBack, onNav
     setLoading(true)
     setError('')
 
-    const { data: roleData } = await supabase.from('roles').select('brand').eq('id', roleId).single()
-    const brand = roleData?.brand || 'ISL'
+const { data: roleData } = await supabase.from('roles').select('brand').eq('id', roleId).single()
+const brand = roleData?.brand || 'ISL'
 
-    const { data: employee, error: empError } = await supabase
-      .from('employees')
-      .insert({ full_name: fullName, email, role_id: roleId, hire_date: hireDate, brand })
-      .select().single()
+const { data: existingEmployees } = await supabase
+  .from('employees')
+  .select('id, full_name, onboarding_instances (id, status)')
+  .ilike('full_name', fullName.trim())
+
+if (existingEmployees && existingEmployees.length > 0) {
+  const hasActive = existingEmployees.some(emp =>
+    emp.onboarding_instances?.some(inst => inst.status === 'active')
+  )
+  if (hasActive) {
+    setError(`An active onboarding already exists for someone named "${fullName}". Check the dashboard before continuing.`)
+    setLoading(false)
+    return
+  }
+}
+
+const { data: employee, error: empError } = await supabase
+  .from('employees')
+  .insert({ full_name: fullName, email, role_id: roleId, hire_date: hireDate, brand })
+  .select().single()
 
     if (empError) { setError(empError.message); setLoading(false); return }
 
