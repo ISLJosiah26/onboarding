@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
 import ConfirmModal from '../components/ConfirmModal'
+import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 
@@ -232,11 +233,32 @@ async function handleArchive() {
     btnSecondary: { background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }
   }
 
-  if (loading) return (
-    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
-      <div style={{ padding: '80px 40px', color: '#a8a8a4', fontSize: '13px' }}>Loading...</div>
-    </Layout>
-  )
+if (loading) return (
+  <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+    <div style={{ padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' }}>
+      <SkeletonLine width="120px" height="12px" style={{ marginBottom: '16px' }} />
+      <SkeletonLine width="220px" height="22px" style={{ marginBottom: '8px' }} />
+      <SkeletonLine width="280px" height="13px" style={{ marginBottom: '20px' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <SkeletonLine width="160px" height="12px" />
+        <SkeletonLine width="240px" height="4px" />
+        <SkeletonLine width="32px" height="12px" />
+      </div>
+    </div>
+    <div style={{ padding: '32px 40px', maxWidth: '780px' }}>
+      <SkeletonLine width="100px" height="11px" style={{ marginBottom: '14px' }} />
+      <SkeletonTaskRow />
+      <SkeletonTaskRow />
+      <SkeletonLine width="80px" height="11px" style={{ margin: '28px 0 14px' }} />
+      <SkeletonTaskRow />
+      <SkeletonTaskRow />
+      <SkeletonTaskRow />
+      <SkeletonLine width="60px" height="11px" style={{ margin: '28px 0 14px' }} />
+      <SkeletonTaskRow />
+      <SkeletonTaskRow />
+    </div>
+  </Layout>
+)
 
   return (
     <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
