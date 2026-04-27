@@ -15,6 +15,8 @@ export default function Admin({ session, initialTab, onBack, onNavigate, onStart
   const [documents, setDocuments] = useState([])
   const [history, setHistory] = useState([])
 
+  const [addingSubtaskTo, setAddingSubtaskTo] = useState(null)
+  const [newSubtaskName, setNewSubtaskName] = useState('')
   const [newRoleName, setNewRoleName] = useState('')
   const [newTaskName, setNewTaskName] = useState('')
   const [newTaskPhase, setNewTaskPhase] = useState('Week 1')
@@ -94,6 +96,20 @@ async function deleteTask(id, name) {
       fetchTemplates(selectedRole.id)
     }
   })
+}
+
+async function addSubtask(parentId) {
+  if (!newSubtaskName.trim()) return
+  await supabase.from('onboarding_templates').insert({
+    role_id: selectedRole.id,
+    task_name: newSubtaskName.trim(),
+    phase: templates.find(t => t.id === parentId)?.phase,
+    owner: templates.find(t => t.id === parentId)?.owner,
+    parent_id: parentId
+  })
+  setNewSubtaskName('')
+  setAddingSubtaskTo(null)
+  fetchTemplates(selectedRole.id)
 }
 
   async function deleteDocument(id) {
@@ -294,24 +310,59 @@ if (initialTab === 'new-onboarding-select') {
                 <button style={styles.btnPrimary} onClick={addTask}>Add task</button>
               </div>
 
-              {PHASES.map(phase => {
-                const phaseTasks = templates.filter(t => t.phase === phase)
-                if (phaseTasks.length === 0) return null
-                return (
-                  <div key={phase}>
-                    <div style={styles.phaseLabel}>{phase}</div>
-                    {phaseTasks.map(t => (
-                      <div key={t.id} style={styles.row}>
-                        <div>
-                          <span style={styles.rowName}>{t.task_name}</span>
-                          <span style={{ ...styles.pill, marginLeft: '10px' }}>{t.owner}</span>
-                        </div>
-                        <button style={styles.btnGhost} onClick={() => deleteTask(t.id, t.task_name)}>Remove</button>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })}
+{PHASES.map(phase => {
+  const phaseTasks = templates.filter(t => t.phase === phase && !t.parent_id)
+  if (phaseTasks.length === 0) return null
+  return (
+    <div key={phase}>
+      <div style={styles.phaseLabel}>{phase}</div>
+      {phaseTasks.map(t => {
+        const subtasks = templates.filter(s => s.parent_id === t.id)
+        return (
+          <div key={t.id}>
+            <div style={styles.row}>
+              <div>
+                <span style={styles.rowName}>{t.task_name}</span>
+                <span style={{ ...styles.pill, marginLeft: '10px' }}>{t.owner}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setAddingSubtaskTo(t.id); setNewSubtaskName('') }}>+ Subtask</button>
+                <button style={styles.btnGhost} onClick={() => deleteTask(t.id, t.task_name)}>Remove</button>
+              </div>
+            </div>
+
+            {subtasks.map(s => (
+              <div key={s.id} style={{ ...styles.row, paddingLeft: '20px', background: '#fafaf9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: '#d4d3cf', fontSize: '12px' }}>↳</span>
+                  <span style={{ ...styles.rowName, color: '#5f5f5c' }}>{s.task_name}</span>
+                </div>
+                <button style={styles.btnGhost} onClick={() => deleteTask(s.id, s.task_name)}>Remove</button>
+              </div>
+            ))}
+
+            {addingSubtaskTo === t.id && (
+              <div style={{ paddingLeft: '20px', paddingBottom: '12px', paddingTop: '8px', background: '#fafaf9', borderBottom: '1px solid #f0efeb' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    style={{ ...styles.input, flex: 1 }}
+                    placeholder="Subtask name"
+                    value={newSubtaskName}
+                    onChange={e => setNewSubtaskName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addSubtask(t.id)}
+                    autoFocus
+                  />
+                  <button style={styles.btnPrimary} onClick={() => addSubtask(t.id)}>Add</button>
+                  <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => setAddingSubtaskTo(null)}>Cancel</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+})}
             </>
           )}
         </div>
