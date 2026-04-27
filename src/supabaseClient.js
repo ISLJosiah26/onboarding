@@ -4,3 +4,13 @@ const supabaseUrl = 'https://gqgjnltqbomtefryqlua.supabase.co'
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxZ2pubHRxYm9tdGVmcnlxbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNDQwNDAsImV4cCI6MjA5MTkyMDA0MH0.FS8xUisIdPRKHLlKWHLR2H3Vt4iOLGkMVuJAzUvIvVw'
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+export async function getUserProfile(userId) {
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', userId)
+    .single()
+  if (error) return null
+  return data
+}

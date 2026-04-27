@@ -19,6 +19,8 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [modal, setModal] = useState(null)
+  const [inviteSent, setInviteSent] = useState(false)
+  const [inviting, setInviting] = useState(false)
 
   useEffect(() => {
     fetchPlan()
@@ -183,6 +185,39 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
       }
     })
   }
+
+async function handleInviteEmployee() {
+  if (!instance.employees.email) {
+    alert('This employee has no email address on file.')
+    return
+  }
+  setInviting(true)
+
+  const { data: { session } } = await supabase.auth.getSession()
+
+  const response = await fetch('https://gqgjnltqbomtefryqlua.supabase.co/functions/v1/invite-employee', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({
+      email: instance.employees.email,
+      employeeId: instance.employees.id,
+      brand: instance.employees.roles?.brand || 'ISL'
+    })
+  })
+
+  const data = await response.json()
+  console.log('Response:', data)
+
+  if (!response.ok || data.error) {
+    alert('Error: ' + JSON.stringify(data.error || data))
+  } else {
+    setInviteSent(true)
+  }
+  setInviting(false)
+}
 
   function totalTasks() {
     return Object.values(tasksByPhase).flat().filter(tc => !tc.onboarding_templates.parent_id).length
@@ -416,10 +451,23 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
         })}
       </div>
 
-      <div style={styles.footer}>
-        <button style={styles.btnPrimary} onClick={handleMarkComplete}>Mark as complete</button>
-        <button style={styles.btnSecondary} onClick={handleArchive}>Archive</button>
-      </div>
+<div style={styles.footer}>
+  <button style={styles.btnPrimary} onClick={handleMarkComplete}>Mark as complete</button>
+  <button style={styles.btnSecondary} onClick={handleArchive}>Archive</button>
+  <div style={{ marginLeft: 'auto' }}>
+    {inviteSent ? (
+      <span style={{ fontSize: '13px', color: '#2d7a4a' }}>Invite sent</span>
+    ) : (
+      <button
+        onClick={handleInviteEmployee}
+        disabled={inviting}
+        style={{ background: 'transparent', color: '#0070CA', border: '1px solid #0070CA', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+      >
+        {inviting ? 'Sending...' : 'Invite to portal'}
+      </button>
+    )}
+  </div>
+</div>
 
       {modal && (
         <ConfirmModal
