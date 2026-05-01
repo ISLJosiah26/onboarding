@@ -14,6 +14,7 @@ export default function EmployeePortal({ session, userProfile }) {
   const [docCompletions, setDocCompletions] = useState({})
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('checklist')
+  const [celebration, setCelebration] = useState(null)
 
   useEffect(() => {
     fetchMyOnboarding()
@@ -68,15 +69,52 @@ async function fetchMyOnboarding() {
   setLoading(false)
 }
 
-  async function toggleTask(completionId, current, e) {
-    e.stopPropagation()
-    const newVal = !current
-    setCompletions(prev => ({ ...prev, [completionId]: newVal }))
-    await supabase
-      .from('task_completions')
-      .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
-      .eq('id', completionId)
+async function toggleTask(completionId, current, e) {
+  if (e && e.stopPropagation) e.stopPropagation()
+  const newVal = !current
+  
+  const newCompletions = { ...completions, [completionId]: newVal }
+  setCompletions(newCompletions)
+  
+  await supabase
+    .from('task_completions')
+    .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
+    .eq('id', completionId)
+
+  if (newVal) {
+    const allTasks = Object.values(tasksByPhase).flat()
+    const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
+    const completedCount = parentTasks.filter(tc => {
+      const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
+      if (subtasks.length === 0) return newCompletions[tc.id]
+      return subtasks.every(s => newCompletions[s.id])
+    }).length
+
+    if (completedCount === parentTasks.length) {
+      setCelebration('all')
+    } else {
+      PHASES.forEach(phase => {
+        const phaseTasks = allTasks.filter(tc => tc.onboarding_templates.phase === phase && !tc.onboarding_templates.parent_id)
+        if (phaseTasks.length === 0) return
+        const phaseComplete = phaseTasks.every(tc => {
+          const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
+          if (subtasks.length === 0) return newCompletions[tc.id]
+          return subtasks.every(s => newCompletions[s.id])
+        })
+        if (phaseComplete) {
+          const prevPhaseComplete = phaseTasks.every(tc => {
+            const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
+            if (subtasks.length === 0) return completions[tc.id]
+            return subtasks.every(s => completions[s.id])
+          })
+          if (!prevPhaseComplete) setCelebration(phase)
+        }
+      })
+    }
+
+    setTimeout(() => setCelebration(null), 3000)
   }
+}
 
   async function toggleDocument(docId) {
     const existing = docCompletions[docId]
@@ -282,6 +320,27 @@ async function fetchMyOnboarding() {
           </>
         )}
       </div>
+
+      {celebration && (
+  <div style={{
+    position: 'fixed', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
+    background: '#1a1a1a', color: '#fff', borderRadius: '12px',
+    padding: '16px 24px', fontSize: '14px', fontWeight: 500,
+    display: 'flex', alignItems: 'center', gap: '10px',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+    animation: 'slideUp 0.3s ease',
+    zIndex: 1000, fontFamily: 'Inter, -apple-system, sans-serif'
+  }}>
+    <span style={{ fontSize: '20px' }}>
+      {celebration === 'all' ? '🎉' : '✓'}
+    </span>
+    <span>
+      {celebration === 'all'
+        ? 'Onboarding complete! Great work.'
+        : `${celebration} complete!`}
+    </span>
+  </div>
+)}
     </div>
   )
 }

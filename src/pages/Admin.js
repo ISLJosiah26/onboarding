@@ -76,14 +76,48 @@ async function deleteRole(id, name) {
   })
 }
 
-  async function addTask() {
-    if (!newTaskName.trim() || !selectedRole) return
-    await supabase.from('onboarding_templates').insert({
-      role_id: selectedRole.id, task_name: newTaskName.trim(), phase: newTaskPhase, owner: newTaskOwner
+async function addTask() {
+  if (!newTaskName.trim() || !selectedRole) return
+  
+  const { data: newTask } = await supabase.from('onboarding_templates').insert({
+    role_id: selectedRole.id,
+    task_name: newTaskName.trim(),
+    phase: newTaskPhase,
+    owner: newTaskOwner
+  }).select().single()
+
+  setNewTaskName('')
+  fetchTemplates(selectedRole.id)
+
+  if (!newTask) return
+
+  const { data: activeInstances } = await supabase
+    .from('onboarding_instances')
+    .select('id, employees (full_name)')
+    .eq('status', 'active')
+    .in('employee_id', 
+      (await supabase.from('employees').select('id').eq('role_id', selectedRole.id)).data?.map(e => e.id) || []
+    )
+
+  if (activeInstances && activeInstances.length > 0) {
+    setModal({
+      title: 'Sync to active onboardings?',
+      message: `${activeInstances.length} active onboarding${activeInstances.length > 1 ? 's' : ''} for ${selectedRole.name} will not have this task unless you sync. Add "${newTask.task_name}" to all active ${selectedRole.name} onboardings?`,
+      confirmLabel: 'Yes, add to all',
+      confirmDanger: false,
+      onConfirm: async () => {
+        await supabase.from('task_completions').insert(
+          activeInstances.map(inst => ({
+            instance_id: inst.id,
+            template_task_id: newTask.id,
+            completed: false
+          }))
+        )
+        setModal(null)
+      }
     })
-    setNewTaskName('')
-    fetchTemplates(selectedRole.id)
   }
+}
 
 async function deleteTask(id, name) {
   setModal({
@@ -207,17 +241,35 @@ if (initialTab === 'new-onboarding-select') {
       <Layout session={session} currentPage="history" onNavigate={onNavigate}>
         {renderHeader('History', 'Completed and archived onboardings.')}
         <div style={styles.content}>
-          {history.length === 0 ? (
-            <div style={styles.emptyState}>No completed or archived onboardings yet.</div>
-          ) : history.map(h => (
-            <div key={h.id} style={styles.row} onClick={() => onViewOnboarding(h.id)}>
-              <div>
-                <div style={styles.rowName}>{h.employees.full_name}</div>
-                <div style={styles.rowMuted}>{h.employees.roles.name} · Started {new Date(h.employees.hire_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-              </div>
-              <span style={styles.pill}>{h.status}</span>
-            </div>
-          ))}
+{history.length === 0 ? (
+  <div style={styles.emptyState}>No completed or archived onboardings yet.</div>
+) : history.map(h => (
+  <div key={h.id} style={{ ...styles.row, cursor: 'default' }}>
+    <div style={{ cursor: 'pointer', flex: 1 }} onClick={() => onViewOnboarding(h.id)}>
+      <div style={styles.rowName}>{h.employees.full_name}</div>
+      <div style={styles.rowMuted}>{h.employees.roles.name} · Started {new Date(h.employees.hire_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <span style={styles.pill}>{h.status}</span>
+      <button
+        style={{ ...styles.btnGhost, color: '#0070CA', fontSize: '12px' }}
+        onClick={() => setModal({
+          title: 'Reactivate onboarding',
+          message: `This will move ${h.employees.full_name}'s onboarding back to active. Any previously completed tasks will remain checked off.`,
+          confirmLabel: 'Reactivate',
+          confirmDanger: false,
+          onConfirm: async () => {
+            await supabase.from('onboarding_instances').update({ status: 'active' }).eq('id', h.id)
+            setModal(null)
+            fetchHistory()
+          }
+        })}
+      >
+        Reactivate
+      </button>
+    </div>
+  </div>
+))}
         </div>
         {modal && (
   <ConfirmModal
