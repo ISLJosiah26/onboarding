@@ -20,15 +20,8 @@ export default function EmployeePortal({ session, userProfile }) {
   }, [])
 
 async function fetchMyOnboarding() {
-  const { data: employeeData } = await supabase
-    .from('employees')
-    .select('id')
-    .eq('id', userProfile.employee_id)
-    .single()
 
-  if (!employeeData) { setLoading(false); return }
-
-  const { data: instanceData } = await supabase
+  const { data: instanceData, error: instanceError } = await supabase
     .from('onboarding_instances')
     .select(`
       id, status,
@@ -42,24 +35,25 @@ async function fetchMyOnboarding() {
     .eq('status', 'active')
     .single()
 
+  console.log('Instance data:', instanceData)
+  console.log('Instance error:', instanceError)
+
   if (instanceData) {
     setInstance(instanceData)
-
     const byPhase = {}
     const comp = {}
     PHASES.forEach(p => byPhase[p] = [])
-
     instanceData.task_completions.forEach(tc => {
       const phase = tc.onboarding_templates.phase
       if (byPhase[phase]) byPhase[phase].push(tc)
       comp[tc.id] = tc.completed
     })
-
     setTasksByPhase(byPhase)
     setCompletions(comp)
   }
 
-  const { data: docs } = await supabase.from('documents').select('*')
+  const { data: docs, error: docsError } = await supabase.from('documents').select('*')
+  console.log('Docs:', docs, docsError)
   if (docs) setDocuments(docs)
 
   const { data: dc } = await supabase
