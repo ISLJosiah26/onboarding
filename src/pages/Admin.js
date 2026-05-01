@@ -8,6 +8,7 @@ const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 const OWNERS = ['HR', 'Manager', 'IT']
 
 export default function Admin({ session, initialTab, onBack, onNavigate, onStartOnboarding, onViewOnboarding }) {
+  const [newSubtaskPhase, setNewSubtaskPhase] = useState('Week 1')
   const [pickedBrand, setPickedBrand] = useState('')  
   const [roles, setRoles] = useState([])
   const [selectedRole, setSelectedRole] = useState(null)
@@ -103,7 +104,7 @@ async function addSubtask(parentId) {
   await supabase.from('onboarding_templates').insert({
     role_id: selectedRole.id,
     task_name: newSubtaskName.trim(),
-    phase: templates.find(t => t.id === parentId)?.phase,
+    phase: newSubtaskPhase,
     owner: templates.find(t => t.id === parentId)?.owner,
     parent_id: parentId
   })
@@ -343,18 +344,21 @@ if (initialTab === 'new-onboarding-select') {
 
             {addingSubtaskTo === t.id && (
               <div style={{ paddingLeft: '20px', paddingBottom: '12px', paddingTop: '8px', background: '#fafaf9', borderBottom: '1px solid #f0efeb' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    style={{ ...styles.input, flex: 1 }}
-                    placeholder="Subtask name"
-                    value={newSubtaskName}
-                    onChange={e => setNewSubtaskName(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && addSubtask(t.id)}
-                    autoFocus
-                  />
-                  <button style={styles.btnPrimary} onClick={() => addSubtask(t.id)}>Add</button>
-                  <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => setAddingSubtaskTo(null)}>Cancel</button>
-                </div>
+<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+  <input
+    style={{ ...styles.input, flex: 1, minWidth: '160px' }}
+    placeholder="Subtask name"
+    value={newSubtaskName}
+    onChange={e => setNewSubtaskName(e.target.value)}
+    onKeyDown={e => e.key === 'Enter' && addSubtask(t.id)}
+    autoFocus
+  />
+  <select style={styles.input} value={newSubtaskPhase} onChange={e => setNewSubtaskPhase(e.target.value)}>
+    {PHASES.map(p => <option key={p}>{p}</option>)}
+  </select>
+  <button style={styles.btnPrimary} onClick={() => addSubtask(t.id)}>Add</button>
+  <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => setAddingSubtaskTo(null)}>Cancel</button>
+</div>
               </div>
             )}
           </div>

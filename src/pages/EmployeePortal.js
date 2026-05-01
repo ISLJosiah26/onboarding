@@ -230,14 +230,29 @@ async function fetchMyOnboarding() {
                           {hasSubtasks && <span style={styles.subtaskCount}>{completedSubs}/{subtasks.length}</span>}
                           {hasSubtasks && <span style={styles.chevron(isExpanded)}>▶</span>}
                         </div>
-                        {hasSubtasks && isExpanded && subtasks.map(s => (
-                          <div key={s.id} style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
-                            <div style={styles.subtaskCheckbox(completions[s.id])}>
-                              {completions[s.id] && checkIcon(7)}
-                            </div>
-                            <div style={styles.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
-                          </div>
-                        ))}
+{hasSubtasks && isExpanded && (
+  <div>
+    {PHASES.map(phase => {
+      const phaseSubtasks = subtasks.filter(s => s.onboarding_templates.phase === phase)
+      if (phaseSubtasks.length === 0) return null
+      return (
+        <div key={phase}>
+          <div style={{ fontSize: '10px', fontWeight: 600, color: '#c0bfbb', textTransform: 'uppercase', letterSpacing: '0.6px', padding: '8px 0 6px 32px', background: '#f7f6f4' }}>
+            {phase}
+          </div>
+          {phaseSubtasks.map(s => (
+            <div key={s.id} style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
+              <div style={styles.subtaskCheckbox(completions[s.id])}>
+                {completions[s.id] && checkIcon(7)}
+              </div>
+              <div style={styles.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
+            </div>
+          ))}
+        </div>
+      )
+    })}
+  </div>
+)}
                       </div>
                     )
                   })}
