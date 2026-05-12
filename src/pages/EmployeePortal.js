@@ -21,52 +21,51 @@ export default function EmployeePortal({ session, userProfile }) {
   }, [])
 
 async function fetchMyOnboarding() {
+  try {
+    const { data: instanceData } = await supabase
+      .from('onboarding_instances')
+      .select(`
+        id, status,
+        employees (id, full_name, hire_date, roles (name)),
+        task_completions (
+          id, completed, completed_at,
+          onboarding_templates (id, task_name, phase, owner, parent_id)
+        )
+      `)
+      .eq('employee_id', userProfile.employee_id)
+      .eq('status', 'active')
+      .single()
 
-  const { data: instanceData, error: instanceError } = await supabase
-    .from('onboarding_instances')
-    .select(`
-      id, status,
-      employees (id, full_name, hire_date, roles (name)),
-      task_completions (
-        id, completed, completed_at,
-        onboarding_templates (id, task_name, phase, owner, parent_id)
-      )
-    `)
-    .eq('employee_id', userProfile.employee_id)
-    .eq('status', 'active')
-    .single()
+    if (instanceData) {
+      setInstance(instanceData)
+      const byPhase = {}
+      const comp = {}
+      PHASES.forEach(p => byPhase[p] = [])
+      instanceData.task_completions.forEach(tc => {
+        const phase = tc.onboarding_templates.phase
+        if (byPhase[phase]) byPhase[phase].push(tc)
+        comp[tc.id] = tc.completed
+      })
+      setTasksByPhase(byPhase)
+      setCompletions(comp)
+    }
 
-  console.log('Instance data:', instanceData)
-  console.log('Instance error:', instanceError)
+    const { data: docs } = await supabase.from('documents').select('*')
+    if (docs) setDocuments(docs)
 
-  if (instanceData) {
-    setInstance(instanceData)
-    const byPhase = {}
-    const comp = {}
-    PHASES.forEach(p => byPhase[p] = [])
-    instanceData.task_completions.forEach(tc => {
-      const phase = tc.onboarding_templates.phase
-      if (byPhase[phase]) byPhase[phase].push(tc)
-      comp[tc.id] = tc.completed
-    })
-    setTasksByPhase(byPhase)
-    setCompletions(comp)
+    const { data: dc } = await supabase
+      .from('document_completions')
+      .select('*')
+      .eq('employee_id', userProfile.employee_id)
+
+    const map = {}
+    if (dc) dc.forEach(d => map[d.document_id] = d)
+    setDocCompletions(map)
+  } catch (err) {
+    console.error('Failed to load onboarding:', err)
+  } finally {
+    setLoading(false)
   }
-
-  const { data: docs, error: docsError } = await supabase.from('documents').select('*')
-  console.log('Docs:', docs, docsError)
-  if (docs) setDocuments(docs)
-
-  const { data: dc } = await supabase
-    .from('document_completions')
-    .select('*')
-    .eq('employee_id', userProfile.employee_id)
-
-  const map = {}
-  if (dc) dc.forEach(d => map[d.document_id] = d)
-  setDocCompletions(map)
-
-  setLoading(false)
 }
 
 async function toggleTask(completionId, current, e) {

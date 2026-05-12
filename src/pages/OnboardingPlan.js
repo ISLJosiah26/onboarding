@@ -188,6 +188,21 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
     })
   }
 
+async function handleDeleteEmployee() {
+  setModal({
+    title: 'Delete employee',
+    message: `This will permanently delete ${instance.employees.full_name} and all their onboarding data. This cannot be undone.`,
+    confirmLabel: 'Delete permanently',
+    confirmDanger: true,
+    onConfirm: async () => {
+      await supabase.from('onboarding_instances').delete().eq('id', instanceId)
+      await supabase.from('employees').delete().eq('id', instance.employees.id)
+      setModal(null)
+      onBack()
+    }
+  })
+}  
+
 async function handleInviteEmployee() {
   if (!instance.employees.email) {
     alert('This employee has no email address on file.')
@@ -470,7 +485,7 @@ async function handleInviteEmployee() {
 <div style={styles.footer}>
   <button style={styles.btnPrimary} onClick={handleMarkComplete}>Mark as complete</button>
   <button style={styles.btnSecondary} onClick={handleArchive}>Archive</button>
-  <div style={{ marginLeft: 'auto' }}>
+  <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
     {inviteSent ? (
       <span style={{ fontSize: '13px', color: '#2d7a4a' }}>Invite sent</span>
     ) : (
@@ -482,6 +497,12 @@ async function handleInviteEmployee() {
         {inviting ? 'Sending...' : 'Invite to portal'}
       </button>
     )}
+    <button
+      onClick={handleDeleteEmployee}
+      style={{ background: 'transparent', color: '#c74848', border: '1px solid #f5d6d6', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+    >
+      Delete employee
+    </button>
   </div>
 </div>
 

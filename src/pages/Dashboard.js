@@ -150,7 +150,7 @@ async function fetchOnboardings() {
             <div style={styles.rowName}>{name}</div>
             <div style={styles.rowMeta}>{o.employees.email || ''}</div>
           </div>
-          <div style={styles.rowText}>{o.employees.roles.name}</div>
+          <div style={styles.rowText}>{o.employees.roles?.name || 'Unknown role'}</div>
           <div style={styles.progressWrap}>
             <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct}%` }}></div></div>
             <div style={styles.progressText}>{pct}%</div>
