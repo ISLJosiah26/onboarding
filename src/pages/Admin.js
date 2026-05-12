@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
 import ConfirmModal from '../components/ConfirmModal'
+import Toast from '../components/Toast'
+import useToast from '../hooks/useToast'
+import { handleSupabaseError } from '../utils/handleError'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 const OWNERS = ['HR', 'Manager', 'IT']
@@ -27,6 +30,7 @@ export default function Admin({ session, initialTab, onBack, onNavigate, onStart
   const [editingTaskName, setEditingTaskName] = useState('')
   const [pickedBrand, setPickedBrand] = useState('')
   const [pickedRoleId, setPickedRoleId] = useState('')
+  const { toast, showToast, hideToast } = useToast()
 
   useEffect(() => { fetchRoles() }, [])
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
@@ -57,12 +61,17 @@ export default function Admin({ session, initialTab, onBack, onNavigate, onStart
     if (data) setHistory(data)
   }
 
-  async function addRole() {
-    if (!newRoleName.trim()) return
-    await supabase.from('roles').insert({ name: newRoleName.trim(), brand: newRoleBrand })
+async function addRole() {
+  if (!newRoleName.trim()) return
+  const { error } = await supabase.from('roles').insert({ name: newRoleName.trim(), brand: newRoleBrand })
+  if (error) {
+    showToast(handleSupabaseError(error, 'Failed to add role.'), 'error')
+  } else {
+    showToast('Role added')
     setNewRoleName('')
     fetchRoles()
   }
+}
 
   async function deleteRole(id, name) {
     setModal({
@@ -131,32 +140,50 @@ export default function Admin({ session, initialTab, onBack, onNavigate, onStart
     })
   }
 
-  async function saveTaskEdit(id) {
-    if (!editingTaskName.trim()) return
-    await supabase.from('onboarding_templates').update({ task_name: editingTaskName.trim() }).eq('id', id)
+async function saveTaskEdit(id) {
+  if (!editingTaskName.trim()) return
+  const { error } = await supabase
+    .from('onboarding_templates')
+    .update({ task_name: editingTaskName.trim() })
+    .eq('id', id)
+  if (error) {
+    showToast(handleSupabaseError(error, 'Failed to save task.'), 'error')
+  } else {
+    showToast('Task updated')
     setEditingTask(null)
     setEditingTaskName('')
     fetchTemplates(selectedRole.id)
   }
+}
 
-  async function addSubtask(parentId) {
-    if (!newSubtaskName.trim()) return
-    await supabase.from('onboarding_templates').insert({
-      role_id: selectedRole.id,
-      task_name: newSubtaskName.trim(),
-      phase: newSubtaskPhase,
-      owner: templates.find(t => t.id === parentId)?.owner,
-      parent_id: parentId
-    })
+async function addSubtask(parentId) {
+  if (!newSubtaskName.trim()) return
+  const { error } = await supabase.from('onboarding_templates').insert({
+    role_id: selectedRole.id,
+    task_name: newSubtaskName.trim(),
+    phase: newSubtaskPhase,
+    owner: templates.find(t => t.id === parentId)?.owner,
+    parent_id: parentId
+  })
+  if (error) {
+    showToast(handleSupabaseError(error, 'Failed to add subtask.'), 'error')
+  } else {
+    showToast('Subtask added')
     setNewSubtaskName('')
     setAddingSubtaskTo(null)
     fetchTemplates(selectedRole.id)
   }
+}
 
-  async function deleteDocument(id) {
-    await supabase.from('documents').delete().eq('id', id)
+async function deleteDocument(id) {
+  const { error } = await supabase.from('documents').delete().eq('id', id)
+  if (error) {
+    showToast(handleSupabaseError(error, 'Failed to remove document.'), 'error')
+  } else {
+    showToast('Document removed')
     fetchDocuments()
   }
+}
 
   function handleStartSelected() {
     if (!pickedRoleId) return
@@ -191,19 +218,23 @@ export default function Admin({ session, initialTab, onBack, onNavigate, onStart
     )
   }
 
-  function renderModal() {
-    if (!modal) return null
-    return (
-      <ConfirmModal
-        title={modal.title}
-        message={modal.message}
-        confirmLabel={modal.confirmLabel}
-        confirmDanger={modal.confirmDanger}
-        onConfirm={modal.onConfirm}
-        onCancel={() => setModal(null)}
-      />
-    )
-  }
+function renderModal() {
+  return (
+    <>
+      {modal && (
+        <ConfirmModal
+          title={modal.title}
+          message={modal.message}
+          confirmLabel={modal.confirmLabel}
+          confirmDanger={modal.confirmDanger}
+          onConfirm={modal.onConfirm}
+          onCancel={() => setModal(null)}
+        />
+      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
+    </>
+  )
+}
 
   if (initialTab === 'new-onboarding-select') {
     const brandRoles = pickedBrand ? roles.filter(r => r.brand === pickedBrand) : []

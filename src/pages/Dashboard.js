@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
 import { SkeletonRow } from '../components/Skeleton'
+import Toast from '../components/Toast'
+import useToast from '../hooks/useToast'
+import { handleSupabaseError } from '../utils/handleError'
 
 function getInitials(name) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -21,32 +24,41 @@ export default function Dashboard({ session, onStartOnboarding, onViewOnboarding
   const [onboardings, setOnboardings] = useState([])
   const [completedCount, setCompletedCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(null)
+  const { toast, hideToast } = useToast()
 
   useEffect(() => {
     fetchOnboardings()
     fetchCompleted()
   }, [refreshKey])
 
-async function fetchOnboardings() {
-  const { data } = await supabase
-    .from('onboarding_instances')
-    .select(`
-      id, started_at, status,
-      employees (id, full_name, email, hire_date, roles (name)),
-      task_completions (id, completed)
-    `)
-    .eq('status', 'active')
-    .order('started_at', { ascending: false })
-  if (data) setOnboardings(data)
-  setLoading(false)
-}
+  async function fetchOnboardings() {
+    setLoading(true)
+    setFetchError(null)
+    const { data, error } = await supabase
+      .from('onboarding_instances')
+      .select(`
+        id, started_at, status,
+        employees (id, full_name, email, hire_date, roles (name)),
+        task_completions (id, completed)
+      `)
+      .eq('status', 'active')
+      .order('started_at', { ascending: false })
+
+    if (error) {
+      setFetchError(handleSupabaseError(error, 'Failed to load onboardings.'))
+    } else {
+      setOnboardings(data || [])
+    }
+    setLoading(false)
+  }
 
   async function fetchCompleted() {
-    const { count } = await supabase
+    const { count, error } = await supabase
       .from('onboarding_instances')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'completed')
-    setCompletedCount(count || 0)
+    if (!error) setCompletedCount(count || 0)
   }
 
   const completingThisWeek = onboardings.filter(o => {
@@ -77,12 +89,12 @@ async function fetchOnboardings() {
     progressFill: { height: '100%', background: '#0070CA' },
     progressText: { fontSize: '12px', fontWeight: 500, color: '#1a1a1a', minWidth: '32px' },
     phasePill: { fontSize: '11px', padding: '3px 9px', borderRadius: '4px', background: '#eef5ff', color: '#0070CA', fontWeight: 500, width: 'fit-content' },
-    emptyState: { padding: '80px 40px', textAlign: 'center', color: '#8a8a86', fontSize: '14px' }
+    emptyState: { padding: '80px 40px', textAlign: 'center', color: '#8a8a86', fontSize: '14px' },
+    errorState: { padding: '80px 40px', textAlign: 'center', fontSize: '14px' }
   }
 
   return (
     <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
-
       <div style={styles.header}>
         <div>
           <div style={styles.title}>Dashboard</div>
@@ -110,62 +122,61 @@ async function fetchOnboardings() {
       </div>
 
       <div style={styles.content}>
-{loading ? (
-  <>
-    <div style={styles.tableHeader}>
-      <div></div>
-      <div>Employee</div>
-      <div>Role</div>
-      <div>Progress</div>
-      <div>Phase</div>
-      <div style={{ textAlign: 'right' }}>Started</div>
-    </div>
-    <SkeletonRow />
-    <SkeletonRow />
-    <SkeletonRow />
-    <SkeletonRow />
-  </>
-) : onboardings.length === 0 ? (
-  <div style={styles.emptyState}>No active onboardings. Click "New onboarding" to start one.</div>
-) : (
-  <>
-    <div style={styles.tableHeader}>
-      <div></div>
-      <div>Employee</div>
-      <div>Role</div>
-      <div>Progress</div>
-      <div>Phase</div>
-      <div style={{ textAlign: 'right' }}>Started</div>
-    </div>
-    {onboardings.map(o => {
-      const total = o.task_completions.length
-      const completed = o.task_completions.filter(t => t.completed).length
-      const pct = total > 0 ? Math.round((completed / total) * 100) : 0
-      const name = o.employees.full_name
-      const phase = getPhase(o.employees.hire_date)
-      return (
-        <div key={o.id} style={styles.tableRow} onClick={() => onViewOnboarding(o.id)}>
-          <div style={styles.avatar}>{getInitials(name)}</div>
-          <div>
-            <div style={styles.rowName}>{name}</div>
-            <div style={styles.rowMeta}>{o.employees.email || ''}</div>
+        {loading ? (
+          <>
+            <div style={styles.tableHeader}>
+              <div></div><div>Employee</div><div>Role</div>
+              <div>Progress</div><div>Phase</div>
+              <div style={{ textAlign: 'right' }}>Started</div>
+            </div>
+            <SkeletonRow /><SkeletonRow /><SkeletonRow /><SkeletonRow />
+          </>
+        ) : fetchError ? (
+          <div style={styles.errorState}>
+            <div style={{ color: '#c74848', marginBottom: '12px' }}>{fetchError}</div>
+            <button onClick={fetchOnboardings} style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+              Try again
+            </button>
           </div>
-          <div style={styles.rowText}>{o.employees.roles?.name || 'Unknown role'}</div>
-          <div style={styles.progressWrap}>
-            <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct}%` }}></div></div>
-            <div style={styles.progressText}>{pct}%</div>
-          </div>
-          <div><span style={styles.phasePill}>{phase}</span></div>
-          <div style={{ ...styles.rowTextMuted, textAlign: 'right' }}>
-            {new Date(o.employees.hire_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
-          </div>
-        </div>
-      )
-    })}
-  </>
-)}
+        ) : onboardings.length === 0 ? (
+          <div style={styles.emptyState}>No active onboardings. Click "New onboarding" to start one.</div>
+        ) : (
+          <>
+            <div style={styles.tableHeader}>
+              <div></div><div>Employee</div><div>Role</div>
+              <div>Progress</div><div>Phase</div>
+              <div style={{ textAlign: 'right' }}>Started</div>
+            </div>
+            {onboardings.map(o => {
+              const total = o.task_completions.length
+              const completed = o.task_completions.filter(t => t.completed).length
+              const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+              const name = o.employees.full_name
+              const phase = getPhase(o.employees.hire_date)
+              return (
+                <div key={o.id} style={styles.tableRow} onClick={() => onViewOnboarding(o.id)}>
+                  <div style={styles.avatar}>{getInitials(name)}</div>
+                  <div>
+                    <div style={styles.rowName}>{name}</div>
+                    <div style={styles.rowMeta}>{o.employees.email || ''}</div>
+                  </div>
+                  <div style={styles.rowText}>{o.employees.roles?.name || 'Unknown role'}</div>
+                  <div style={styles.progressWrap}>
+                    <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct}%` }}></div></div>
+                    <div style={styles.progressText}>{pct}%</div>
+                  </div>
+                  <div><span style={styles.phasePill}>{phase}</span></div>
+                  <div style={{ ...styles.rowTextMuted, textAlign: 'right' }}>
+                    {new Date(o.employees.hire_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                  </div>
+                </div>
+              )
+            })}
+          </>
+        )}
       </div>
 
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </Layout>
   )
 }

@@ -6,6 +6,9 @@ import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 import ConfirmModal from '../components/ConfirmModal'
 import EditEmployeeModal from '../components/EditEmployeeModal'
 import { HR_EMAIL } from '../config'
+import Toast from '../components/Toast'
+import useToast from '../hooks/useToast'
+import { handleSupabaseError } from '../utils/handleError'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 
@@ -24,47 +27,51 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   const [inviteSent, setInviteSent] = useState(false)
   const [inviting, setInviting] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(false)
+  const { toast, showToast, hideToast } = useToast()
+  const [fetchError, setFetchError] = useState(null)
 
   useEffect(() => {
     fetchPlan()
     fetchDocuments()
   }, [instanceId])
 
-  async function fetchPlan() {
-    const { data, error } = await supabase
-      .from('onboarding_instances')
-      .select(`
-        id, status,
-        employees (id, full_name, email, hire_date, roles (name)),
-        task_completions (
-          id, completed, completed_at, notes,
-          onboarding_templates (id, task_name, phase, owner, parent_id)
-        )
-      `)
-      .eq('id', instanceId)
-      .single()
+async function fetchPlan() {
+  setFetchError(null)
+  const { data, error } = await supabase
+    .from('onboarding_instances')
+    .select(`
+      id, status,
+      employees (id, full_name, email, hire_date, roles (name)),
+      task_completions (
+        id, completed, completed_at, notes,
+        onboarding_templates (id, task_name, phase, owner, parent_id)
+      )
+    `)
+    .eq('id', instanceId)
+    .single()
 
-    if (error) { console.error(error); return }
-
-    setInstance(data)
-
-    const byPhase = {}
-    const comp = {}
-    const nts = {}
-    PHASES.forEach(p => byPhase[p] = [])
-
-    data.task_completions.forEach(tc => {
-      const phase = tc.onboarding_templates.phase
-      if (byPhase[phase]) byPhase[phase].push(tc)
-      comp[tc.id] = tc.completed
-      nts[tc.id] = tc.notes || ''
-    })
-
-    setTasksByPhase(byPhase)
-    setCompletions(comp)
-    setNotes(nts)
+  if (error) {
+    setFetchError(handleSupabaseError(error, 'Failed to load onboarding plan.'))
     setLoading(false)
+    return
   }
+
+  setInstance(data)
+  const byPhase = {}
+  const comp = {}
+  const nts = {}
+  PHASES.forEach(p => byPhase[p] = [])
+  data.task_completions.forEach(tc => {
+    const phase = tc.onboarding_templates.phase
+    if (byPhase[phase]) byPhase[phase].push(tc)
+    comp[tc.id] = tc.completed
+    nts[tc.id] = tc.notes || ''
+  })
+  setTasksByPhase(byPhase)
+  setCompletions(comp)
+  setNotes(nts)
+  setLoading(false)
+}
 
   async function fetchDocuments() {
     const { data: docs } = await supabase.from('documents').select('*')
@@ -90,23 +97,29 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
     setDocCompletions(map)
   }
 
-  async function toggleTask(completionId, current, e) {
-    e.stopPropagation()
-    const newVal = !current
-    setCompletions(prev => ({ ...prev, [completionId]: newVal }))
-    await supabase
-      .from('task_completions')
-      .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
-      .eq('id', completionId)
+async function toggleTask(completionId, current, e) {
+  e.stopPropagation()
+  const newVal = !current
+  setCompletions(prev => ({ ...prev, [completionId]: newVal }))
+  const { error } = await supabase
+    .from('task_completions')
+    .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
+    .eq('id', completionId)
+  if (error) {
+    setCompletions(prev => ({ ...prev, [completionId]: current }))
+    showToast(handleSupabaseError(error, 'Failed to save task. Please try again.'), 'error')
   }
+}
 
-  async function saveNote(completionId, value) {
-    setNotes(prev => ({ ...prev, [completionId]: value }))
-    await supabase
-      .from('task_completions')
-      .update({ notes: value })
-      .eq('id', completionId)
-  }
+async function saveNote(completionId, value) {
+  setNotes(prev => ({ ...prev, [completionId]: value }))
+  const { error } = await supabase
+    .from('task_completions')
+    .update({ notes: value })
+    .eq('id', completionId)
+  if (error) showToast(handleSupabaseError(error, 'Failed to save note.'), 'error')
+  else showToast('Note saved')
+}
 
   async function toggleDocument(docId, e) {
     e.stopPropagation()
@@ -129,18 +142,27 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
     }
   }
 
-  async function handleUploadDocument(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    setUploading(true)
-    const filePath = `documents/${Date.now()}_${file.name}`
-    const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
-    if (uploadError) { console.error(uploadError.message); setUploading(false); return }
-    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath)
-    await supabase.from('documents').insert({ name: file.name, file_url: urlData.publicUrl })
-    await fetchDocuments()
+async function handleUploadDocument(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  setUploading(true)
+  const filePath = `documents/${Date.now()}_${file.name}`
+  const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
+  if (uploadError) {
+    showToast(handleSupabaseError(uploadError, 'Upload failed. Please try again.'), 'error')
     setUploading(false)
+    return
   }
+  const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath)
+  const { error: insertError } = await supabase.from('documents').insert({ name: file.name, file_url: urlData.publicUrl })
+  if (insertError) {
+    showToast(handleSupabaseError(insertError, 'Failed to save document.'), 'error')
+  } else {
+    showToast('Document uploaded')
+    await fetchDocuments()
+  }
+  setUploading(false)
+}
 
   async function handleMarkComplete() {
     setModal({
@@ -323,29 +345,37 @@ async function handleInviteEmployee() {
     </svg>
   )
 
-  if (loading) return (
-    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
-      <div style={{ padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' }}>
-        <SkeletonLine width="120px" height="12px" style={{ marginBottom: '16px' }} />
-        <SkeletonLine width="220px" height="22px" style={{ marginBottom: '8px' }} />
-        <SkeletonLine width="280px" height="13px" style={{ marginBottom: '20px' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <SkeletonLine width="160px" height="12px" />
-          <SkeletonLine width="240px" height="4px" />
-          <SkeletonLine width="32px" height="12px" />
-        </div>
+if (loading) return (
+  <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+    <div style={{ padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' }}>
+      <SkeletonLine width="120px" height="12px" style={{ marginBottom: '16px' }} />
+      <SkeletonLine width="220px" height="22px" style={{ marginBottom: '8px' }} />
+      <SkeletonLine width="280px" height="13px" style={{ marginBottom: '20px' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <SkeletonLine width="160px" height="12px" />
+        <SkeletonLine width="240px" height="4px" />
+        <SkeletonLine width="32px" height="12px" />
       </div>
-      <div style={{ padding: '32px 40px', maxWidth: '780px' }}>
-        <SkeletonLine width="100px" height="11px" style={{ marginBottom: '14px' }} />
-        <SkeletonTaskRow />
-        <SkeletonTaskRow />
-        <SkeletonLine width="80px" height="11px" style={{ margin: '28px 0 14px' }} />
-        <SkeletonTaskRow />
-        <SkeletonTaskRow />
-        <SkeletonTaskRow />
-      </div>
-    </Layout>
-  )
+    </div>
+    <div style={{ padding: '32px 40px', maxWidth: '780px' }}>
+      <SkeletonLine width="100px" height="11px" style={{ marginBottom: '14px' }} />
+      <SkeletonTaskRow /><SkeletonTaskRow />
+      <SkeletonLine width="80px" height="11px" style={{ margin: '28px 0 14px' }} />
+      <SkeletonTaskRow /><SkeletonTaskRow /><SkeletonTaskRow />
+    </div>
+  </Layout>
+)
+
+if (fetchError) return (
+  <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+    <div style={{ padding: '80px 40px', textAlign: 'center', fontFamily: 'Inter, -apple-system, sans-serif' }}>
+      <div style={{ color: '#c74848', fontSize: '14px', marginBottom: '12px' }}>{fetchError}</div>
+      <button onClick={fetchPlan} style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+        Try again
+      </button>
+    </div>
+  </Layout>
+)
 
   return (
     <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
@@ -542,6 +572,7 @@ async function handleInviteEmployee() {
     }}
   />
 )}
+{toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </Layout>
   )
 }

@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
+import Toast from '../components/Toast'
+import useToast from '../hooks/useToast'
+import { handleSupabaseError } from '../utils/handleError'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 
@@ -15,6 +18,7 @@ export default function EmployeePortal({ session, userProfile }) {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('checklist')
   const [celebration, setCelebration] = useState(null)
+  const { toast, showToast, hideToast } = useToast()
 
   useEffect(() => {
     fetchMyOnboarding()
@@ -22,7 +26,7 @@ export default function EmployeePortal({ session, userProfile }) {
 
 async function fetchMyOnboarding() {
   try {
-    const { data: instanceData } = await supabase
+    const { data: instanceData, error: instanceError } = await supabase
       .from('onboarding_instances')
       .select(`
         id, status,
@@ -35,6 +39,10 @@ async function fetchMyOnboarding() {
       .eq('employee_id', userProfile.employee_id)
       .eq('status', 'active')
       .single()
+
+    if (instanceError && instanceError.code !== 'PGRST116') {
+      showToast(handleSupabaseError(instanceError, 'Failed to load your onboarding.'), 'error')
+    }
 
     if (instanceData) {
       setInstance(instanceData)
@@ -62,6 +70,7 @@ async function fetchMyOnboarding() {
     if (dc) dc.forEach(d => map[d.document_id] = d)
     setDocCompletions(map)
   } catch (err) {
+    showToast('Failed to load your onboarding. Please refresh.', 'error')
     console.error('Failed to load onboarding:', err)
   } finally {
     setLoading(false)
@@ -71,14 +80,19 @@ async function fetchMyOnboarding() {
 async function toggleTask(completionId, current, e) {
   if (e && e.stopPropagation) e.stopPropagation()
   const newVal = !current
-  
   const newCompletions = { ...completions, [completionId]: newVal }
   setCompletions(newCompletions)
-  
-  await supabase
+
+  const { error } = await supabase
     .from('task_completions')
     .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
     .eq('id', completionId)
+
+  if (error) {
+    setCompletions(prev => ({ ...prev, [completionId]: current }))
+    showToast(handleSupabaseError(error, 'Failed to save. Please try again.'), 'error')
+    return
+  }
 
   if (newVal) {
     const allTasks = Object.values(tasksByPhase).flat()
@@ -110,28 +124,35 @@ async function toggleTask(completionId, current, e) {
         }
       })
     }
-
     setTimeout(() => setCelebration(null), 3000)
   }
 }
 
-  async function toggleDocument(docId) {
-    const existing = docCompletions[docId]
-    if (existing) {
-      const newVal = !existing.signed
-      setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, signed: newVal } }))
-      await supabase
-        .from('document_completions')
-        .update({ signed: newVal, completed_at: newVal ? new Date().toISOString() : null })
-        .eq('id', existing.id)
-    } else {
-      const { data } = await supabase
-        .from('document_completions')
-        .insert({ employee_id: userProfile.employee_id, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString() })
-        .select().single()
-      if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
+async function toggleDocument(docId) {
+  const existing = docCompletions[docId]
+  if (existing) {
+    const newVal = !existing.signed
+    setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, signed: newVal } }))
+    const { error } = await supabase
+      .from('document_completions')
+      .update({ signed: newVal, completed_at: newVal ? new Date().toISOString() : null })
+      .eq('id', existing.id)
+    if (error) {
+      setDocCompletions(prev => ({ ...prev, [docId]: existing }))
+      showToast(handleSupabaseError(error, 'Failed to save. Please try again.'), 'error')
+    }
+  } else {
+    const { data, error } = await supabase
+      .from('document_completions')
+      .insert({ employee_id: userProfile.employee_id, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString() })
+      .select().single()
+    if (error) {
+      showToast(handleSupabaseError(error, 'Failed to save. Please try again.'), 'error')
+    } else if (data) {
+      setDocCompletions(prev => ({ ...prev, [docId]: data }))
     }
   }
+}
 
   function totalTasks() {
     return Object.values(tasksByPhase).flat().filter(tc => !tc.onboarding_templates.parent_id).length
@@ -340,6 +361,7 @@ async function toggleTask(completionId, current, e) {
     </span>
   </div>
 )}
+{toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   )
 }
