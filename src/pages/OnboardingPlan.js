@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 import ConfirmModal from '../components/ConfirmModal'
+import EditEmployeeModal from '../components/EditEmployeeModal'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 
@@ -21,6 +22,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   const [modal, setModal] = useState(null)
   const [inviteSent, setInviteSent] = useState(false)
   const [inviting, setInviting] = useState(false)
+  const [editingEmployee, setEditingEmployee] = useState(false)
 
   useEffect(() => {
     fetchPlan()
@@ -320,14 +322,17 @@ async function handleInviteEmployee() {
   return (
     <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
       <div style={styles.header}>
-        <button style={styles.backLink} onClick={onBack}>
-          <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 2L4 7l5 5"/></svg>
-          Back to dashboard
-        </button>
-        <div style={styles.title}>{instance.employees.full_name}</div>
-        <div style={styles.sub}>
-          {instance.employees.roles.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
-        </div>
+<button style={styles.backLink} onClick={onBack}>
+  <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 2L4 7l5 5"/></svg>
+  Back to dashboard
+</button>
+<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+  <div style={styles.title}>{instance.employees.full_name}</div>
+  <button onClick={() => setEditingEmployee(true)} style={{ fontSize: '12px', color: '#8a8a86', background: 'none', border: '1px solid #ebebe8', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+</div>
+<div style={styles.sub}>
+  {instance.employees.roles.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
+</div>
         <div style={styles.progressRow}>
           <span style={styles.progressText}>{completedTasksCount()} of {totalTasks()} tasks complete</span>
           <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct()}%` }}></div></div>
@@ -490,6 +495,19 @@ async function handleInviteEmployee() {
           onCancel={() => setModal(null)}
         />
       )}
+
+{editingEmployee && (
+  <EditEmployeeModal
+    employee={instance.employees}
+    instanceId={instanceId}
+    onClose={() => setEditingEmployee(false)}
+    onSave={(updated) => {
+      setInstance(prev => ({ ...prev, employees: { ...prev.employees, ...updated } }))
+      setEditingEmployee(false)
+      fetchPlan()
+    }}
+  />
+)}
     </Layout>
   )
 }

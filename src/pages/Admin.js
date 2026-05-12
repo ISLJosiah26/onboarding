@@ -15,6 +15,8 @@ export default function Admin({ session, initialTab, onBack, onNavigate, onStart
   const [templates, setTemplates] = useState([])
   const [documents, setDocuments] = useState([])
   const [history, setHistory] = useState([])
+  const [editingTask, setEditingTask] = useState(null)
+  const [editingTaskName, setEditingTaskName] = useState('')
 
   const [addingSubtaskTo, setAddingSubtaskTo] = useState(null)
   const [newSubtaskName, setNewSubtaskName] = useState('')
@@ -131,6 +133,17 @@ async function deleteTask(id, name) {
       fetchTemplates(selectedRole.id)
     }
   })
+}
+
+async function saveTaskEdit(id) {
+  if (!editingTaskName.trim()) return
+  await supabase
+    .from('onboarding_templates')
+    .update({ task_name: editingTaskName.trim() })
+    .eq('id', id)
+  setEditingTask(null)
+  setEditingTaskName('')
+  fetchTemplates(selectedRole.id)
 }
 
 async function addSubtask(parentId) {
@@ -369,30 +382,72 @@ if (initialTab === 'new-onboarding-select') {
   return (
     <div key={phase}>
       <div style={styles.phaseLabel}>{phase}</div>
-      {phaseTasks.map(t => {
-        const subtasks = templates.filter(s => s.parent_id === t.id)
-        return (
-          <div key={t.id}>
-            <div style={styles.row}>
-              <div>
-                <span style={styles.rowName}>{t.task_name}</span>
-                <span style={{ ...styles.pill, marginLeft: '10px' }}>{t.owner}</span>
+{phaseTasks.map(t => {
+  const subtasks = templates.filter(s => s.parent_id === t.id)
+  return (
+    <div key={t.id}>
+      <div style={styles.row}>
+        {editingTask === t.id ? (
+          <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
+            <input
+              style={{ ...styles.input, flex: 1, marginBottom: 0 }}
+              value={editingTaskName}
+              onChange={e => setEditingTaskName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') saveTaskEdit(t.id)
+                if (e.key === 'Escape') setEditingTask(null)
+              }}
+              autoFocus
+            />
+            <button style={styles.btnPrimary} onClick={() => saveTaskEdit(t.id)}>Save</button>
+            <button style={styles.btnGhost} onClick={() => setEditingTask(null)}>Cancel</button>
+          </div>
+        ) : (
+          <>
+            <div>
+              <span style={styles.rowName}>{t.task_name}</span>
+              <span style={{ ...styles.pill, marginLeft: '10px' }}>{t.owner}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setEditingTask(t.id); setEditingTaskName(t.task_name) }}>Edit</button>
+              <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setAddingSubtaskTo(t.id); setNewSubtaskName('') }}>+ Subtask</button>
+              <button style={styles.btnGhost} onClick={() => deleteTask(t.id, t.task_name)}>Remove</button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {subtasks.map(s => (
+        <div key={s.id} style={{ ...styles.row, paddingLeft: '20px', background: '#fafaf9' }}>
+          {editingTask === s.id ? (
+            <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
+              <input
+                style={{ ...styles.input, flex: 1, marginBottom: 0 }}
+                value={editingTaskName}
+                onChange={e => setEditingTaskName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') saveTaskEdit(s.id)
+                  if (e.key === 'Escape') setEditingTask(null)
+                }}
+                autoFocus
+              />
+              <button style={styles.btnPrimary} onClick={() => saveTaskEdit(s.id)}>Save</button>
+              <button style={styles.btnGhost} onClick={() => setEditingTask(null)}>Cancel</button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: '#d4d3cf', fontSize: '12px' }}>↳</span>
+                <span style={{ ...styles.rowName, color: '#5f5f5c' }}>{s.task_name}</span>
               </div>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setAddingSubtaskTo(t.id); setNewSubtaskName('') }}>+ Subtask</button>
-                <button style={styles.btnGhost} onClick={() => deleteTask(t.id, t.task_name)}>Remove</button>
-              </div>
-            </div>
-
-            {subtasks.map(s => (
-              <div key={s.id} style={{ ...styles.row, paddingLeft: '20px', background: '#fafaf9' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: '#d4d3cf', fontSize: '12px' }}>↳</span>
-                  <span style={{ ...styles.rowName, color: '#5f5f5c' }}>{s.task_name}</span>
-                </div>
+                <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setEditingTask(s.id); setEditingTaskName(s.task_name) }}>Edit</button>
                 <button style={styles.btnGhost} onClick={() => deleteTask(s.id, s.task_name)}>Remove</button>
               </div>
-            ))}
+            </>
+          )}
+        </div>
+      ))}
 
             {addingSubtaskTo === t.id && (
               <div style={{ paddingLeft: '20px', paddingBottom: '12px', paddingTop: '8px', background: '#fafaf9', borderBottom: '1px solid #f0efeb' }}>
