@@ -191,17 +191,29 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
 async function handleDeleteEmployee() {
   setModal({
     title: 'Delete employee',
-    message: `This will permanently delete ${instance.employees.full_name} and all their onboarding data. This cannot be undone.`,
+    message: `This will permanently delete ${instance.employees.full_name} and all their onboarding data including their portal access. This cannot be undone.`,
     confirmLabel: 'Delete permanently',
     confirmDanger: true,
     onConfirm: async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+
+      await fetch('https://gqgjnltqbomtefryqlua.supabase.co/functions/v1/delete-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ employeeId: instance.employees.id })
+      })
+
       await supabase.from('onboarding_instances').delete().eq('id', instanceId)
       await supabase.from('employees').delete().eq('id', instance.employees.id)
+
       setModal(null)
       onBack()
     }
   })
-}  
+}
 
 async function handleInviteEmployee() {
   if (!instance.employees.email) {
