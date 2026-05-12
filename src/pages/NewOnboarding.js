@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
+import { HR_EMAIL } from '../config'
+import { handleSupabaseError } from '../utils/handleError'
 
 export default function NewOnboarding({ session, roleId, roleName, onBack, onNavigate, onComplete }) {
   const [fullName, setFullName] = useState('')
@@ -21,66 +23,56 @@ export default function NewOnboarding({ session, roleId, roleName, onBack, onNav
     error: { fontSize: '12px', color: '#c74848', marginBottom: '16px' }
   }
 
-  async function handleCreate() {
-    if (!fullName || !hireDate) { setError('Please fill in name and start date.'); return }
-    setLoading(true)
-    setError('')
+async function handleCreate() {
+  if (!fullName || !hireDate) { setError('Please fill in name and start date.'); return }
+  setLoading(true)
+  setError('')
 
-const { data: roleData } = await supabase.from('roles').select('brand').eq('id', roleId).single()
-const brand = roleData?.brand || 'ISL'
+  const { data: roleData } = await supabase.from('roles').select('brand').eq('id', roleId).single()
+  const brand = roleData?.brand || 'ISL'
 
-const { data: existingEmployees } = await supabase
-  .from('employees')
-  .select('id, full_name, onboarding_instances (id, status)')
-  .ilike('full_name', fullName.trim())
+  const existingEmployees = await supabase
+    .from('employees')
+    .select('id, full_name, onboarding_instances (id, status)')
+    .ilike('full_name', fullName.trim())
 
-if (existingEmployees && existingEmployees.length > 0) {
-  const hasActive = existingEmployees.some(emp =>
-    emp.onboarding_instances?.some(inst => inst.status === 'active')
-  )
-  if (hasActive) {
-    setError(`An active onboarding already exists for someone named "${fullName}". Check the dashboard before continuing.`)
-    setLoading(false)
-    return
+  if (existingEmployees.data && existingEmployees.data.length > 0) {
+    const hasActive = existingEmployees.data.some(emp =>
+      emp.onboarding_instances?.some(inst => inst.status === 'active')
+    )
+    if (hasActive) {
+      setError(`An active onboarding already exists for someone named "${fullName}". Check the dashboard before continuing.`)
+      setLoading(false)
+      return
+    }
   }
+
+  const { data, error: rpcError } = await supabase.rpc('create_onboarding', {
+    p_full_name: fullName.trim(),
+    p_email: email,
+    p_role_id: roleId,
+    p_hire_date: hireDate,
+    p_brand: brand
+  })
+
+if (rpcError) {
+  setError(handleSupabaseError(rpcError, 'Failed to create onboarding. Please try again.'))
+  setLoading(false)
+  return
 }
 
-const { data: employee, error: empError } = await supabase
-  .from('employees')
-  .insert({ full_name: fullName, email, role_id: roleId, hire_date: hireDate, brand })
-  .select().single()
+  await sendOnboardingStartedEmails(fullName, email, roleName, hireDate)
 
-    if (empError) { setError(empError.message); setLoading(false); return }
+  setLoading(false)
+  onComplete(data.instance_id)
+}
 
-    const { data: instance, error: instError } = await supabase
-      .from('onboarding_instances')
-      .insert({ employee_id: employee.id })
-      .select().single()
+async function sendOnboardingStartedEmails(name, employeeEmail, role, startDate) {
+  const startFormatted = new Date(startDate).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
 
-    if (instError) { setError(instError.message); setLoading(false); return }
-
-    const { data: tasks } = await supabase
-      .from('onboarding_templates')
-      .select('id')
-      .eq('role_id', roleId)
-
-    if (tasks && tasks.length > 0) {
-      await supabase.from('task_completions').insert(
-        tasks.map(t => ({ instance_id: instance.id, template_task_id: t.id, completed: false }))
-      )
-    }
-
-    await sendOnboardingStartedEmails(fullName, email, roleName, hireDate)
-
-    setLoading(false)
-    onComplete(instance.id)
-  }
-
-  async function sendOnboardingStartedEmails(name, employeeEmail, role, startDate) {
-    const startFormatted = new Date(startDate).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
-
+  try {
     if (employeeEmail) {
-      const { data, error } = await supabase.functions.invoke('send-email', {
+      await supabase.functions.invoke('send-email', {
         body: {
           to: employeeEmail,
           subject: `Welcome to Integrated Staffing, ${name.split(' ')[0]}`,
@@ -96,12 +88,11 @@ const { data: employee, error: empError } = await supabase
           `
         }
       })
-      console.log('Employee email result:', { data, error })
     }
 
-    const { data: data2, error: error2 } = await supabase.functions.invoke('send-email', {
+    await supabase.functions.invoke('send-email', {
       body: {
-        to: 'josiah@integratedstaffing.ca',
+        to: HR_EMAIL,
         subject: `New onboarding started: ${name}`,
         html: `
           <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
@@ -117,8 +108,10 @@ const { data: employee, error: empError } = await supabase
         `
       }
     })
-    console.log('HR email result:', { data: data2, error: error2 })
+  } catch (err) {
+    console.error('Email notification failed:', err)
   }
+}
 
   return (
     <Layout session={session} currentPage="active" onNavigate={onNavigate}>

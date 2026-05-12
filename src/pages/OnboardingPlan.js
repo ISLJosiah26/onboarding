@@ -5,6 +5,7 @@ import Layout from '../components/Layout'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 import ConfirmModal from '../components/ConfirmModal'
 import EditEmployeeModal from '../components/EditEmployeeModal'
+import { HR_EMAIL } from '../config'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 
@@ -151,7 +152,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
         await supabase.from('onboarding_instances').update({ status: 'completed' }).eq('id', instanceId)
         await supabase.functions.invoke('send-email', {
           body: {
-            to: 'josiah@integratedstaffing.ca',
+            to: HR_EMAIL,
             subject: `Onboarding complete: ${instance.employees.full_name}`,
             html: `
               <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">

@@ -6,6 +6,7 @@ import OnboardingPlan from './pages/OnboardingPlan'
 import Admin from './pages/Admin'
 import EmployeePortal from './pages/EmployeePortal'
 import SetPassword from './pages/SetPassword'
+import { APP_URL } from './config'
 
 function App() {
   const [magicLinkMode, setMagicLinkMode] = useState(false)
@@ -66,7 +67,7 @@ function App() {
       email,
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: 'https://onboarding.integratedstaffing.ca'
+        emailRedirectTo: APP_URL
       }
     })
     if (error) setError(error.message)
