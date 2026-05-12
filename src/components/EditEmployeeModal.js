@@ -5,7 +5,7 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
   const [fullName, setFullName] = useState(employee.full_name)
   const [email, setEmail] = useState(employee.email || '')
   const [hireDate, setHireDate] = useState(employee.hire_date)
-  const [roleId, setRoleId] = useState(employee.role_id || null)
+  const [roleId, setRoleId] = useState(employee.role_id)
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -34,10 +34,11 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
 
   const roleChanged = roleId !== employee.role_id
 
-  async function handleSave() {
-    if (!fullName.trim() || !hireDate) { setError('Name and start date are required.'); return }
-    setLoading(true)
-    setError('')
+async function handleSave() {
+  if (!fullName.trim() || !hireDate) { setError('Name and start date are required.'); return }
+  if (!roleId) { setError('Please select a role.'); return }
+  setLoading(true)
+  setError('')
 
 const { error: updateError } = await supabase
   .from('employees')
@@ -45,7 +46,7 @@ const { error: updateError } = await supabase
     full_name: fullName.trim(), 
     email, 
     hire_date: hireDate, 
-    role_id: roleId || null 
+    role_id: roleId
   })
   .eq('id', employee.id)
 
@@ -95,7 +96,7 @@ const { error: updateError } = await supabase
         <label style={styles.label}>Start date</label>
         <input style={styles.input} type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
         <label style={styles.label}>Role</label>
-        <select style={{ ...styles.input, marginBottom: '20px' }} value={roleId} onChange={e => setRoleId(e.target.value || null)}>
+        <select style={{ ...styles.input, marginBottom: '20px' }} value={roleId} onChange={e => setRoleId(e.target.value)}>
           <option value="">Select a role...</option>
           {roles.map(r => <option key={r.id} value={r.id}>{r.name} ({r.brand})</option>)}
         </select>
