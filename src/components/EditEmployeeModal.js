@@ -5,7 +5,7 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
   const [fullName, setFullName] = useState(employee.full_name)
   const [email, setEmail] = useState(employee.email || '')
   const [hireDate, setHireDate] = useState(employee.hire_date)
-  const [roleId, setRoleId] = useState(employee.role_id || '')
+  const [roleId, setRoleId] = useState(employee.role_id || null)
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -39,10 +39,15 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
     setLoading(true)
     setError('')
 
-    const { error: updateError } = await supabase
-      .from('employees')
-      .update({ full_name: fullName.trim(), email, hire_date: hireDate, role_id: roleId })
-      .eq('id', employee.id)
+const { error: updateError } = await supabase
+  .from('employees')
+  .update({ 
+    full_name: fullName.trim(), 
+    email, 
+    hire_date: hireDate, 
+    role_id: roleId || null 
+  })
+  .eq('id', employee.id)
 
     if (updateError) { setError(updateError.message); setLoading(false); return }
 
@@ -90,7 +95,7 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
         <label style={styles.label}>Start date</label>
         <input style={styles.input} type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
         <label style={styles.label}>Role</label>
-        <select style={{ ...styles.input, marginBottom: '20px' }} value={roleId} onChange={e => setRoleId(e.target.value)}>
+        <select style={{ ...styles.input, marginBottom: '20px' }} value={roleId} onChange={e => setRoleId(e.target.value || null)}>
           <option value="">Select a role...</option>
           {roles.map(r => <option key={r.id} value={r.id}>{r.name} ({r.brand})</option>)}
         </select>
