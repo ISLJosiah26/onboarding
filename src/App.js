@@ -6,7 +6,6 @@ import OnboardingPlan from './pages/OnboardingPlan'
 import Admin from './pages/Admin'
 import EmployeePortal from './pages/EmployeePortal'
 import SetPassword from './pages/SetPassword'
-import { APP_URL } from './config'
 
 function App() {
   const [session, setSession] = useState(null)
