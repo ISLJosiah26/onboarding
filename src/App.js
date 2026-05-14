@@ -7,6 +7,7 @@ import Admin from './pages/Admin'
 import EmployeePortal from './pages/EmployeePortal'
 import SetPassword from './pages/SetPassword'
 
+
 function App() {
   const [session, setSession] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
@@ -18,6 +19,8 @@ function App() {
   const [selectedRole, setSelectedRole] = useState(null)
   const [activeInstanceId, setActiveInstanceId] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [forgotPassword, setForgotPassword] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
 useEffect(() => {
   const hash = window.location.hash
@@ -66,6 +69,16 @@ useEffect(() => {
     if (error) setError(error.message)
   }
 
+  async function handleForgotPassword() {
+  if (!email) { setError('Please enter your email address first.'); return }
+  setError('')
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://onboarding.integratedstaffing.ca'
+  })
+  if (error) setError(error.message)
+  else setResetSent(true)
+}
+
   function handleNavigate(target) {
     setRefreshKey(k => k + 1)
     if (target === 'active') {
@@ -86,25 +99,68 @@ if (!session) {
           <div style={{ fontSize: '22px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.5px', marginBottom: '4px' }}>Welcome back</div>
           <div style={{ fontSize: '13px', color: '#8a8a86' }}>Sign in to Integrated Launch</div>
         </div>
+
         <div style={{ background: '#fff', border: '1px solid #ebebe8', borderRadius: '12px', padding: '28px' }}>
-          <label style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' }}>Email</label>
-          <input type="email" placeholder="you@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            style={{ display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: '1px solid #ebebe8', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#1a1a1a', background: '#fff', boxSizing: 'border-box' }} />
-          <label style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' }}>Password</label>
-          <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            style={{ display: 'block', width: '100%', marginBottom: '20px', padding: '10px 14px', border: '1px solid #ebebe8', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#1a1a1a', background: '#fff', boxSizing: 'border-box' }} />
-          {error && (
-            <div style={{ fontSize: '12px', color: '#c74848', marginBottom: '16px', padding: '10px 12px', background: '#fdf0f0', border: '1px solid #f5d6d6', borderRadius: '6px' }}>
-              {error}
+          {resetSent ? (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '8px' }}>Check your email</div>
+              <div style={{ fontSize: '13px', color: '#8a8a86', lineHeight: '1.6', marginBottom: '20px' }}>
+                We sent a password reset link to {email}. Click the link to set a new password.
+              </div>
+              <button onClick={() => { setResetSent(false); setForgotPassword(false) }}
+                style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                Back to sign in
+              </button>
             </div>
+          ) : forgotPassword ? (
+            <>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '4px' }}>Reset your password</div>
+              <div style={{ fontSize: '13px', color: '#8a8a86', marginBottom: '20px' }}>Enter your email and we'll send you a reset link.</div>
+              <label style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' }}>Email</label>
+              <input type="email" placeholder="you@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleForgotPassword()}
+                style={{ display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: '1px solid #ebebe8', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#1a1a1a', background: '#fff', boxSizing: 'border-box' }} />
+              {error && (
+                <div style={{ fontSize: '12px', color: '#c74848', marginBottom: '16px', padding: '10px 12px', background: '#fdf0f0', border: '1px solid #f5d6d6', borderRadius: '6px' }}>
+                  {error}
+                </div>
+              )}
+              <button onClick={handleForgotPassword}
+                style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '11px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '12px' }}>
+                Send reset link
+              </button>
+              <button onClick={() => { setForgotPassword(false); setError('') }}
+                style={{ width: '100%', background: 'transparent', color: '#8a8a86', border: 'none', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: '4px' }}>
+                Back to sign in
+              </button>
+            </>
+          ) : (
+            <>
+              <label style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' }}>Email</label>
+              <input type="email" placeholder="you@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                style={{ display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: '1px solid #ebebe8', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#1a1a1a', background: '#fff', boxSizing: 'border-box' }} />
+              <label style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' }}>Password</label>
+              <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                style={{ display: 'block', width: '100%', marginBottom: '20px', padding: '10px 14px', border: '1px solid #ebebe8', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#1a1a1a', background: '#fff', boxSizing: 'border-box' }} />
+              {error && (
+                <div style={{ fontSize: '12px', color: '#c74848', marginBottom: '16px', padding: '10px 12px', background: '#fdf0f0', border: '1px solid #f5d6d6', borderRadius: '6px' }}>
+                  {error}
+                </div>
+              )}
+              <button onClick={handleLogin}
+                style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '11px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '12px' }}>
+                Sign in
+              </button>
+              <button onClick={() => { setForgotPassword(true); setError('') }}
+                style={{ width: '100%', background: 'transparent', color: '#8a8a86', border: 'none', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: '4px' }}>
+                Forgot password?
+              </button>
+            </>
           )}
-          <button onClick={handleLogin}
-            style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '11px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-            Sign in
-          </button>
         </div>
+
         <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '12px', color: '#a8a8a4' }}>
           Integrated Staffing Limited · onboarding portal
         </div>
