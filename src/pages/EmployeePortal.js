@@ -154,6 +154,48 @@ async function toggleDocument(docId) {
   }
 }
 
+async function handleEmployeeDocumentUpload(e, docId) {
+  const file = e.target.files[0]
+  if (!file) return
+
+  const employeeId = userProfile.employee_id
+  const filePath = `${employeeId}/${docId}_${Date.now()}_${file.name}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('employee-documents')
+    .upload(filePath, file, { upsert: true })
+
+  if (uploadError) {
+    showToast('Upload failed. Please try again.', 'error')
+    return
+  }
+
+  const { data: urlData } = await supabase.storage
+    .from('employee-documents')
+    .createSignedUrl(filePath, 60 * 60 * 24 * 365)
+
+  const fileUrl = urlData?.signedUrl
+
+  const existing = docCompletions[docId]
+  if (existing) {
+    const { error } = await supabase
+      .from('document_completions')
+      .update({ completed_file_url: fileUrl, signed: true, completed_at: new Date().toISOString() })
+      .eq('id', existing.id)
+    if (error) { showToast('Failed to save upload.', 'error'); return }
+    setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, completed_file_url: fileUrl, signed: true } }))
+  } else {
+    const { data, error } = await supabase
+      .from('document_completions')
+      .insert({ employee_id: employeeId, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString(), completed_file_url: fileUrl })
+      .select().single()
+    if (error) { showToast('Failed to save upload.', 'error'); return }
+    if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
+  }
+
+  showToast('Document uploaded successfully')
+}
+
   function totalTasks() {
     return Object.values(tasksByPhase).flat().filter(tc => !tc.onboarding_templates.parent_id).length
   }
@@ -325,18 +367,47 @@ async function toggleDocument(docId) {
             {documents.length === 0 && (
               <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No documents have been uploaded yet.</div>
             )}
-            {documents.map(doc => {
-              const signed = docCompletions[doc.id]?.signed || false
-              return (
-                <div key={doc.id} style={styles.docRow} onClick={() => toggleDocument(doc.id)}>
-                  <div style={styles.checkbox(signed)}>
-                    {signed && checkIcon()}
-                  </div>
-                  <div style={styles.taskName(signed)}>{doc.name}</div>
-                  <a href={doc.file_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>View</a>
-                </div>
-              )
-            })}
+{documents.map(doc => {
+  const dc = docCompletions[doc.id]
+  const signed = dc?.signed || false
+  const completedFileUrl = dc?.completed_file_url || null
+  return (
+    <div key={doc.id} style={{ ...styles.docRow, flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', width: '100%' }}>
+        <div style={styles.checkbox(signed)} onClick={() => toggleDocument(doc.id)}>
+          {signed && checkIcon()}
+        </div>
+        <div style={{ ...styles.taskName(false), flex: 1 }}>{doc.name}</div>
+        <a href={doc.file_url} target="_blank" rel="noreferrer"
+          style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none', flexShrink: 0 }}>
+          Download
+        </a>
+      </div>
+      <div style={{ paddingLeft: '34px', width: '100%' }}>
+        {completedFileUrl ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '12px', color: '#2d7a4a' }}>✓ Uploaded</span>
+            <a href={completedFileUrl} target="_blank" rel="noreferrer"
+              style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>
+              View uploaded file
+            </a>
+            <label style={{ fontSize: '12px', color: '#8a8a86', cursor: 'pointer' }}>
+              Replace
+              <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
+                onChange={e => handleEmployeeDocumentUpload(e, doc.id)} />
+            </label>
+          </div>
+        ) : (
+          <label style={{ fontSize: '12px', color: '#0070CA', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            + Upload completed document
+            <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
+              onChange={e => handleEmployeeDocumentUpload(e, doc.id)} />
+          </label>
+        )}
+      </div>
+    </div>
+  )
+})}
           </>
         )}
       </div>

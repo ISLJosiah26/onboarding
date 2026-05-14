@@ -411,18 +411,35 @@ if (fetchError) return (
           {documents.length === 0 && (
             <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '12px 0' }}>No documents in the library yet.</div>
           )}
-          {documents.map(doc => {
-            const signed = docCompletions[doc.id]?.signed || false
-            return (
-              <div key={doc.id} style={styles.parentRow} onClick={(e) => toggleDocument(doc.id, e)}>
-                <div style={styles.checkbox(signed)}>
-                  {signed && checkIcon()}
-                </div>
-                <div style={styles.taskName(signed)}>{doc.name}</div>
-                <a href={doc.file_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>View</a>
-              </div>
-            )
-          })}
+{documents.map(doc => {
+  const dc = docCompletions[doc.id]
+  const signed = dc?.signed || false
+  const completedFileUrl = dc?.completed_file_url || null
+  return (
+    <div key={doc.id} style={{ ...styles.taskRow, flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', width: '100%' }} onClick={(e) => toggleDocument(doc.id, e)}>
+        <div style={styles.checkbox(signed)}>
+          {signed && checkIcon()}
+        </div>
+        <div style={styles.taskName(signed)}>{doc.name}</div>
+        <a href={doc.file_url} target="_blank" rel="noreferrer"
+          onClick={e => e.stopPropagation()}
+          style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none', flexShrink: 0 }}>
+          View template
+        </a>
+      </div>
+      {completedFileUrl && (
+        <div style={{ paddingLeft: '32px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '12px', color: '#2d7a4a' }}>✓ Employee uploaded</span>
+          <a href={completedFileUrl} target="_blank" rel="noreferrer"
+            style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>
+            Download
+          </a>
+        </div>
+      )}
+    </div>
+  )
+})}
         </div>
 
         {PHASES.map(phase => {
