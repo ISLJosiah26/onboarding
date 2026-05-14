@@ -31,11 +31,15 @@ export default function Admin({ session, initialTab, onBack, onNavigate, onStart
   const [pickedBrand, setPickedBrand] = useState('')
   const [pickedRoleId, setPickedRoleId] = useState('')
   const { toast, showToast, hideToast } = useToast()
+  const [taskLibrary, setTaskLibrary] = useState([])
+  const [useLibraryTask, setUseLibraryTask] = useState(true)
+  const [useLibrarySubtask, setUseLibrarySubtask] = useState(true)
 
   useEffect(() => { fetchRoles() }, [])
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
   useEffect(() => { if (initialTab === 'documents') fetchDocuments() }, [initialTab])
   useEffect(() => { if (initialTab === 'history') fetchHistory() }, [initialTab])
+    useEffect(() => { if (initialTab === 'templates') fetchTaskLibrary() }, [initialTab])
 
   async function fetchRoles() {
     const { data } = await supabase.from('roles').select('*').order('name')
@@ -60,6 +64,11 @@ export default function Admin({ session, initialTab, onBack, onNavigate, onStart
       .order('started_at', { ascending: false })
     if (data) setHistory(data)
   }
+
+  async function fetchTaskLibrary() {
+  const { data } = await supabase.from('task_library').select('*').order('task_name')
+  if (data) setTaskLibrary(data)
+}
 
 async function addRole() {
   if (!newRoleName.trim()) return
@@ -100,6 +109,11 @@ async function addRole() {
     setNewTaskName('')
     fetchTemplates(selectedRole.id)
     if (!newTask) return
+
+    if (!taskLibrary.some(t => t.task_name === newTaskName)) {
+  await supabase.from('task_library').insert({ task_name: newTaskName.trim() })
+  fetchTaskLibrary()
+}
 
     const { data: roleEmployees } = await supabase.from('employees').select('id').eq('role_id', selectedRole.id)
     if (!roleEmployees || roleEmployees.length === 0) return
@@ -361,18 +375,46 @@ function renderModal() {
 
           {selectedRole && (
             <>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-                <input style={{ ...styles.input, flex: 1, minWidth: '200px' }} placeholder="Task name"
-                  value={newTaskName} onChange={e => setNewTaskName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addTask()} />
-                <select style={styles.input} value={newTaskPhase} onChange={e => setNewTaskPhase(e.target.value)}>
-                  {PHASES.map(p => <option key={p}>{p}</option>)}
-                </select>
-                <select style={styles.input} value={newTaskOwner} onChange={e => setNewTaskOwner(e.target.value)}>
-                  {OWNERS.map(o => <option key={o}>{o}</option>)}
-                </select>
-                <button style={styles.btnPrimary} onClick={addTask}>Add task</button>
-              </div>
+<div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+  <div style={{ flex: 1, minWidth: '200px' }}>
+    {useLibraryTask ? (
+      <select style={{ ...styles.input, width: '100%' }} value={newTaskName} onChange={e => setNewTaskName(e.target.value)}>
+        <option value="">Select from library...</option>
+        {taskLibrary.map(t => <option key={t.id} value={t.task_name}>{t.task_name}</option>)}
+        <option value="__custom__">+ Custom task</option>
+      </select>
+    ) : (
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <input style={{ ...styles.input, flex: 1 }} placeholder="Task name"
+          value={newTaskName} onChange={e => setNewTaskName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && addTask()} autoFocus />
+        <button style={{ ...styles.btnGhost, fontSize: '11px', color: '#a8a8a4' }}
+          onClick={() => { setUseLibraryTask(true); setNewTaskName('') }}>
+          Use library
+        </button>
+      </div>
+    )}
+    {useLibraryTask && newTaskName === '__custom__' && (
+      <input style={{ ...styles.input, width: '100%', marginTop: '6px' }} placeholder="Type custom task name"
+        value={newTaskName === '__custom__' ? '' : newTaskName}
+        onChange={e => setNewTaskName(e.target.value)}
+        autoFocus />
+    )}
+  </div>
+  <select style={styles.input} value={newTaskPhase} onChange={e => setNewTaskPhase(e.target.value)}>
+    {PHASES.map(p => <option key={p}>{p}</option>)}
+  </select>
+  <select style={styles.input} value={newTaskOwner} onChange={e => setNewTaskOwner(e.target.value)}>
+    {OWNERS.map(o => <option key={o}>{o}</option>)}
+  </select>
+  <button style={styles.btnPrimary} onClick={addTask}>Add task</button>
+</div>
+{useLibraryTask && (
+  <button style={{ ...styles.btnGhost, fontSize: '11px', color: '#0070CA', marginTop: '-16px', marginBottom: '16px' }}
+    onClick={() => { setUseLibraryTask(false); setNewTaskName('') }}>
+    + Type a custom task instead
+  </button>
+)}
 
               {PHASES.map(phase => {
                 const phaseTasks = templates.filter(t => t.phase === phase && !t.parent_id)
@@ -437,16 +479,32 @@ function renderModal() {
 
                           {addingSubtaskTo === t.id && (
                             <div style={{ paddingLeft: '20px', paddingBottom: '12px', paddingTop: '8px', background: '#fafaf9', borderBottom: '1px solid #f0efeb' }}>
-                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                <input style={{ ...styles.input, flex: 1, minWidth: '160px' }} placeholder="Subtask name"
-                                  value={newSubtaskName} onChange={e => setNewSubtaskName(e.target.value)}
-                                  onKeyDown={e => e.key === 'Enter' && addSubtask(t.id)} autoFocus />
-                                <select style={styles.input} value={newSubtaskPhase} onChange={e => setNewSubtaskPhase(e.target.value)}>
-                                  {PHASES.map(p => <option key={p}>{p}</option>)}
-                                </select>
-                                <button style={styles.btnPrimary} onClick={() => addSubtask(t.id)}>Add</button>
-                                <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => setAddingSubtaskTo(null)}>Cancel</button>
-                              </div>
+<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+  {useLibrarySubtask ? (
+    <select style={{ ...styles.input, flex: 1, minWidth: '160px' }} value={newSubtaskName}
+      onChange={e => {
+        if (e.target.value === '__custom__') {
+          setUseLibrarySubtask(false)
+          setNewSubtaskName('')
+        } else {
+          setNewSubtaskName(e.target.value)
+        }
+      }}>
+      <option value="">Select from library...</option>
+      {taskLibrary.map(t => <option key={t.id} value={t.task_name}>{t.task_name}</option>)}
+      <option value="__custom__">+ Custom subtask</option>
+    </select>
+  ) : (
+    <input style={{ ...styles.input, flex: 1, minWidth: '160px' }} placeholder="Subtask name"
+      value={newSubtaskName} onChange={e => setNewSubtaskName(e.target.value)}
+      onKeyDown={e => e.key === 'Enter' && addSubtask(t.id)} autoFocus />
+  )}
+  <select style={styles.input} value={newSubtaskPhase} onChange={e => setNewSubtaskPhase(e.target.value)}>
+    {PHASES.map(p => <option key={p}>{p}</option>)}
+  </select>
+  <button style={styles.btnPrimary} onClick={() => addSubtask(t.id)}>Add</button>
+  <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => { setAddingSubtaskTo(null); setUseLibrarySubtask(true) }}>Cancel</button>
+</div>
                             </div>
                           )}
                         </div>
