@@ -73,29 +73,34 @@ async function fetchPlan() {
   setLoading(false)
 }
 
-  async function fetchDocuments() {
-    const { data: docs } = await supabase.from('documents').select('*')
-    if (!docs) return
-    setDocuments(docs)
+async function fetchDocuments() {
+  const { data: inst } = await supabase
+    .from('onboarding_instances')
+    .select('employees (id, role_id)')
+    .eq('id', instanceId)
+    .single()
 
-    const { data: inst } = await supabase
-      .from('onboarding_instances')
-      .select('employees (id)')
-      .eq('id', instanceId)
-      .single()
+  if (!inst) return
 
-    if (!inst) return
-    const employeeId = inst.employees.id
+  const employeeId = inst.employees.id
+  const roleId = inst.employees.role_id
 
-    const { data: dc } = await supabase
-      .from('document_completions')
-      .select('*')
-      .eq('employee_id', employeeId)
+  const { data: docs } = await supabase
+    .from('documents')
+    .select('*')
+    .or(`role_id.is.null,role_id.eq.${roleId}`)
 
-    const map = {}
-    if (dc) dc.forEach(d => map[d.document_id] = d)
-    setDocCompletions(map)
-  }
+  if (docs) setDocuments(docs)
+
+  const { data: dc } = await supabase
+    .from('document_completions')
+    .select('*')
+    .eq('employee_id', employeeId)
+
+  const map = {}
+  if (dc) dc.forEach(d => map[d.document_id] = d)
+  setDocCompletions(map)
+}
 
 async function toggleTask(completionId, current, e) {
   e.stopPropagation()

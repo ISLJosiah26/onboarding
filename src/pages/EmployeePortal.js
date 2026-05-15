@@ -30,7 +30,7 @@ async function fetchMyOnboarding() {
       .from('onboarding_instances')
       .select(`
         id, status,
-        employees (id, full_name, hire_date, roles (name)),
+        employees (id, full_name, hire_date, role_id, roles (name)),
         task_completions (
           id, completed, completed_at,
           onboarding_templates (id, task_name, phase, owner, parent_id)
@@ -58,8 +58,20 @@ async function fetchMyOnboarding() {
       setCompletions(comp)
     }
 
-    const { data: docs } = await supabase.from('documents').select('*')
-    if (docs) setDocuments(docs)
+   const roleId = instanceData?.employees?.role_id
+if (roleId) {
+  const { data: docs } = await supabase
+    .from('documents')
+    .select('*')
+    .or(`role_id.is.null,role_id.eq.${roleId}`)
+  if (docs) setDocuments(docs)
+} else {
+  const { data: docs } = await supabase
+    .from('documents')
+    .select('*')
+    .is('role_id', null)
+  if (docs) setDocuments(docs)
+}
 
     const { data: dc } = await supabase
       .from('document_completions')

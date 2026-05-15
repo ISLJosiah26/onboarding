@@ -34,6 +34,8 @@ export default function Admin({ session, initialTab, onBack, onNavigate, onStart
   const [taskLibrary, setTaskLibrary] = useState([])
   const [useLibraryTask, setUseLibraryTask] = useState(true)
   const [useLibrarySubtask, setUseLibrarySubtask] = useState(true)
+  const [uploadDocRole, setUploadDocRole] = useState('')
+  const [uploadingDoc, setUploadingDoc] = useState(false)
 
   useEffect(() => { fetchRoles() }, [])
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
@@ -197,6 +199,40 @@ async function deleteDocument(id) {
     showToast('Document removed')
     fetchDocuments()
   }
+}
+
+async function handleAdminDocumentUpload(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  setUploadingDoc(true)
+
+  const filePath = `documents/${Date.now()}_${file.name}`
+  const { error: uploadError } = await supabase.storage
+    .from('documents')
+    .upload(filePath, file)
+
+  if (uploadError) {
+    showToast(handleSupabaseError(uploadError, 'Upload failed.'), 'error')
+    setUploadingDoc(false)
+    return
+  }
+
+  const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath)
+
+  const { error: insertError } = await supabase.from('documents').insert({
+    name: file.name,
+    file_url: urlData.publicUrl,
+    role_id: uploadDocRole || null
+  })
+
+  if (insertError) {
+    showToast(handleSupabaseError(insertError, 'Failed to save document.'), 'error')
+  } else {
+    showToast('Document uploaded')
+    fetchDocuments()
+  }
+  setUploadingDoc(false)
+  e.target.value = ''
 }
 
   function handleStartSelected() {
@@ -521,30 +557,64 @@ function renderModal() {
     )
   }
 
-  if (initialTab === 'documents') {
-    return (
-      <Layout session={session} currentPage="documents" onNavigate={onNavigate}>
-        {renderHeader('Documents', 'Manage the document library shared across all onboardings.')}
-        <div style={styles.content}>
-          {documents.length === 0 ? (
-            <div style={styles.emptyState}>No documents yet. Upload from an onboarding plan.</div>
-          ) : documents.map(doc => (
-            <div key={doc.id} style={styles.row}>
-              <div>
-                <div style={styles.rowName}>{doc.name}</div>
-                <div style={styles.rowMuted}>{new Date(doc.uploaded_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-              </div>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>View</a>
-                <button style={styles.btnGhost} onClick={() => deleteDocument(doc.id)}>Remove</button>
-              </div>
-            </div>
-          ))}
+if (initialTab === 'documents') {
+  return (
+    <Layout session={session} currentPage="documents" onNavigate={onNavigate}>
+      {renderHeader('Documents', 'Manage the document library. Documents can be universal or role-specific.')}
+      <div style={styles.content}>
+        <div style={{ marginBottom: '28px', padding: '20px', background: '#fafaf9', border: '1px solid #ebebe8', borderRadius: '10px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', marginBottom: '16px' }}>Upload new document</div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              style={{ ...styles.input, flex: 1, maxWidth: '260px' }}
+              value={uploadDocRole}
+              onChange={e => setUploadDocRole(e.target.value)}
+            >
+              <option value="">All roles (universal)</option>
+              {roles.map(r => <option key={r.id} value={r.id}>{r.name} ({r.brand})</option>)}
+            </select>
+            <label style={{ ...styles.btnPrimary, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              {uploadingDoc ? 'Uploading...' : '+ Upload document'}
+              <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
+                onChange={handleAdminDocumentUpload} disabled={uploadingDoc} />
+            </label>
+          </div>
         </div>
-        {renderModal()}
-      </Layout>
-    )
-  }
+
+        {documents.length === 0 ? (
+          <div style={styles.emptyState}>No documents yet. Upload one above.</div>
+        ) : (
+          <>
+            {[null, ...roles.filter(r => documents.some(d => d.role_id === r.id))].map(role => {
+              const roleDocs = role === null
+                ? documents.filter(d => !d.role_id)
+                : documents.filter(d => d.role_id === role.id)
+              if (roleDocs.length === 0) return null
+              return (
+                <div key={role?.id || 'universal'} style={{ marginBottom: '24px' }}>
+                  <div style={styles.phaseLabel}>{role ? `${role.name} (${role.brand})` : 'Universal'}</div>
+                  {roleDocs.map(doc => (
+                    <div key={doc.id} style={styles.row}>
+                      <div>
+                        <div style={styles.rowName}>{doc.name}</div>
+                        <div style={styles.rowMuted}>{new Date(doc.uploaded_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>View</a>
+                        <button style={styles.btnGhost} onClick={() => deleteDocument(doc.id)}>Remove</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </>
+        )}
+      </div>
+      {renderModal()}
+    </Layout>
+  )
+}
 
   return null
 }
