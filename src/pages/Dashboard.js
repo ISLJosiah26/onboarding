@@ -25,6 +25,7 @@ export default function Dashboard({ session, onStartOnboarding, onViewOnboarding
   const [completedCount, setCompletedCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(null)
+  const [docStats, setDocStats] = useState({})
   const { toast, hideToast } = useToast()
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function Dashboard({ session, onStartOnboarding, onViewOnboarding
       setFetchError(handleSupabaseError(error, 'Failed to load onboardings.'))
     } else {
       setOnboardings(data || [])
+      fetchDocStats(data || [])
     }
     setLoading(false)
   }
@@ -59,6 +61,24 @@ export default function Dashboard({ session, onStartOnboarding, onViewOnboarding
       .select('id', { count: 'exact', head: true })
       .eq('status', 'completed')
     if (!error) setCompletedCount(count || 0)
+  }
+
+  async function fetchDocStats(onboardingData) {
+    if (!onboardingData || onboardingData.length === 0) return
+    const employeeIds = onboardingData.map(o => o.employees.id)
+    const { data } = await supabase
+      .from('document_completions')
+      .select('employee_id, completed_file_url')
+      .in('employee_id', employeeIds)
+      .not('completed_file_url', 'is', null)
+
+    const stats = {}
+    if (data) {
+      data.forEach(dc => {
+        stats[dc.employee_id] = (stats[dc.employee_id] || 0) + 1
+      })
+    }
+    setDocStats(stats)
   }
 
   const completingThisWeek = onboardings.filter(o => {
@@ -153,12 +173,20 @@ export default function Dashboard({ session, onStartOnboarding, onViewOnboarding
               const pct = total > 0 ? Math.round((completed / total) * 100) : 0
               const name = o.employees.full_name
               const phase = getPhase(o.employees.hire_date)
+              const uploadedDocs = docStats[o.employees.id] || 0
               return (
                 <div key={o.id} style={styles.tableRow} onClick={() => onViewOnboarding(o.id)}>
                   <div style={styles.avatar}>{getInitials(name)}</div>
                   <div>
                     <div style={styles.rowName}>{name}</div>
-                    <div style={styles.rowMeta}>{o.employees.email || ''}</div>
+                    <div style={styles.rowMeta}>
+                      {o.employees.email || ''}
+                      {uploadedDocs > 0 && (
+                        <span style={{ marginLeft: '8px', color: '#2d7a4a', fontSize: '11px' }}>
+                          · {uploadedDocs} doc{uploadedDocs > 1 ? 's' : ''} uploaded
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div style={styles.rowText}>{o.employees.roles?.name || 'Unknown role'}</div>
                   <div style={styles.progressWrap}>

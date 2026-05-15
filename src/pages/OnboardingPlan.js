@@ -41,7 +41,7 @@ async function fetchPlan() {
     .from('onboarding_instances')
     .select(`
       id, status,
-      employees (id, full_name, email, hire_date, roles (name)),
+      employees (id, full_name, email, hire_date, role_id, roles (name)),
       task_completions (
         id, completed, completed_at, notes,
         onboarding_templates (id, task_name, phase, owner, parent_id)
@@ -554,18 +554,13 @@ if (fetchError) return (
     {inviteSent ? (
       <span style={{ fontSize: '13px', color: '#2d7a4a' }}>Invite sent</span>
     ) : (
-      <button
-        onClick={handleInviteEmployee}
-        disabled={inviting}
-        style={{ background: 'transparent', color: '#0070CA', border: '1px solid #0070CA', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-      >
+      <button onClick={handleInviteEmployee} disabled={inviting}
+        style={{ background: 'transparent', color: '#0070CA', border: '1px solid #0070CA', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
         {inviting ? 'Sending...' : 'Invite to portal'}
       </button>
     )}
-    <button
-      onClick={handleDeleteEmployee}
-      style={{ background: 'transparent', color: '#c74848', border: '1px solid #f5d6d6', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-    >
+    <button onClick={handleDeleteEmployee}
+      style={{ background: 'transparent', color: '#c74848', border: '1px solid #f5d6d6', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
       Delete employee
     </button>
   </div>

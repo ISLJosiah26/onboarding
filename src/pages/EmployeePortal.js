@@ -19,6 +19,7 @@ export default function EmployeePortal({ session, userProfile }) {
   const [activeTab, setActiveTab] = useState('checklist')
   const [celebration, setCelebration] = useState(null)
   const { toast, showToast, hideToast } = useToast()
+  const [uploadingDocId, setUploadingDocId] = useState(null)
 
   useEffect(() => {
     fetchMyOnboarding()
@@ -169,6 +170,7 @@ async function toggleDocument(docId) {
 async function handleEmployeeDocumentUpload(e, docId) {
   const file = e.target.files[0]
   if (!file) return
+  setUploadingDocId(docId)
 
   const employeeId = userProfile.employee_id
   const filePath = `${employeeId}/${docId}_${Date.now()}_${file.name}`
@@ -205,7 +207,8 @@ async function handleEmployeeDocumentUpload(e, docId) {
     if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
   }
 
-  showToast('Document uploaded successfully')
+   showToast('Document uploaded successfully')
+   setUploadingDocId(null)
 }
 
   function totalTasks() {
@@ -260,11 +263,12 @@ async function handleEmployeeDocumentUpload(e, docId) {
     docRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 0', borderBottom: '1px solid #f0efeb', cursor: 'pointer' },
   }
 
-  if (loading) return (
-    <div style={styles.app}>
-      <div style={styles.topbar}>
-        <div style={styles.logo}>Integrated Launch</div>
-      </div>
+if (loading) return (
+  <div style={styles.app}>
+    <div style={styles.topbar}>
+      <div style={styles.logo}>Integrated Launch</div>
+      <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
+    </div>
       <div style={{ padding: '40px', maxWidth: '720px', margin: '0 auto' }}>
         <SkeletonLine width="200px" height="24px" style={{ marginBottom: '8px' }} />
         <SkeletonLine width="280px" height="13px" style={{ marginBottom: '24px' }} />
@@ -403,18 +407,20 @@ async function handleEmployeeDocumentUpload(e, docId) {
               style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>
               View uploaded file
             </a>
-            <label style={{ fontSize: '12px', color: '#8a8a86', cursor: 'pointer' }}>
-              Replace
-              <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
-                onChange={e => handleEmployeeDocumentUpload(e, doc.id)} />
-            </label>
+<label style={{ fontSize: '12px', color: uploadingDocId === doc.id ? '#a8a8a4' : '#8a8a86', cursor: uploadingDocId === doc.id ? 'default' : 'pointer' }}>
+  {uploadingDocId === doc.id ? 'Uploading...' : 'Replace'}
+  <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
+    onChange={e => handleEmployeeDocumentUpload(e, doc.id)}
+    disabled={!!uploadingDocId} />
+</label>
           </div>
         ) : (
-          <label style={{ fontSize: '12px', color: '#0070CA', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            + Upload completed document
-            <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
-              onChange={e => handleEmployeeDocumentUpload(e, doc.id)} />
-          </label>
+            <label style={{ fontSize: '12px', color: uploadingDocId === doc.id ? '#a8a8a4' : '#0070CA', cursor: uploadingDocId === doc.id ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+  {uploadingDocId === doc.id ? 'Uploading...' : '+ Upload completed document'}
+  <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
+    onChange={e => handleEmployeeDocumentUpload(e, doc.id)}
+    disabled={!!uploadingDocId} />
+</label>
         )}
       </div>
     </div>

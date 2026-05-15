@@ -333,7 +333,7 @@ function renderModal() {
             <div key={h.id} style={{ ...styles.row, cursor: 'default' }}>
               <div style={{ cursor: 'pointer', flex: 1 }} onClick={() => onViewOnboarding(h.id)}>
                 <div style={styles.rowName}>{h.employees.full_name}</div>
-                <div style={styles.rowMuted}>{h.employees.roles?.name || 'Unknown role'} · Started {new Date(h.employees.hire_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                <div style={styles.rowMuted}>{h.employees.roles?.name || 'Role removed'} · Started {new Date(h.employees.hire_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <span style={styles.pill}>{h.status}</span>
