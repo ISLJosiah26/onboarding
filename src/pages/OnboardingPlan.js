@@ -27,110 +27,110 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   const [inviteSent, setInviteSent] = useState(false)
   const [inviting, setInviting] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(false)
-  const { toast, showToast, hideToast } = useToast()
+  const [showHiddenDocs, setShowHiddenDocs] = useState(false)
   const [fetchError, setFetchError] = useState(null)
+  const { toast, showToast, hideToast } = useToast()
 
   useEffect(() => {
     fetchPlan()
     fetchDocuments()
   }, [instanceId])
 
-async function fetchPlan() {
-  setFetchError(null)
-  const { data, error } = await supabase
-    .from('onboarding_instances')
-    .select(`
-      id, status,
-      employees (id, full_name, email, hire_date, role_id, roles (name)),
-      task_completions (
-        id, completed, completed_at, notes,
-        onboarding_templates (id, task_name, phase, owner, parent_id)
-      )
-    `)
-    .eq('id', instanceId)
-    .single()
+  async function fetchPlan() {
+    setFetchError(null)
+    const { data, error } = await supabase
+      .from('onboarding_instances')
+      .select(`
+        id, status,
+        employees (id, full_name, email, hire_date, role_id, roles (name)),
+        task_completions (
+          id, completed, completed_at, notes,
+          onboarding_templates (id, task_name, phase, owner, parent_id)
+        )
+      `)
+      .eq('id', instanceId)
+      .single()
 
-  if (error) {
-    setFetchError(handleSupabaseError(error, 'Failed to load onboarding plan.'))
+    if (error) {
+      setFetchError(handleSupabaseError(error, 'Failed to load onboarding plan.'))
+      setLoading(false)
+      return
+    }
+
+    setInstance(data)
+    const byPhase = {}
+    const comp = {}
+    const nts = {}
+    PHASES.forEach(p => byPhase[p] = [])
+    data.task_completions.forEach(tc => {
+      const phase = tc.onboarding_templates.phase
+      if (byPhase[phase]) byPhase[phase].push(tc)
+      comp[tc.id] = tc.completed
+      nts[tc.id] = tc.notes || ''
+    })
+    setTasksByPhase(byPhase)
+    setCompletions(comp)
+    setNotes(nts)
     setLoading(false)
-    return
   }
 
-  setInstance(data)
-  const byPhase = {}
-  const comp = {}
-  const nts = {}
-  PHASES.forEach(p => byPhase[p] = [])
-  data.task_completions.forEach(tc => {
-    const phase = tc.onboarding_templates.phase
-    if (byPhase[phase]) byPhase[phase].push(tc)
-    comp[tc.id] = tc.completed
-    nts[tc.id] = tc.notes || ''
-  })
-  setTasksByPhase(byPhase)
-  setCompletions(comp)
-  setNotes(nts)
-  setLoading(false)
-}
+  async function fetchDocuments() {
+    const { data: inst } = await supabase
+      .from('onboarding_instances')
+      .select('employees (id, role_id)')
+      .eq('id', instanceId)
+      .single()
 
-async function fetchDocuments() {
-  const { data: inst } = await supabase
-    .from('onboarding_instances')
-    .select('employees (id, role_id)')
-    .eq('id', instanceId)
-    .single()
+    if (!inst) return
 
-  if (!inst) return
+    const employeeId = inst.employees.id
+    const roleId = inst.employees.role_id
 
-  const employeeId = inst.employees.id
-  const roleId = inst.employees.role_id
+    const { data: docs } = await supabase
+      .from('documents')
+      .select('*')
+      .or(`role_id.is.null,role_id.eq.${roleId}`)
 
-  const { data: docs } = await supabase
-    .from('documents')
-    .select('*')
-    .or(`role_id.is.null,role_id.eq.${roleId}`)
+    if (docs) setDocuments(docs)
 
-  if (docs) setDocuments(docs)
+    const { data: dc } = await supabase
+      .from('document_completions')
+      .select('*')
+      .eq('employee_id', employeeId)
 
-  const { data: dc } = await supabase
-    .from('document_completions')
-    .select('*')
-    .eq('employee_id', employeeId)
-
-  const map = {}
-  if (dc) dc.forEach(d => map[d.document_id] = d)
-  setDocCompletions(map)
-}
-
-async function toggleTask(completionId, current, e) {
-  e.stopPropagation()
-  const newVal = !current
-  setCompletions(prev => ({ ...prev, [completionId]: newVal }))
-  const { error } = await supabase
-    .from('task_completions')
-    .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
-    .eq('id', completionId)
-  if (error) {
-    setCompletions(prev => ({ ...prev, [completionId]: current }))
-    showToast(handleSupabaseError(error, 'Failed to save task. Please try again.'), 'error')
+    const map = {}
+    if (dc) dc.forEach(d => map[d.document_id] = d)
+    setDocCompletions(map)
   }
-}
 
-async function saveNote(completionId, value) {
-  setNotes(prev => ({ ...prev, [completionId]: value }))
-  const { error } = await supabase
-    .from('task_completions')
-    .update({ notes: value })
-    .eq('id', completionId)
-  if (error) showToast(handleSupabaseError(error, 'Failed to save note.'), 'error')
-  else showToast('Note saved')
-}
+  async function toggleTask(completionId, current, e) {
+    e.stopPropagation()
+    const newVal = !current
+    setCompletions(prev => ({ ...prev, [completionId]: newVal }))
+    const { error } = await supabase
+      .from('task_completions')
+      .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
+      .eq('id', completionId)
+    if (error) {
+      setCompletions(prev => ({ ...prev, [completionId]: current }))
+      showToast(handleSupabaseError(error, 'Failed to save task. Please try again.'), 'error')
+    }
+  }
+
+  async function saveNote(completionId, value) {
+    setNotes(prev => ({ ...prev, [completionId]: value }))
+    const { error } = await supabase
+      .from('task_completions')
+      .update({ notes: value })
+      .eq('id', completionId)
+    if (error) showToast(handleSupabaseError(error, 'Failed to save note.'), 'error')
+    else showToast('Note saved')
+  }
 
   async function toggleDocument(docId, e) {
     e.stopPropagation()
     const employeeId = instance.employees.id
     const existing = docCompletions[docId]
-
     if (existing) {
       const newVal = !existing.signed
       setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, signed: newVal } }))
@@ -147,27 +147,52 @@ async function saveNote(completionId, value) {
     }
   }
 
-async function handleUploadDocument(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  setUploading(true)
-  const filePath = `documents/${Date.now()}_${file.name}`
-  const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
-  if (uploadError) {
-    showToast(handleSupabaseError(uploadError, 'Upload failed. Please try again.'), 'error')
+  async function hideDocument(docId) {
+    const employeeId = instance.employees.id
+    const existing = docCompletions[docId]
+    if (existing) {
+      await supabase.from('document_completions').update({ hidden: true }).eq('id', existing.id)
+      setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, hidden: true } }))
+    } else {
+      const { data } = await supabase
+        .from('document_completions')
+        .insert({ employee_id: employeeId, document_id: docId, hidden: true, signed: false, received: false })
+        .select().single()
+      if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
+    }
+    showToast('Document hidden for this employee')
+  }
+
+  async function restoreDocument(docId) {
+    const existing = docCompletions[docId]
+    if (existing) {
+      await supabase.from('document_completions').update({ hidden: false }).eq('id', existing.id)
+      setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, hidden: false } }))
+      showToast('Document restored')
+    }
+  }
+
+  async function handleUploadDocument(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    const filePath = `documents/${Date.now()}_${file.name}`
+    const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
+    if (uploadError) {
+      showToast(handleSupabaseError(uploadError, 'Upload failed. Please try again.'), 'error')
+      setUploading(false)
+      return
+    }
+    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath)
+    const { error: insertError } = await supabase.from('documents').insert({ name: file.name, file_url: urlData.publicUrl })
+    if (insertError) {
+      showToast(handleSupabaseError(insertError, 'Failed to save document.'), 'error')
+    } else {
+      showToast('Document uploaded')
+      await fetchDocuments()
+    }
     setUploading(false)
-    return
   }
-  const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath)
-  const { error: insertError } = await supabase.from('documents').insert({ name: file.name, file_url: urlData.publicUrl })
-  if (insertError) {
-    showToast(handleSupabaseError(insertError, 'Failed to save document.'), 'error')
-  } else {
-    showToast('Document uploaded')
-    await fetchDocuments()
-  }
-  setUploading(false)
-}
 
   async function handleMarkComplete() {
     setModal({
@@ -216,65 +241,47 @@ async function handleUploadDocument(e) {
     })
   }
 
-async function handleDeleteEmployee() {
-  setModal({
-    title: 'Delete employee',
-    message: `This will permanently delete ${instance.employees.full_name} and all their onboarding data including their portal access. This cannot be undone.`,
-    confirmLabel: 'Delete permanently',
-    confirmDanger: true,
-    onConfirm: async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-
-      await fetch('https://gqgjnltqbomtefryqlua.supabase.co/functions/v1/delete-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ employeeId: instance.employees.id })
-      })
-
-      await supabase.from('onboarding_instances').delete().eq('id', instanceId)
-      await supabase.from('employees').delete().eq('id', instance.employees.id)
-
-      setModal(null)
-      onBack()
-    }
-  })
-}
-
-async function handleInviteEmployee() {
-  if (!instance.employees.email) {
-    alert('This employee has no email address on file.')
-    return
-  }
-  setInviting(true)
-
-  const { data: { session } } = await supabase.auth.getSession()
-
-  const response = await fetch('https://gqgjnltqbomtefryqlua.supabase.co/functions/v1/invite-employee', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`
-    },
-    body: JSON.stringify({
-      email: instance.employees.email,
-      employeeId: instance.employees.id,
-      brand: instance.employees.roles?.brand || 'ISL'
+  async function handleDeleteEmployee() {
+    setModal({
+      title: 'Delete employee',
+      message: `This will permanently delete ${instance.employees.full_name} and all their onboarding data including their portal access. This cannot be undone.`,
+      confirmLabel: 'Delete permanently',
+      confirmDanger: true,
+      onConfirm: async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        await fetch('https://gqgjnltqbomtefryqlua.supabase.co/functions/v1/delete-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ employeeId: instance.employees.id })
+        })
+        await supabase.from('onboarding_instances').delete().eq('id', instanceId)
+        await supabase.from('employees').delete().eq('id', instance.employees.id)
+        setModal(null)
+        onBack()
+      }
     })
-  })
-
-  const data = await response.json()
-  console.log('Response:', data)
-
-  if (!response.ok || data.error) {
-    alert('Error: ' + JSON.stringify(data.error || data))
-  } else {
-    setInviteSent(true)
   }
-  setInviting(false)
-}
+
+  async function handleInviteEmployee() {
+    if (!instance.employees.email) {
+      showToast('This employee has no email address on file.', 'error')
+      return
+    }
+    setInviting(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    const response = await fetch('https://gqgjnltqbomtefryqlua.supabase.co/functions/v1/invite-employee', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ email: instance.employees.email, employeeId: instance.employees.id, brand: instance.employees.roles?.brand || 'ISL' })
+    })
+    const data = await response.json()
+    if (!response.ok || data.error) {
+      showToast('Failed to send invite. Please try again.', 'error')
+    } else {
+      setInviteSent(true)
+    }
+    setInviting(false)
+  }
 
   function totalTasks() {
     return Object.values(tasksByPhase).flat().filter(tc => !tc.onboarding_templates.parent_id).length
@@ -295,9 +302,11 @@ async function handleInviteEmployee() {
     return t > 0 ? Math.round((completedTasksCount() / t) * 100) : 0
   }
 
-  function toggleTaskExpanded(taskId) {
-    setExpandedTasks(prev => ({ ...prev, [taskId]: !prev[taskId] }))
-  }
+  const checkIcon = (size = 9) => (
+    <svg width={size} height={size - 2} viewBox="0 0 10 8" fill="none">
+      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
 
   const styles = {
     header: { padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' },
@@ -312,22 +321,11 @@ async function handleInviteEmployee() {
     content: { padding: '32px 40px', maxWidth: '780px' },
     sectionLabel: { fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
     uploadLink: { fontSize: '12px', color: '#0070CA', cursor: 'pointer', fontWeight: 500, textTransform: 'none', letterSpacing: 0 },
+    taskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efeb', cursor: 'pointer' },
     parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efeb', cursor: 'pointer' },
     subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#fafaf9' },
-    checkbox: (checked) => ({
-      width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0,
-      border: checked ? 'none' : '1.5px solid #d4d3cf',
-      background: checked ? '#0070CA' : '#fff',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      transition: 'all 0.15s', cursor: 'pointer'
-    }),
-    subtaskCheckbox: (checked) => ({
-      width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0,
-      border: checked ? 'none' : '1.5px solid #d4d3cf',
-      background: checked ? '#0070CA' : '#fff',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      transition: 'all 0.15s', cursor: 'pointer'
-    }),
+    checkbox: (checked) => ({ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d4d3cf', background: checked ? '#0070CA' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
+    subtaskCheckbox: (checked) => ({ width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d4d3cf', background: checked ? '#0070CA' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
     taskName: (checked) => ({ fontSize: '13px', color: checked ? '#a8a8a4' : '#1a1a1a', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
     subtaskName: (checked) => ({ fontSize: '12px', color: checked ? '#a8a8a4' : '#5f5f5c', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
     owner: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f4f3f1', color: '#8a8a86', fontWeight: 500 },
@@ -344,58 +342,55 @@ async function handleInviteEmployee() {
     btnSecondary: { background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }
   }
 
-  const checkIcon = (size = 9) => (
-    <svg width={size} height={size - 2} viewBox="0 0 10 8" fill="none">
-      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+  if (loading) return (
+    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+      <div style={{ padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' }}>
+        <SkeletonLine width="120px" height="12px" style={{ marginBottom: '16px' }} />
+        <SkeletonLine width="220px" height="22px" style={{ marginBottom: '8px' }} />
+        <SkeletonLine width="280px" height="13px" style={{ marginBottom: '20px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <SkeletonLine width="160px" height="12px" />
+          <SkeletonLine width="240px" height="4px" />
+          <SkeletonLine width="32px" height="12px" />
+        </div>
+      </div>
+      <div style={{ padding: '32px 40px', maxWidth: '780px' }}>
+        <SkeletonLine width="100px" height="11px" style={{ marginBottom: '14px' }} />
+        <SkeletonTaskRow /><SkeletonTaskRow />
+        <SkeletonLine width="80px" height="11px" style={{ margin: '28px 0 14px' }} />
+        <SkeletonTaskRow /><SkeletonTaskRow /><SkeletonTaskRow />
+      </div>
+    </Layout>
   )
 
-if (loading) return (
-  <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
-    <div style={{ padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' }}>
-      <SkeletonLine width="120px" height="12px" style={{ marginBottom: '16px' }} />
-      <SkeletonLine width="220px" height="22px" style={{ marginBottom: '8px' }} />
-      <SkeletonLine width="280px" height="13px" style={{ marginBottom: '20px' }} />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <SkeletonLine width="160px" height="12px" />
-        <SkeletonLine width="240px" height="4px" />
-        <SkeletonLine width="32px" height="12px" />
+  if (fetchError) return (
+    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+      <div style={{ padding: '80px 40px', textAlign: 'center', fontFamily: 'Inter, -apple-system, sans-serif' }}>
+        <div style={{ color: '#c74848', fontSize: '14px', marginBottom: '12px' }}>{fetchError}</div>
+        <button onClick={fetchPlan} style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+          Try again
+        </button>
       </div>
-    </div>
-    <div style={{ padding: '32px 40px', maxWidth: '780px' }}>
-      <SkeletonLine width="100px" height="11px" style={{ marginBottom: '14px' }} />
-      <SkeletonTaskRow /><SkeletonTaskRow />
-      <SkeletonLine width="80px" height="11px" style={{ margin: '28px 0 14px' }} />
-      <SkeletonTaskRow /><SkeletonTaskRow /><SkeletonTaskRow />
-    </div>
-  </Layout>
-)
+    </Layout>
+  )
 
-if (fetchError) return (
-  <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
-    <div style={{ padding: '80px 40px', textAlign: 'center', fontFamily: 'Inter, -apple-system, sans-serif' }}>
-      <div style={{ color: '#c74848', fontSize: '14px', marginBottom: '12px' }}>{fetchError}</div>
-      <button onClick={fetchPlan} style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-        Try again
-      </button>
-    </div>
-  </Layout>
-)
+  const visibleDocs = documents.filter(doc => !docCompletions[doc.id]?.hidden)
+  const hiddenDocs = documents.filter(doc => docCompletions[doc.id]?.hidden)
 
   return (
     <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
       <div style={styles.header}>
-<button style={styles.backLink} onClick={onBack}>
-  <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 2L4 7l5 5"/></svg>
-  Back to dashboard
-</button>
-<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-  <div style={styles.title}>{instance.employees.full_name}</div>
-  <button onClick={() => setEditingEmployee(true)} style={{ fontSize: '12px', color: '#8a8a86', background: 'none', border: '1px solid #ebebe8', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
-</div>
-<div style={styles.sub}>
-  {instance.employees.roles.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
-</div>
+        <button style={styles.backLink} onClick={onBack}>
+          <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 2L4 7l5 5"/></svg>
+          Back to dashboard
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={styles.title}>{instance.employees.full_name}</div>
+          <button onClick={() => setEditingEmployee(true)} style={{ fontSize: '12px', color: '#8a8a86', background: 'none', border: '1px solid #ebebe8', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+        </div>
+        <div style={styles.sub}>
+          {instance.employees.roles?.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
+        </div>
         <div style={styles.progressRow}>
           <span style={styles.progressText}>{completedTasksCount()} of {totalTasks()} tasks complete</span>
           <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct()}%` }}></div></div>
@@ -413,38 +408,65 @@ if (fetchError) return (
               <input type="file" style={{ display: 'none' }} onChange={handleUploadDocument} accept=".pdf,.doc,.docx" />
             </label>
           </div>
-          {documents.length === 0 && (
+
+          {visibleDocs.length === 0 && hiddenDocs.length === 0 && (
             <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '12px 0' }}>No documents in the library yet.</div>
           )}
-{documents.map(doc => {
-  const dc = docCompletions[doc.id]
-  const signed = dc?.signed || false
-  const completedFileUrl = dc?.completed_file_url || null
-  return (
-    <div key={doc.id} style={{ ...styles.taskRow, flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', width: '100%' }} onClick={(e) => toggleDocument(doc.id, e)}>
-        <div style={styles.checkbox(signed)}>
-          {signed && checkIcon()}
-        </div>
-        <div style={styles.taskName(signed)}>{doc.name}</div>
-        <a href={doc.file_url} target="_blank" rel="noreferrer"
-          onClick={e => e.stopPropagation()}
-          style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none', flexShrink: 0 }}>
-          View template
-        </a>
-      </div>
-      {completedFileUrl && (
-        <div style={{ paddingLeft: '32px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '12px', color: '#2d7a4a' }}>✓ Employee uploaded</span>
-          <a href={completedFileUrl} target="_blank" rel="noreferrer"
-            style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>
-            Download
-          </a>
-        </div>
-      )}
-    </div>
-  )
-})}
+
+          {visibleDocs.map(doc => {
+            const dc = docCompletions[doc.id]
+            const signed = dc?.signed || false
+            const completedFileUrl = dc?.completed_file_url || null
+            return (
+              <div key={doc.id} style={{ borderBottom: '1px solid #f0efeb', paddingBottom: '12px', marginBottom: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0 4px' }} onClick={(e) => toggleDocument(doc.id, e)}>
+                  <div style={styles.checkbox(signed)}>
+                    {signed && checkIcon()}
+                  </div>
+                  <div style={styles.taskName(signed)}>{doc.name}</div>
+                  <a href={doc.file_url} target="_blank" rel="noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none', flexShrink: 0 }}>
+                    View
+                  </a>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); hideDocument(doc.id) }}
+                    style={{ fontSize: '11px', color: '#a8a8a4', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                    Hide
+                  </button>
+                </div>
+                {completedFileUrl && (
+                  <div style={{ paddingLeft: '32px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', color: '#2d7a4a' }}>✓ Employee uploaded</span>
+                    <a href={completedFileUrl} target="_blank" rel="noreferrer"
+                      style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>
+                      Download
+                    </a>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+
+          {hiddenDocs.length > 0 && (
+            <div style={{ marginTop: '8px' }}>
+              <button
+                onClick={() => setShowHiddenDocs(prev => !prev)}
+                style={{ fontSize: '12px', color: '#8a8a86', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                {showHiddenDocs ? 'Hide hidden documents' : `Show hidden (${hiddenDocs.length})`}
+              </button>
+              {showHiddenDocs && hiddenDocs.map(doc => (
+                <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: '1px solid #f0efeb', opacity: 0.5 }}>
+                  <div style={{ flex: 1, fontSize: '13px', color: '#8a8a86', textDecoration: 'line-through' }}>{doc.name}</div>
+                  <button
+                    onClick={() => restoreDocument(doc.id)}
+                    style={{ fontSize: '12px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Restore
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {PHASES.map(phase => {
@@ -476,14 +498,13 @@ if (fetchError) return (
 
                 return (
                   <div key={tc.id}>
-                    <div style={styles.parentRow} onClick={() => hasSubtasks ? toggleTaskExpanded(tc.id) : setExpanded(isNoteExpanded ? null : tc.id)}>
-                      {!hasSubtasks && (
-                        <div style={styles.checkbox(isChecked)} onClick={(e) => toggleTask(tc.id, completions[tc.id], e)}>
+                    <div style={styles.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [tc.id]: !prev[tc.id] })) : setExpanded(isNoteExpanded ? null : tc.id)}>
+                      {hasSubtasks ? (
+                        <div style={{ ...styles.checkbox(isChecked), cursor: 'default' }} onClick={e => e.stopPropagation()}>
                           {isChecked && checkIcon()}
                         </div>
-                      )}
-                      {hasSubtasks && (
-                        <div style={{ ...styles.checkbox(isChecked), cursor: 'default' }} onClick={e => e.stopPropagation()}>
+                      ) : (
+                        <div style={styles.checkbox(isChecked)} onClick={(e) => toggleTask(tc.id, completions[tc.id], e)}>
                           {isChecked && checkIcon()}
                         </div>
                       )}
@@ -493,38 +514,34 @@ if (fetchError) return (
                           <span style={styles.noteIndicator}>· note</span>
                         )}
                       </div>
-                      {hasSubtasks && (
-                        <span style={styles.subtaskCount}>{completedSubtasks}/{subtasks.length}</span>
-                      )}
+                      {hasSubtasks && <span style={styles.subtaskCount}>{completedSubtasks}/{subtasks.length}</span>}
                       <div style={styles.owner}>{tc.onboarding_templates.owner}</div>
-                      {hasSubtasks && (
-                        <span style={styles.chevron(isTaskExpanded)}>▶</span>
-                      )}
+                      {hasSubtasks && <span style={styles.chevron(isTaskExpanded)}>▶</span>}
                     </div>
 
-{hasSubtasks && isTaskExpanded && (
-  <div>
-    {PHASES.map(phase => {
-      const phaseSubtasks = subtasks.filter(s => s.onboarding_templates.phase === phase)
-      if (phaseSubtasks.length === 0) return null
-      return (
-        <div key={phase}>
-          <div style={{ fontSize: '10px', fontWeight: 600, color: '#c0bfbb', textTransform: 'uppercase', letterSpacing: '0.6px', padding: '8px 0 6px 32px', background: '#fafaf9' }}>
-            {phase}
-          </div>
-          {phaseSubtasks.map(s => (
-            <div key={s.id} style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
-              <div style={styles.subtaskCheckbox(completions[s.id])}>
-                {completions[s.id] && checkIcon(7)}
-              </div>
-              <div style={styles.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
-            </div>
-          ))}
-        </div>
-      )
-    })}
-  </div>
-)}
+                    {hasSubtasks && isTaskExpanded && (
+                      <div>
+                        {PHASES.map(p => {
+                          const phaseSubtasks = subtasks.filter(s => s.onboarding_templates.phase === p)
+                          if (phaseSubtasks.length === 0) return null
+                          return (
+                            <div key={p}>
+                              <div style={{ fontSize: '10px', fontWeight: 600, color: '#c0bfbb', textTransform: 'uppercase', letterSpacing: '0.6px', padding: '8px 0 6px 32px', background: '#fafaf9' }}>
+                                {p}
+                              </div>
+                              {phaseSubtasks.map(s => (
+                                <div key={s.id} style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
+                                  <div style={styles.subtaskCheckbox(completions[s.id])}>
+                                    {completions[s.id] && checkIcon(7)}
+                                  </div>
+                                  <div style={styles.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
 
                     {!hasSubtasks && isNoteExpanded && (
                       <div style={styles.expandedPanel} onClick={e => e.stopPropagation()}>
@@ -547,24 +564,24 @@ if (fetchError) return (
         })}
       </div>
 
-<div style={styles.footer}>
-  <button style={styles.btnPrimary} onClick={handleMarkComplete}>Mark as complete</button>
-  <button style={styles.btnSecondary} onClick={handleArchive}>Archive</button>
-  <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
-    {inviteSent ? (
-      <span style={{ fontSize: '13px', color: '#2d7a4a' }}>Invite sent</span>
-    ) : (
-      <button onClick={handleInviteEmployee} disabled={inviting}
-        style={{ background: 'transparent', color: '#0070CA', border: '1px solid #0070CA', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-        {inviting ? 'Sending...' : 'Invite to portal'}
-      </button>
-    )}
-    <button onClick={handleDeleteEmployee}
-      style={{ background: 'transparent', color: '#c74848', border: '1px solid #f5d6d6', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-      Delete employee
-    </button>
-  </div>
-</div>
+      <div style={styles.footer}>
+        <button style={styles.btnPrimary} onClick={handleMarkComplete}>Mark as complete</button>
+        <button style={styles.btnSecondary} onClick={handleArchive}>Archive</button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {inviteSent ? (
+            <span style={{ fontSize: '13px', color: '#2d7a4a' }}>Invite sent</span>
+          ) : (
+            <button onClick={handleInviteEmployee} disabled={inviting}
+              style={{ background: 'transparent', color: '#0070CA', border: '1px solid #0070CA', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {inviting ? 'Sending...' : 'Invite to portal'}
+            </button>
+          )}
+          <button onClick={handleDeleteEmployee}
+            style={{ background: 'transparent', color: '#c74848', border: '1px solid #f5d6d6', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Delete employee
+          </button>
+        </div>
+      </div>
 
       {modal && (
         <ConfirmModal
@@ -577,19 +594,20 @@ if (fetchError) return (
         />
       )}
 
-{editingEmployee && (
-  <EditEmployeeModal
-    employee={instance.employees}
-    instanceId={instanceId}
-    onClose={() => setEditingEmployee(false)}
-    onSave={(updated) => {
-      setInstance(prev => ({ ...prev, employees: { ...prev.employees, ...updated } }))
-      setEditingEmployee(false)
-      fetchPlan()
-    }}
-  />
-)}
-{toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
+      {editingEmployee && (
+        <EditEmployeeModal
+          employee={instance.employees}
+          instanceId={instanceId}
+          onClose={() => setEditingEmployee(false)}
+          onSave={(updated) => {
+            setInstance(prev => ({ ...prev, employees: { ...prev.employees, ...updated } }))
+            setEditingEmployee(false)
+            fetchPlan()
+          }}
+        />
+      )}
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </Layout>
   )
 }

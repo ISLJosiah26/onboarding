@@ -383,7 +383,7 @@ if (loading) return (
             {documents.length === 0 && (
               <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No documents have been uploaded yet.</div>
             )}
-{documents.map(doc => {
+{documents.filter(doc => !docCompletions[doc.id]?.hidden).map(doc => {
   const dc = docCompletions[doc.id]
   const signed = dc?.signed || false
   const completedFileUrl = dc?.completed_file_url || null
