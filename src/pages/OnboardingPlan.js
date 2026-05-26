@@ -5,14 +5,15 @@ import Layout from '../components/Layout'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 import ConfirmModal from '../components/ConfirmModal'
 import EditEmployeeModal from '../components/EditEmployeeModal'
-import { HR_EMAIL } from '../config'
 import Toast from '../components/Toast'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
+import { logAudit } from '../utils/auditLog'
+import { getHrEmail } from '../utils/getHrEmail'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 
-export default function OnboardingPlan({ session, instanceId, onBack, onNavigate }) {
+export default function OnboardingPlan({ session, userProfile, instanceId, onBack, onNavigate }) {
   const [instance, setInstance] = useState(null)
   const [tasksByPhase, setTasksByPhase] = useState({})
   const [completions, setCompletions] = useState({})
@@ -166,6 +167,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
         .select().single()
       if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
     }
+    await logAudit('document_hidden', 'document', docId, { employee_name: instance.employees.full_name })
     showToast('Document hidden for this employee')
   }
 
@@ -174,6 +176,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
     if (existing) {
       await supabase.from('document_completions').update({ hidden: false }).eq('id', existing.id)
       setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, hidden: false } }))
+      await logAudit('document_restored', 'document', docId, { employee_name: instance.employees.full_name })
       showToast('Document restored')
     }
   }
@@ -209,9 +212,11 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
       confirmDanger: false,
       onConfirm: async () => {
         await supabase.from('onboarding_instances').update({ status: 'completed' }).eq('id', instanceId)
+        await logAudit('onboarding_completed', 'onboarding_instance', instanceId, { employee_name: instance.employees.full_name })
+        const hrEmail = await getHrEmail()
         await supabase.functions.invoke('send-email', {
           body: {
-            to: HR_EMAIL,
+            to: hrEmail,
             subject: `Onboarding complete: ${instance.employees.full_name}`,
             html: `
               <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
@@ -242,6 +247,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
       confirmDanger: true,
       onConfirm: async () => {
         await supabase.from('onboarding_instances').update({ status: 'archived' }).eq('id', instanceId)
+        await logAudit('onboarding_archived', 'onboarding_instance', instanceId, { employee_name: instance.employees.full_name })
         setModal(null)
         onBack()
       }
@@ -255,6 +261,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
       confirmLabel: 'Delete permanently',
       confirmDanger: true,
       onConfirm: async () => {
+        await logAudit('employee_deleted', 'employee', instance.employees.id, { employee_name: instance.employees.full_name })
         await supabase.functions.invoke('delete-user', { body: { employeeId: instance.employees.id } })
         await supabase.from('onboarding_instances').delete().eq('id', instanceId)
         await supabase.from('employees').delete().eq('id', instance.employees.id)
@@ -341,7 +348,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   }
 
   if (loading) return (
-    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+    <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
       <div style={{ padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' }}>
         <SkeletonLine width="120px" height="12px" style={{ marginBottom: '16px' }} />
         <SkeletonLine width="220px" height="22px" style={{ marginBottom: '8px' }} />
@@ -362,7 +369,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   )
 
   if (fetchError) return (
-    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+    <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
       <div style={{ padding: '80px 40px', textAlign: 'center', fontFamily: 'Inter, -apple-system, sans-serif' }}>
         <div style={{ color: '#c74848', fontSize: '14px', marginBottom: '12px' }}>{fetchError}</div>
         <button onClick={fetchPlan} style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -376,7 +383,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   const hiddenDocs = documents.filter(doc => docCompletions[doc.id]?.hidden)
 
   return (
-    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+    <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
       <div style={styles.header}>
         <button style={styles.backLink} onClick={onBack}>
           <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 2L4 7l5 5"/></svg>

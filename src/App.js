@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import NewOnboarding from './pages/NewOnboarding'
 import OnboardingPlan from './pages/OnboardingPlan'
 import Admin from './pages/Admin'
+import SuperAdmin from './pages/SuperAdmin'
 import EmployeePortal from './pages/EmployeePortal'
 import SetPassword from './pages/SetPassword'
 import { pageToPath, pathToPage } from './config'
@@ -188,14 +189,39 @@ if (!session) {
     return <SetPassword onComplete={() => navigate('dashboard')} />
   }
 
+  if (userProfile?.deactivated) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, -apple-system, sans-serif', padding: '20px' }}>
+        <div style={{ textAlign: 'center', maxWidth: '360px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a1a', marginBottom: '8px' }}>Account deactivated</div>
+          <div style={{ fontSize: '13px', color: '#8a8a86', marginBottom: '24px', lineHeight: 1.6 }}>Your account has been deactivated. Please contact HR if you believe this is an error.</div>
+          <button onClick={() => supabase.auth.signOut()} style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Sign out</button>
+        </div>
+      </div>
+    )
+  }
+
   if (userProfile?.role === 'employee') {
     return <EmployeePortal session={session} userProfile={userProfile} />
+  }
+
+  if (page === 'super-admin-users' || page === 'super-admin-audit' || page === 'super-admin-settings') {
+    if (userProfile?.role !== 'super_admin') return null
+    return (
+      <SuperAdmin
+        session={session}
+        userProfile={userProfile}
+        currentPage={page}
+        onNavigate={handleNavigate}
+      />
+    )
   }
 
   if (page === 'new-onboarding' && selectedRole) {
     return (
       <NewOnboarding
         session={session}
+        userProfile={userProfile}
         roleId={selectedRole.id}
         roleName={selectedRole.name}
         onBack={() => { setRefreshKey(k => k + 1); navigate('dashboard') }}
@@ -212,6 +238,7 @@ if (!session) {
     return (
       <OnboardingPlan
         session={session}
+        userProfile={userProfile}
         instanceId={activeInstanceId}
         onBack={() => { setRefreshKey(k => k + 1); navigate('dashboard') }}
         onNavigate={handleNavigate}
@@ -223,6 +250,7 @@ if (!session) {
     return (
       <Admin
         session={session}
+        userProfile={userProfile}
         initialTab={page}
         onBack={() => { setRefreshKey(k => k + 1); navigate('dashboard') }}
         onNavigate={handleNavigate}
@@ -241,6 +269,7 @@ if (!session) {
   return (
     <Dashboard
       session={session}
+      userProfile={userProfile}
       refreshKey={refreshKey}
       onNavigate={handleNavigate}
       onStartOnboarding={(role) => {

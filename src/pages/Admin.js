@@ -6,11 +6,12 @@ import ConfirmModal from '../components/ConfirmModal'
 import Toast from '../components/Toast'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
+import { logAudit } from '../utils/auditLog'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 const OWNERS = ['HR', 'Manager', 'IT']
 
-export default function Admin({ session, initialTab, onBack, onNavigate, onStartOnboarding, onViewOnboarding }) {
+export default function Admin({ session, userProfile, initialTab, onBack, onNavigate, onStartOnboarding, onViewOnboarding }) {
   const [roles, setRoles] = useState([])
   const [selectedRole, setSelectedRole] = useState(null)
   const [templates, setTemplates] = useState([])
@@ -290,7 +291,7 @@ function renderModal() {
   if (initialTab === 'new-onboarding-select') {
     const brandRoles = pickedBrand ? roles.filter(r => r.brand === pickedBrand) : []
     return (
-      <Layout session={session} currentPage="active" onNavigate={onNavigate}>
+      <Layout session={session} userProfile={userProfile} currentPage="active" onNavigate={onNavigate}>
         {renderHeader('Start new onboarding', 'Select the brand and role for this new employee.')}
         <div style={styles.content}>
           <div style={styles.card}>
@@ -325,7 +326,7 @@ function renderModal() {
 
   if (initialTab === 'history') {
     return (
-      <Layout session={session} currentPage="history" onNavigate={onNavigate}>
+      <Layout session={session} userProfile={userProfile} currentPage="history" onNavigate={onNavigate}>
         {renderHeader('History', 'Completed and archived onboardings.')}
         <div style={styles.content}>
           {history.length === 0 ? (
@@ -346,6 +347,7 @@ function renderModal() {
                     confirmDanger: false,
                     onConfirm: async () => {
                       await supabase.from('onboarding_instances').update({ status: 'active' }).eq('id', h.id)
+                      await logAudit('onboarding_reactivated', 'onboarding_instance', h.id, { employee_name: h.employees.full_name })
                       setModal(null)
                       fetchHistory()
                     }
@@ -363,7 +365,7 @@ function renderModal() {
 
   if (initialTab === 'roles') {
     return (
-      <Layout session={session} currentPage="roles" onNavigate={onNavigate}>
+      <Layout session={session} userProfile={userProfile} currentPage="roles" onNavigate={onNavigate}>
         {renderHeader('Roles', 'Manage the roles employees are hired for.')}
         <div style={styles.content}>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
@@ -399,7 +401,7 @@ function renderModal() {
 
   if (initialTab === 'templates') {
     return (
-      <Layout session={session} currentPage="templates" onNavigate={onNavigate}>
+      <Layout session={session} userProfile={userProfile} currentPage="templates" onNavigate={onNavigate}>
         {renderHeader('Task templates', 'Define the onboarding tasks for each role.')}
         <div style={styles.content}>
           <label style={styles.label}>Select a role to manage its tasks</label>
@@ -558,7 +560,7 @@ function renderModal() {
 
 if (initialTab === 'documents') {
   return (
-    <Layout session={session} currentPage="documents" onNavigate={onNavigate}>
+    <Layout session={session} userProfile={userProfile} currentPage="documents" onNavigate={onNavigate}>
       {renderHeader('Documents', 'Manage the document library. Documents can be universal or role-specific.')}
       <div style={styles.content}>
         <div style={{ marginBottom: '28px', padding: '20px', background: '#fafaf9', border: '1px solid #ebebe8', borderRadius: '10px' }}>
@@ -616,7 +618,7 @@ if (initialTab === 'documents') {
 }
 
   return (
-    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+    <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
       {renderHeader('Admin', '')}
       <div style={styles.content}>
         <div style={styles.emptyState}>Select a section from the sidebar.</div>
