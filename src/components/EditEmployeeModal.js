@@ -27,6 +27,12 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
     fetchRoles()
   }, [])
 
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
   async function fetchRoles() {
     const { data } = await supabase.from('roles').select('*').order('name')
     if (data) setRoles(data)
@@ -53,17 +59,21 @@ const { error: updateError } = await supabase
     if (updateError) { setError(updateError.message); setLoading(false); return }
 
     if (roleChanged && instanceId) {
-      await supabase.from('task_completions').delete().eq('instance_id', instanceId)
-
-      const { data: newTasks } = await supabase
+      const { data: newTasks, error: fetchTasksError } = await supabase
         .from('onboarding_templates')
         .select('id')
         .eq('role_id', roleId)
 
+      if (fetchTasksError) { setError('Failed to load tasks for the new role.'); setLoading(false); return }
+
+      const { error: deleteError } = await supabase.from('task_completions').delete().eq('instance_id', instanceId)
+      if (deleteError) { setError('Failed to update task list.'); setLoading(false); return }
+
       if (newTasks && newTasks.length > 0) {
-        await supabase.from('task_completions').insert(
+        const { error: insertError } = await supabase.from('task_completions').insert(
           newTasks.map(t => ({ instance_id: instanceId, template_task_id: t.id, completed: false }))
         )
+        if (insertError) { setError('Failed to create new tasks.'); setLoading(false); return }
       }
     }
 
