@@ -2,7 +2,7 @@ import { supabase } from '../supabaseClient'
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { id: 'active', label: 'Active', icon: 'people' },
+  { id: 'active', label: 'New onboarding', icon: 'people' },
   { id: 'history', label: 'History', icon: 'check' },
 ]
 
