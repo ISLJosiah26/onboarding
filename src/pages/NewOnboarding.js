@@ -17,7 +17,7 @@ export default function NewOnboarding({ session, roleId, roleName, onBack, onNav
     sub: { fontSize: '13px', color: '#8a8a86', marginTop: '2px' },
     content: { padding: '40px', maxWidth: '480px' },
     label: { fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' },
-    input: { width: '100%', background: '#fff', border: '1px solid #ebebe8', borderRadius: '7px', padding: '10px 14px', fontSize: '13px', color: '#1a1a1a', fontFamily: 'inherit', outline: 'none', marginBottom: '20px', display: 'block' },
+    input: { width: '100%', background: '#fff', border: '1px solid #ebebe8', borderRadius: '7px', padding: '10px 14px', fontSize: '13px', color: '#1a1a1a', fontFamily: 'inherit', outline: 'none', marginBottom: '20px', display: 'block', boxSizing: 'border-box' },
     btnPrimary: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
     btnSecondary: { background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginRight: '8px' },
     error: { fontSize: '12px', color: '#c74848', marginBottom: '16px' }

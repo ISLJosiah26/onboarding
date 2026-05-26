@@ -19,7 +19,7 @@ function Icon({ type }) {
   if (type === 'check') return <svg {...common}><path d="M2 7l3 3 7-7"/></svg>
   if (type === 'lines') return <svg {...common}><path d="M2 3h10M2 7h10M2 11h10"/></svg>
   if (type === 'doc') return <svg {...common}><path d="M3 2h6l3 3v7H3z"/><path d="M9 2v3h3"/></svg>
-  if (type === 'circle') return <svg {...common}><circle cx="7" cy="7" r="5"/><path d="M7 4v3l2 1"/></svg>
+  if (type === 'circle') return <svg {...common}><rect x="3" y="5" width="8" height="7" rx="1"/><path d="M5 5V3.5h4V5"/></svg>
   return null
 }
 
@@ -97,11 +97,16 @@ export default function Layout({ session, currentPage, onNavigate, children }) {
         ))}
 
         <div style={styles.sidebarBottom}>
-          <div style={styles.userChip} onClick={() => supabase.auth.signOut()}>
+          <div style={styles.userChip}>
             <div style={styles.userAvatar}>{initials}</div>
             <div>
               <div style={styles.userName}>{email.split('@')[0]}</div>
-              <div style={styles.userEmail}>Sign out</div>
+              <button
+                onClick={() => supabase.auth.signOut()}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: '#a8a8a4', fontSize: '11px', display: 'block', textAlign: 'left' }}
+              >
+                Sign out
+              </button>
             </div>
           </div>
         </div>

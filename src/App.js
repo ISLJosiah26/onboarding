@@ -73,7 +73,7 @@ useEffect(() => {
   if (!email) { setError('Please enter your email address first.'); return }
   setError('')
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://onboarding.integratedstaffing.ca'
+    redirectTo: window.location.origin
   })
   if (error) setError(error.message)
   else setResetSent(true)

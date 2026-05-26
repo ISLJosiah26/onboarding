@@ -227,6 +227,7 @@ async function handleAdminDocumentUpload(e) {
 
   if (insertError) {
     showToast(handleSupabaseError(insertError, 'Failed to save document.'), 'error')
+    await supabase.storage.from('documents').remove([filePath])
   } else {
     showToast('Document uploaded')
     fetchDocuments()
@@ -414,7 +415,11 @@ function renderModal() {
 <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
   <div style={{ flex: 1, minWidth: '200px' }}>
     {useLibraryTask ? (
-      <select style={{ ...styles.input, width: '100%' }} value={newTaskName} onChange={e => setNewTaskName(e.target.value)}>
+      <select style={{ ...styles.input, width: '100%' }} value={newTaskName}
+        onChange={e => {
+          if (e.target.value === '__custom__') { setUseLibraryTask(false); setNewTaskName('') }
+          else setNewTaskName(e.target.value)
+        }}>
         <option value="">Select from library...</option>
         {taskLibrary.map(t => <option key={t.id} value={t.task_name}>{t.task_name}</option>)}
         <option value="__custom__">+ Custom task</option>
@@ -429,12 +434,6 @@ function renderModal() {
           Use library
         </button>
       </div>
-    )}
-    {useLibraryTask && newTaskName === '__custom__' && (
-      <input style={{ ...styles.input, width: '100%', marginTop: '6px' }} placeholder="Type custom task name"
-        value={newTaskName === '__custom__' ? '' : newTaskName}
-        onChange={e => setNewTaskName(e.target.value)}
-        autoFocus />
     )}
   </div>
   <select style={styles.input} value={newTaskPhase} onChange={e => setNewTaskPhase(e.target.value)}>
@@ -616,5 +615,13 @@ if (initialTab === 'documents') {
   )
 }
 
-  return null
+  return (
+    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+      {renderHeader('Admin', '')}
+      <div style={styles.content}>
+        <div style={styles.emptyState}>Select a section from the sidebar.</div>
+      </div>
+      {renderModal()}
+    </Layout>
+  )
 }

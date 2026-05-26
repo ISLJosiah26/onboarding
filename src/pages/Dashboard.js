@@ -8,7 +8,8 @@ import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 
 function getInitials(name) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  if (!name) return '?'
+  return name.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().slice(0, 2) || '?'
 }
 
 function getPhase(hireDate) {
@@ -41,7 +42,7 @@ export default function Dashboard({ session, onStartOnboarding, onViewOnboarding
       .select(`
         id, started_at, status,
         employees (id, full_name, email, hire_date, roles (name)),
-        task_completions (id, completed)
+        task_completions (id, completed, onboarding_templates (id, parent_id))
       `)
       .eq('status', 'active')
       .order('started_at', { ascending: false })
@@ -81,10 +82,21 @@ export default function Dashboard({ session, onStartOnboarding, onViewOnboarding
     setDocStats(stats)
   }
 
+  function calcProgress(taskCompletions) {
+    const parentTc = taskCompletions.filter(tc => !tc.onboarding_templates?.parent_id)
+    const total = parentTc.length
+    if (total === 0) return { total: 0, done: 0, pct: 0 }
+    const done = parentTc.filter(tc => {
+      const subtasks = taskCompletions.filter(s => s.onboarding_templates?.parent_id === tc.onboarding_templates?.id)
+      if (subtasks.length === 0) return tc.completed
+      return subtasks.every(s => s.completed)
+    }).length
+    return { total, done, pct: Math.round((done / total) * 100) }
+  }
+
   const completingThisWeek = onboardings.filter(o => {
-    const total = o.task_completions.length
-    const done = o.task_completions.filter(t => t.completed).length
-    return total > 0 && (done / total) >= 0.9
+    const { total, pct } = calcProgress(o.task_completions)
+    return total > 0 && pct >= 90
   }).length
 
   const styles = {
@@ -132,7 +144,7 @@ export default function Dashboard({ session, onStartOnboarding, onViewOnboarding
           <div style={styles.statValue}>{onboardings.length}</div>
         </div>
         <div style={styles.stat}>
-          <div style={styles.statLabel}>Completing soon</div>
+          <div style={styles.statLabel}>Near completion</div>
           <div style={styles.statValue}>{completingThisWeek}</div>
         </div>
         <div style={styles.stat}>
@@ -168,9 +180,7 @@ export default function Dashboard({ session, onStartOnboarding, onViewOnboarding
               <div style={{ textAlign: 'right' }}>Started</div>
             </div>
             {onboardings.map(o => {
-              const total = o.task_completions.length
-              const completed = o.task_completions.filter(t => t.completed).length
-              const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+              const { pct } = calcProgress(o.task_completions)
               const name = o.employees.full_name
               const phase = getPhase(o.employees.hire_date)
               const uploadedDocs = docStats[o.employees.id] || 0

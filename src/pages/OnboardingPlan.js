@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
@@ -30,6 +30,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   const [showHiddenDocs, setShowHiddenDocs] = useState(false)
   const [fetchError, setFetchError] = useState(null)
   const { toast, showToast, hideToast } = useToast()
+  const noteTimers = useRef({})
 
   useEffect(() => {
     fetchPlan()
@@ -75,13 +76,13 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   }
 
   async function fetchDocuments() {
-    const { data: inst } = await supabase
+    const { data: inst, error: instError } = await supabase
       .from('onboarding_instances')
       .select('employees (id, role_id)')
       .eq('id', instanceId)
       .single()
 
-    if (!inst) return
+    if (instError || !inst) return
 
     const employeeId = inst.employees.id
     const roleId = inst.employees.role_id
@@ -118,13 +119,18 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
   }
 
   async function saveNote(completionId, value) {
-    setNotes(prev => ({ ...prev, [completionId]: value }))
     const { error } = await supabase
       .from('task_completions')
       .update({ notes: value })
       .eq('id', completionId)
     if (error) showToast(handleSupabaseError(error, 'Failed to save note.'), 'error')
     else showToast('Note saved')
+  }
+
+  function handleNoteChange(completionId, value) {
+    setNotes(prev => ({ ...prev, [completionId]: value }))
+    clearTimeout(noteTimers.current[completionId])
+    noteTimers.current[completionId] = setTimeout(() => saveNote(completionId, value), 1000)
   }
 
   async function toggleDocument(docId, e) {
@@ -187,6 +193,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
     const { error: insertError } = await supabase.from('documents').insert({ name: file.name, file_url: urlData.publicUrl })
     if (insertError) {
       showToast(handleSupabaseError(insertError, 'Failed to save document.'), 'error')
+      await supabase.storage.from('documents').remove([filePath])
     } else {
       showToast('Document uploaded')
       await fetchDocuments()
@@ -248,12 +255,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
       confirmLabel: 'Delete permanently',
       confirmDanger: true,
       onConfirm: async () => {
-        const { data: { session } } = await supabase.auth.getSession()
-        await fetch('https://gqgjnltqbomtefryqlua.supabase.co/functions/v1/delete-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-          body: JSON.stringify({ employeeId: instance.employees.id })
-        })
+        await supabase.functions.invoke('delete-user', { body: { employeeId: instance.employees.id } })
         await supabase.from('onboarding_instances').delete().eq('id', instanceId)
         await supabase.from('employees').delete().eq('id', instance.employees.id)
         setModal(null)
@@ -268,14 +270,10 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
       return
     }
     setInviting(true)
-    const { data: { session } } = await supabase.auth.getSession()
-    const response = await fetch('https://gqgjnltqbomtefryqlua.supabase.co/functions/v1/invite-employee', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ email: instance.employees.email, employeeId: instance.employees.id, brand: instance.employees.roles?.brand || 'ISL' })
+    const { data, error } = await supabase.functions.invoke('invite-employee', {
+      body: { email: instance.employees.email, employeeId: instance.employees.id, brand: instance.employees.roles?.brand || 'ISL' }
     })
-    const data = await response.json()
-    if (!response.ok || data.error) {
+    if (error || data?.error) {
       showToast('Failed to send invite. Please try again.', 'error')
     } else {
       setInviteSent(true)
@@ -453,7 +451,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
               <button
                 onClick={() => setShowHiddenDocs(prev => !prev)}
                 style={{ fontSize: '12px', color: '#8a8a86', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-                {showHiddenDocs ? 'Hide hidden documents' : `Show hidden (${hiddenDocs.length})`}
+                {showHiddenDocs ? `Collapse (${hiddenDocs.length} shown)` : `Show hidden (${hiddenDocs.length})`}
               </button>
               {showHiddenDocs && hiddenDocs.map(doc => (
                 <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: '1px solid #f0efeb', opacity: 0.5 }}>
@@ -500,7 +498,7 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
                   <div key={tc.id}>
                     <div style={styles.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [tc.id]: !prev[tc.id] })) : setExpanded(isNoteExpanded ? null : tc.id)}>
                       {hasSubtasks ? (
-                        <div style={{ ...styles.checkbox(isChecked), cursor: 'default' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ ...styles.checkbox(isChecked), cursor: 'default' }} onClick={e => e.stopPropagation()} title="Completion is driven by subtasks">
                           {isChecked && checkIcon()}
                         </div>
                       ) : (
@@ -549,11 +547,11 @@ export default function OnboardingPlan({ session, instanceId, onBack, onNavigate
                         <textarea
                           style={styles.noteInput}
                           value={notes[tc.id] || ''}
-                          onChange={e => setNotes(prev => ({ ...prev, [tc.id]: e.target.value }))}
-                          onBlur={e => saveNote(tc.id, e.target.value)}
+                          onChange={e => handleNoteChange(tc.id, e.target.value)}
+                          onBlur={e => { clearTimeout(noteTimers.current[tc.id]); saveNote(tc.id, e.target.value) }}
                           placeholder="Add a note about this task..."
                         />
-                        <div style={styles.noteHint}>Note saves automatically when you click away.</div>
+                        <div style={styles.noteHint}>Saves automatically.</div>
                       </div>
                     )}
                   </div>

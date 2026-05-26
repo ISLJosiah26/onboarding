@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 import Toast from '../components/Toast'
@@ -20,6 +20,7 @@ export default function EmployeePortal({ session, userProfile }) {
   const [celebration, setCelebration] = useState(null)
   const { toast, showToast, hideToast } = useToast()
   const [uploadingDocId, setUploadingDocId] = useState(null)
+  const celebrationTimer = useRef(null)
 
   useEffect(() => {
     fetchMyOnboarding()
@@ -137,7 +138,8 @@ async function toggleTask(completionId, current, e) {
         }
       })
     }
-    setTimeout(() => setCelebration(null), 3000)
+    clearTimeout(celebrationTimer.current)
+    celebrationTimer.current = setTimeout(() => setCelebration(null), 3000)
   }
 }
 
@@ -181,6 +183,7 @@ async function handleEmployeeDocumentUpload(e, docId) {
 
   if (uploadError) {
     showToast('Upload failed. Please try again.', 'error')
+    setUploadingDocId(null)
     return
   }
 
@@ -196,14 +199,14 @@ async function handleEmployeeDocumentUpload(e, docId) {
       .from('document_completions')
       .update({ completed_file_url: fileUrl, signed: true, completed_at: new Date().toISOString() })
       .eq('id', existing.id)
-    if (error) { showToast('Failed to save upload.', 'error'); return }
+    if (error) { showToast('Failed to save upload.', 'error'); setUploadingDocId(null); return }
     setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, completed_file_url: fileUrl, signed: true } }))
   } else {
     const { data, error } = await supabase
       .from('document_completions')
       .insert({ employee_id: employeeId, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString(), completed_file_url: fileUrl })
       .select().single()
-    if (error) { showToast('Failed to save upload.', 'error'); return }
+    if (error) { showToast('Failed to save upload.', 'error'); setUploadingDocId(null); return }
     if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
   }
 
@@ -301,7 +304,7 @@ if (loading) return (
 
       <div style={styles.hero}>
         <div style={styles.name}>Welcome, {instance.employees.full_name.split(' ')[0]}</div>
-        <div style={styles.sub}>{instance.employees.roles.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+        <div style={styles.sub}>{instance.employees.roles?.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
         <div style={styles.progressWrap}>
           <div style={styles.progressRow}>
             <span style={{ fontSize: '12px', color: '#8a8a86' }}>{completedTasksCount()} of {totalTasks()} tasks complete</span>

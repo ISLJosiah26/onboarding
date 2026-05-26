@@ -1,17 +1,31 @@
+import { useEffect } from 'react'
+
 export default function ConfirmModal({ title, message, confirmLabel, confirmDanger, onConfirm, onCancel }) {
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onCancel() }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onCancel])
+
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 1000,
-      background: 'rgba(0,0,0,0.25)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Inter, -apple-system, sans-serif'
-    }}>
-      <div style={{
-        background: '#fff', borderRadius: '12px',
-        border: '1px solid #ebebe8',
-        padding: '28px', width: '100%', maxWidth: '400px',
-        margin: '0 24px'
-      }}>
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.25)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'Inter, -apple-system, sans-serif'
+      }}
+      onClick={onCancel}
+    >
+      <div
+        style={{
+          background: '#fff', borderRadius: '12px',
+          border: '1px solid #ebebe8',
+          padding: '28px', width: '100%', maxWidth: '400px',
+          margin: '0 24px'
+        }}
+        onClick={e => e.stopPropagation()}
+      >
         <div style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.3px', marginBottom: '8px' }}>
           {title}
         </div>
