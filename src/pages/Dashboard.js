@@ -21,7 +21,7 @@ function getPhase(hireDate) {
   return '90 Day'
 }
 
-export default function Dashboard({ session, onStartOnboarding, onViewOnboarding, onNavigate, refreshKey }) {
+export default function Dashboard({ session, userProfile, onStartOnboarding, onViewOnboarding, onNavigate, refreshKey }) {
   const [onboardings, setOnboardings] = useState([])
   const [completedCount, setCompletedCount] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -126,7 +126,7 @@ export default function Dashboard({ session, onStartOnboarding, onViewOnboarding
   }
 
   return (
-    <Layout session={session} currentPage="dashboard" onNavigate={onNavigate}>
+    <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
       <div style={styles.header}>
         <div>
           <div style={styles.title}>Dashboard</div>

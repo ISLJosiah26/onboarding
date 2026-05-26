@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
+import { logAudit } from '../utils/auditLog'
 
 export default function EditEmployeeModal({ employee, instanceId, onClose, onSave }) {
   const [fullName, setFullName] = useState(employee.full_name)
@@ -76,6 +77,15 @@ const { error: updateError } = await supabase
         if (insertError) { setError('Failed to create new tasks.'); setLoading(false); return }
       }
     }
+
+    if (roleChanged) {
+      await logAudit('role_changed', 'employee', employee.id, {
+        employee_name: fullName.trim(),
+        old_role_id: employee.role_id,
+        new_role_id: roleId
+      })
+    }
+    await logAudit('employee_edited', 'employee', employee.id, { employee_name: fullName.trim() })
 
     const newRole = roles.find(r => r.id === roleId)
     setLoading(false)

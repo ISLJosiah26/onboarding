@@ -12,6 +12,12 @@ const SETTINGS_ITEMS = [
   { id: 'roles', label: 'Roles', icon: 'circle' },
 ]
 
+const SYSTEM_ITEMS = [
+  { id: 'super-admin-users', label: 'Users', icon: 'shield' },
+  { id: 'super-admin-audit', label: 'Audit log', icon: 'audit' },
+  { id: 'super-admin-settings', label: 'System settings', icon: 'gear' },
+]
+
 function Icon({ type }) {
   const common = { width: 14, height: 14, viewBox: '0 0 14 14', fill: 'none', stroke: 'currentColor', strokeWidth: 1.5 }
   if (type === 'dashboard') return <svg {...common}><rect x="1" y="1" width="5" height="5"/><rect x="8" y="1" width="5" height="5"/><rect x="1" y="8" width="5" height="5"/><rect x="8" y="8" width="5" height="5"/></svg>
@@ -20,10 +26,13 @@ function Icon({ type }) {
   if (type === 'lines') return <svg {...common}><path d="M2 3h10M2 7h10M2 11h10"/></svg>
   if (type === 'doc') return <svg {...common}><path d="M3 2h6l3 3v7H3z"/><path d="M9 2v3h3"/></svg>
   if (type === 'circle') return <svg {...common}><rect x="3" y="5" width="8" height="7" rx="1"/><path d="M5 5V3.5h4V5"/></svg>
+  if (type === 'shield') return <svg {...common}><path d="M7 1L2 3.5v3.5c0 3 2.3 5.5 5 6.5 2.7-1 5-3.5 5-6.5V3.5L7 1z"/></svg>
+  if (type === 'audit') return <svg {...common}><path d="M2 2h10v10H2z"/><path d="M4 5h6M4 7h4M4 9h5"/></svg>
+  if (type === 'gear') return <svg {...common}><circle cx="7" cy="7" r="2"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.9 2.9l1.4 1.4M9.7 9.7l1.4 1.4M2.9 11.1l1.4-1.4M9.7 4.3l1.4-1.4"/></svg>
   return null
 }
 
-export default function Layout({ session, currentPage, onNavigate, children }) {
+export default function Layout({ session, userProfile, currentPage, onNavigate, children }) {
   const styles = {
     app: {
       minHeight: '100vh',
@@ -95,6 +104,18 @@ export default function Layout({ session, currentPage, onNavigate, children }) {
             {item.label}
           </button>
         ))}
+
+        {userProfile?.role === 'super_admin' && (
+          <>
+            <div style={styles.navSection}>System</div>
+            {SYSTEM_ITEMS.map(item => (
+              <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
+                <Icon type={item.icon} />
+                {item.label}
+              </button>
+            ))}
+          </>
+        )}
 
         <div style={styles.sidebarBottom}>
           <div style={styles.userChip}>

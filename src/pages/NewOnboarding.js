@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
-import { HR_EMAIL } from '../config'
 import { handleSupabaseError } from '../utils/handleError'
+import { logAudit } from '../utils/auditLog'
+import { getHrEmail } from '../utils/getHrEmail'
 
-export default function NewOnboarding({ session, roleId, roleName, onBack, onNavigate, onComplete }) {
+export default function NewOnboarding({ session, userProfile, roleId, roleName, onBack, onNavigate, onComplete }) {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [hireDate, setHireDate] = useState('')
@@ -62,6 +63,10 @@ if (rpcError) {
 }
 
   await sendOnboardingStartedEmails(fullName, email, roleName, hireDate)
+  await logAudit('onboarding_created', 'onboarding_instance', data.instance_id, {
+    employee_name: fullName.trim(),
+    role: roleName
+  })
 
   setLoading(false)
   onComplete(data.instance_id)
@@ -69,6 +74,7 @@ if (rpcError) {
 
 async function sendOnboardingStartedEmails(name, employeeEmail, role, startDate) {
   const startFormatted = new Date(startDate).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+  const hrEmail = await getHrEmail()
 
   try {
     if (employeeEmail) {
@@ -92,7 +98,7 @@ async function sendOnboardingStartedEmails(name, employeeEmail, role, startDate)
 
     await supabase.functions.invoke('send-email', {
       body: {
-        to: HR_EMAIL,
+        to: hrEmail,
         subject: `New onboarding started: ${name}`,
         html: `
           <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
@@ -114,7 +120,7 @@ async function sendOnboardingStartedEmails(name, employeeEmail, role, startDate)
 }
 
   return (
-    <Layout session={session} currentPage="active" onNavigate={onNavigate}>
+    <Layout session={session} userProfile={userProfile} currentPage="active" onNavigate={onNavigate}>
       <div style={styles.header}>
         <div>
           <div style={styles.title}>New onboarding</div>
