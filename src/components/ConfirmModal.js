@@ -1,11 +1,25 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function ConfirmModal({ title, message, confirmLabel, confirmDanger, onConfirm, onCancel }) {
+  const [confirming, setConfirming] = useState(false)
+  const mountedRef = useRef(true)
+
+  useEffect(() => () => { mountedRef.current = false }, [])
+
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onCancel() }
+    const handleKey = (e) => { if (e.key === 'Escape' && !confirming) onCancel() }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [onCancel])
+  }, [onCancel, confirming])
+
+  async function handleConfirm() {
+    setConfirming(true)
+    try {
+      await onConfirm()
+    } finally {
+      if (mountedRef.current) setConfirming(false)
+    }
+  }
 
   return (
     <div
@@ -15,7 +29,7 @@ export default function ConfirmModal({ title, message, confirmLabel, confirmDang
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: 'Inter, -apple-system, sans-serif'
       }}
-      onClick={onCancel}
+      onClick={confirming ? undefined : onCancel}
     >
       <div
         style={{
@@ -35,15 +49,17 @@ export default function ConfirmModal({ title, message, confirmLabel, confirmDang
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
           <button
             onClick={onCancel}
-            style={{ background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '7px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+            disabled={confirming}
+            style={{ background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '7px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: confirming ? 'default' : 'pointer', fontFamily: 'inherit', opacity: confirming ? 0.5 : 1 }}
           >
             Cancel
           </button>
           <button
-            onClick={onConfirm}
-            style={{ background: confirmDanger ? '#c74848' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+            onClick={handleConfirm}
+            disabled={confirming}
+            style={{ background: confirmDanger ? '#c74848' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: confirming ? 'default' : 'pointer', fontFamily: 'inherit', opacity: confirming ? 0.7 : 1, minWidth: '80px' }}
           >
-            {confirmLabel || 'Confirm'}
+            {confirming ? 'Working…' : (confirmLabel || 'Confirm')}
           </button>
         </div>
       </div>
