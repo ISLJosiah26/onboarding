@@ -144,7 +144,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
           <div style={styles.statValue}>{onboardings.length}</div>
         </div>
         <div style={styles.stat}>
-          <div style={styles.statLabel}>Near completion</div>
+          <div style={styles.statLabel}>90%+ complete</div>
           <div style={styles.statValue}>{completingThisWeek}</div>
         </div>
         <div style={styles.stat}>
@@ -200,8 +200,8 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                   </div>
                   <div style={styles.rowText}>{o.employees.roles?.name || 'Unknown role'}</div>
                   <div style={styles.progressWrap}>
-                    <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct}%` }}></div></div>
-                    <div style={styles.progressText}>{pct}%</div>
+                    <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? '#2d7a4a' : '#0070CA' }}></div></div>
+                    <div style={{ ...styles.progressText, color: pct === 100 ? '#2d7a4a' : '#1a1a1a' }}>{pct}%</div>
                   </div>
                   <div><span style={styles.phasePill}>{phase}</span></div>
                   <div style={{ ...styles.rowTextMuted, textAlign: 'right' }}>

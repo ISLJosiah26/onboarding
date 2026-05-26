@@ -37,6 +37,7 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [useLibrarySubtask, setUseLibrarySubtask] = useState(true)
   const [uploadDocRole, setUploadDocRole] = useState('')
   const [uploadingDoc, setUploadingDoc] = useState(false)
+  const [historyFilter, setHistoryFilter] = useState('all')
 
   useEffect(() => { fetchRoles() }, [])
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
@@ -270,6 +271,38 @@ async function handleAdminDocumentUpload(e) {
     )
   }
 
+function renderAdminHeader(title, sub) {
+  const tabs = [
+    { id: 'history', label: 'History' },
+    { id: 'templates', label: 'Task templates' },
+    { id: 'documents', label: 'Documents' },
+    { id: 'roles', label: 'Roles' },
+  ]
+  const tabStyle = (active) => ({
+    padding: '10px 16px', fontSize: '13px',
+    fontWeight: active ? 500 : 400,
+    color: active ? '#1a1a1a' : '#8a8a86',
+    background: 'none', border: 'none',
+    borderBottom: active ? '2px solid #1a1a1a' : '2px solid transparent',
+    cursor: 'pointer', fontFamily: 'inherit', marginBottom: '-1px',
+  })
+  return (
+    <div style={{ borderBottom: '1px solid #ebebe8' }}>
+      <div style={{ padding: '28px 40px 20px' }}>
+        <div style={styles.title}>{title}</div>
+        {sub && <div style={styles.sub}>{sub}</div>}
+      </div>
+      <div style={{ display: 'flex', padding: '0 40px' }}>
+        {tabs.map(tab => (
+          <button key={tab.id} style={tabStyle(initialTab === tab.id)} onClick={() => onNavigate(tab.id)}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function renderModal() {
   return (
     <>
@@ -327,11 +360,18 @@ function renderModal() {
   if (initialTab === 'history') {
     return (
       <Layout session={session} userProfile={userProfile} currentPage="history" onNavigate={onNavigate}>
-        {renderHeader('History', 'Completed and archived onboardings.')}
+        {renderAdminHeader('History', '')}
         <div style={styles.content}>
-          {history.length === 0 ? (
-            <div style={styles.emptyState}>No completed or archived onboardings yet.</div>
-          ) : history.map(h => (
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '20px' }}>
+            {['all', 'completed', 'archived'].map(f => (
+              <button key={f} onClick={() => setHistoryFilter(f)} style={{ fontSize: '12px', padding: '4px 12px', borderRadius: '5px', border: '1px solid ' + (historyFilter === f ? '#1a1a1a' : '#ebebe8'), background: historyFilter === f ? '#1a1a1a' : '#fff', color: historyFilter === f ? '#fff' : '#5f5f5c', cursor: 'pointer', fontFamily: 'inherit', fontWeight: historyFilter === f ? 500 : 400 }}>
+                {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+          {history.filter(h => historyFilter === 'all' || h.status === historyFilter).length === 0 ? (
+            <div style={styles.emptyState}>No {historyFilter === 'all' ? 'completed or archived' : historyFilter} onboardings yet.</div>
+          ) : history.filter(h => historyFilter === 'all' || h.status === historyFilter).map(h => (
             <div key={h.id} style={{ ...styles.row, cursor: 'default' }}>
               <div style={{ cursor: 'pointer', flex: 1 }} onClick={() => onViewOnboarding(h.id)}>
                 <div style={styles.rowName}>{h.employees.full_name}</div>
@@ -366,7 +406,7 @@ function renderModal() {
   if (initialTab === 'roles') {
     return (
       <Layout session={session} userProfile={userProfile} currentPage="roles" onNavigate={onNavigate}>
-        {renderHeader('Roles', 'Manage the roles employees are hired for.')}
+        {renderAdminHeader('Roles', '')}
         <div style={styles.content}>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
             <input style={{ ...styles.input, flex: 1 }} placeholder="New role name" value={newRoleName}
@@ -402,7 +442,7 @@ function renderModal() {
   if (initialTab === 'templates') {
     return (
       <Layout session={session} userProfile={userProfile} currentPage="templates" onNavigate={onNavigate}>
-        {renderHeader('Task templates', 'Define the onboarding tasks for each role.')}
+        {renderAdminHeader('Task templates', '')}
         <div style={styles.content}>
           <label style={styles.label}>Select a role to manage its tasks</label>
           <select style={{ ...styles.input, width: '100%', maxWidth: '320px', marginBottom: '24px' }}
@@ -561,7 +601,7 @@ function renderModal() {
 if (initialTab === 'documents') {
   return (
     <Layout session={session} userProfile={userProfile} currentPage="documents" onNavigate={onNavigate}>
-      {renderHeader('Documents', 'Manage the document library. Documents can be universal or role-specific.')}
+      {renderAdminHeader('Documents', '')}
       <div style={styles.content}>
         <div style={{ marginBottom: '28px', padding: '20px', background: '#fafaf9', border: '1px solid #ebebe8', borderRadius: '10px' }}>
           <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', marginBottom: '16px' }}>Upload new document</div>

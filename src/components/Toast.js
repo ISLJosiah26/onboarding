@@ -2,9 +2,10 @@ import { useEffect } from 'react'
 
 export default function Toast({ message, type = 'success', onClose }) {
   useEffect(() => {
+    if (type === 'error') return
     const timer = setTimeout(onClose, 3000)
     return () => clearTimeout(timer)
-  }, [onClose])
+  }, [onClose, type])
 
   const colors = {
     success: { bg: '#1a1a1a', color: '#fff' },
@@ -19,7 +20,7 @@ export default function Toast({ message, type = 'success', onClose }) {
       position: 'fixed', bottom: '32px', left: '50%',
       transform: 'translateX(-50%)',
       background: bg, color,
-      borderRadius: '10px', padding: '12px 20px',
+      borderRadius: '10px', padding: '12px 16px 12px 20px',
       fontSize: '13px', fontWeight: 500,
       display: 'flex', alignItems: 'center', gap: '10px',
       boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
@@ -30,7 +31,14 @@ export default function Toast({ message, type = 'success', onClose }) {
       {type === 'success' && <span>✓</span>}
       {type === 'error' && <span>✕</span>}
       {type === 'warning' && <span>⚠</span>}
-      {message}
+      <span>{message}</span>
+      <button
+        onClick={onClose}
+        style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: '0 0 0 4px', fontSize: '16px', lineHeight: 1, fontFamily: 'inherit', flexShrink: 0 }}
+        aria-label="Dismiss"
+      >
+        ×
+      </button>
     </div>
   )
 }

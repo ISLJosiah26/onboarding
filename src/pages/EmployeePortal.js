@@ -8,6 +8,13 @@ import { handleSupabaseError } from '../utils/handleError'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 
+const PHASE_START_DAYS = { 'Week 1': 0, 'Week 2': 7, '30 Day': 14, '60 Day': 30, '90 Day': 60 }
+
+function isPhaseUpcoming(phase, hireDate) {
+  const days = Math.floor((new Date() - new Date(hireDate)) / 86400000)
+  return days < PHASE_START_DAYS[phase]
+}
+
 export default function EmployeePortal({ session, userProfile }) {
   const [instance, setInstance] = useState(null)
   const [tasksByPhase, setTasksByPhase] = useState({})
@@ -289,8 +296,15 @@ if (loading) return (
         <div style={styles.logo}>Integrated Launch</div>
         <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
       </div>
-      <div style={{ padding: '80px 40px', textAlign: 'center', color: '#8a8a86', fontSize: '14px' }}>
-        No active onboarding found. Please contact HR.
+      <div style={{ padding: '80px 40px', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
+        <div style={{ fontSize: '22px', marginBottom: '16px' }}>👋</div>
+        <div style={{ fontSize: '17px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.3px', marginBottom: '8px' }}>No active onboarding</div>
+        <div style={{ fontSize: '13px', color: '#8a8a86', lineHeight: 1.7, marginBottom: '24px' }}>
+          Your onboarding plan hasn't been set up yet.<br />Reach out to HR to get started.
+        </div>
+        <button onClick={() => supabase.auth.signOut()} style={{ fontSize: '13px', color: '#5f5f5c', background: 'none', border: '1px solid #ebebe8', borderRadius: '6px', padding: '8px 16px', cursor: 'pointer', fontFamily: 'inherit' }}>
+          Sign out
+        </button>
       </div>
     </div>
   )
@@ -328,9 +342,13 @@ if (loading) return (
               const allTasks = tasksByPhase[phase] || []
               const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
               if (parentTasks.length === 0) return null
+              const upcoming = isPhaseUpcoming(phase, instance.employees.hire_date)
               return (
-                <div key={phase}>
-                  <div style={styles.phaseLabel}>{phase}</div>
+                <div key={phase} style={{ opacity: upcoming ? 0.4 : 1, pointerEvents: upcoming ? 'none' : 'auto' }}>
+                  <div style={{ ...styles.phaseLabel, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>{phase}</span>
+                    {upcoming && <span style={{ fontSize: '10px', color: '#a8a8a4', fontWeight: 500, background: '#f4f3f1', padding: '1px 6px', borderRadius: '3px', textTransform: 'none', letterSpacing: 0 }}>Upcoming</span>}
+                  </div>
                   {parentTasks.map(tc => {
                     const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
                     const hasSubtasks = subtasks.length > 0
@@ -383,52 +401,61 @@ if (loading) return (
 
         {activeTab === 'documents' && (
           <>
-            {documents.length === 0 && (
-              <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No documents have been uploaded yet.</div>
+            {documents.filter(doc => !docCompletions[doc.id]?.hidden).length === 0 && (
+              <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No documents have been assigned yet.</div>
             )}
-{documents.filter(doc => !docCompletions[doc.id]?.hidden).map(doc => {
-  const dc = docCompletions[doc.id]
-  const signed = dc?.signed || false
-  const completedFileUrl = dc?.completed_file_url || null
-  return (
-    <div key={doc.id} style={{ ...styles.docRow, flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', width: '100%' }}>
-        <div style={styles.checkbox(signed)} onClick={() => toggleDocument(doc.id)}>
-          {signed && checkIcon()}
-        </div>
-        <div style={{ ...styles.taskName(false), flex: 1 }}>{doc.name}</div>
-        <a href={doc.file_url} target="_blank" rel="noreferrer"
-          style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none', flexShrink: 0 }}>
-          Download
-        </a>
-      </div>
-      <div style={{ paddingLeft: '34px', width: '100%' }}>
-        {completedFileUrl ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '12px', color: '#2d7a4a' }}>✓ Uploaded</span>
-            <a href={completedFileUrl} target="_blank" rel="noreferrer"
-              style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>
-              View uploaded file
-            </a>
-<label style={{ fontSize: '12px', color: uploadingDocId === doc.id ? '#a8a8a4' : '#8a8a86', cursor: uploadingDocId === doc.id ? 'default' : 'pointer' }}>
-  {uploadingDocId === doc.id ? 'Uploading...' : 'Replace'}
-  <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
-    onChange={e => handleEmployeeDocumentUpload(e, doc.id)}
-    disabled={!!uploadingDocId} />
-</label>
-          </div>
-        ) : (
-            <label style={{ fontSize: '12px', color: uploadingDocId === doc.id ? '#a8a8a4' : '#0070CA', cursor: uploadingDocId === doc.id ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-  {uploadingDocId === doc.id ? 'Uploading...' : '+ Upload completed document'}
-  <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
-    onChange={e => handleEmployeeDocumentUpload(e, doc.id)}
-    disabled={!!uploadingDocId} />
-</label>
-        )}
-      </div>
-    </div>
-  )
-})}
+            {documents.filter(doc => !docCompletions[doc.id]?.hidden).map(doc => {
+              const dc = docCompletions[doc.id]
+              const signed = dc?.signed || false
+              const completedFileUrl = dc?.completed_file_url || null
+              const isUploading = uploadingDocId === doc.id
+              return (
+                <div key={doc.id} style={{ padding: '16px 0', borderBottom: '1px solid #f0efeb' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ flex: 1, fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>{doc.name}</div>
+                    <a href={doc.file_url} target="_blank" rel="noreferrer"
+                      style={{ fontSize: '12px', color: '#8a8a86', textDecoration: 'underline', flexShrink: 0 }}>
+                      View
+                    </a>
+                    {signed ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                        <span style={{ fontSize: '12px', color: '#2d7a4a', fontWeight: 500 }}>✓ Received</span>
+                        <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '11px', color: '#a8a8a4', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Undo</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '12px', color: '#5f5f5c', border: '1px solid #d4d3cf', borderRadius: '5px', padding: '4px 10px', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                        Mark as received
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ marginTop: '10px' }}>
+                    {completedFileUrl ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '12px', color: '#2d7a4a' }}>✓ Uploaded</span>
+                        <a href={completedFileUrl} target="_blank" rel="noreferrer"
+                          style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>
+                          View file
+                        </a>
+                        <label style={{ fontSize: '12px', color: isUploading ? '#a8a8a4' : '#8a8a86', cursor: isUploading ? 'default' : 'pointer' }}>
+                          {isUploading ? 'Uploading...' : 'Replace'}
+                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
+                            onChange={e => handleEmployeeDocumentUpload(e, doc.id)} disabled={!!uploadingDocId} />
+                        </label>
+                      </div>
+                    ) : (
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: isUploading ? '#a8a8a4' : '#0070CA', cursor: isUploading ? 'default' : 'pointer', border: '1px solid ' + (isUploading ? '#ebebe8' : '#cce0f5'), borderRadius: '6px', padding: '6px 12px', background: isUploading ? '#f7f6f4' : '#f0f7ff' }}>
+                        {!isUploading && (
+                          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 10V4M4 7l3-3 3 3"/><path d="M2 12h10"/></svg>
+                        )}
+                        {isUploading ? 'Uploading...' : 'Upload completed document'}
+                        <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
+                          onChange={e => handleEmployeeDocumentUpload(e, doc.id)} disabled={!!uploadingDocId} />
+                      </label>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </>
         )}
       </div>

@@ -32,6 +32,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
   const [fetchError, setFetchError] = useState(null)
   const { toast, showToast, hideToast } = useToast()
   const noteTimers = useRef({})
+  const [noteSaveState, setNoteSaveState] = useState({})
 
   useEffect(() => {
     fetchPlan()
@@ -120,12 +121,22 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
   }
 
   async function saveNote(completionId, value) {
+    setNoteSaveState(prev => ({ ...prev, [completionId]: 'saving' }))
     const { error } = await supabase
       .from('task_completions')
       .update({ notes: value })
       .eq('id', completionId)
-    if (error) showToast(handleSupabaseError(error, 'Failed to save note.'), 'error')
-    else showToast('Note saved')
+    if (error) {
+      showToast(handleSupabaseError(error, 'Failed to save note.'), 'error')
+      setNoteSaveState(prev => ({ ...prev, [completionId]: null }))
+    } else {
+      setNoteSaveState(prev => ({ ...prev, [completionId]: 'saved' }))
+      setTimeout(() => setNoteSaveState(prev => {
+        const next = { ...prev }
+        if (next[completionId] === 'saved') delete next[completionId]
+        return next
+      }), 2000)
+    }
   }
 
   function handleNoteChange(completionId, value) {
@@ -155,20 +166,30 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
   }
 
   async function hideDocument(docId) {
-    const employeeId = instance.employees.id
-    const existing = docCompletions[docId]
-    if (existing) {
-      await supabase.from('document_completions').update({ hidden: true }).eq('id', existing.id)
-      setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, hidden: true } }))
-    } else {
-      const { data } = await supabase
-        .from('document_completions')
-        .insert({ employee_id: employeeId, document_id: docId, hidden: true, signed: false, received: false })
-        .select().single()
-      if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
-    }
-    await logAudit('document_hidden', 'document', docId, { employee_name: instance.employees.full_name })
-    showToast('Document hidden for this employee')
+    const docName = documents.find(d => d.id === docId)?.name || 'this document'
+    setModal({
+      title: 'Hide document',
+      message: `"${docName}" will be hidden for this employee. You can restore it using "Show hidden."`,
+      confirmLabel: 'Hide',
+      confirmDanger: false,
+      onConfirm: async () => {
+        const employeeId = instance.employees.id
+        const existing = docCompletions[docId]
+        if (existing) {
+          await supabase.from('document_completions').update({ hidden: true }).eq('id', existing.id)
+          setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, hidden: true } }))
+        } else {
+          const { data } = await supabase
+            .from('document_completions')
+            .insert({ employee_id: employeeId, document_id: docId, hidden: true, signed: false, received: false })
+            .select().single()
+          if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
+        }
+        await logAudit('document_hidden', 'document', docId, { employee_name: instance.employees.full_name })
+        setModal(null)
+        showToast('Document hidden for this employee')
+      }
+    })
   }
 
   async function restoreDocument(docId) {
@@ -319,10 +340,10 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
     title: { fontSize: '22px', fontWeight: 600, letterSpacing: '-0.4px' },
     sub: { fontSize: '13px', color: '#8a8a86', marginTop: '3px' },
     progressRow: { marginTop: '20px', display: 'flex', alignItems: 'center', gap: '16px' },
-    progressTrack: { flex: 1, maxWidth: '320px', height: '4px', background: '#ebebe8', borderRadius: '2px', overflow: 'hidden' },
-    progressFill: { height: '100%', background: '#0070CA', transition: 'width 0.3s ease' },
+    progressTrack: { flex: 1, maxWidth: '320px', height: '6px', background: '#ebebe8', borderRadius: '3px', overflow: 'hidden' },
+    progressFill: { height: '100%', transition: 'width 0.3s ease' },
     progressText: { fontSize: '12px', color: '#8a8a86' },
-    progressPct: { fontSize: '12px', fontWeight: 500, color: '#0070CA' },
+    progressPct: { fontSize: '12px', fontWeight: 500 },
     content: { padding: '32px 40px', maxWidth: '780px' },
     sectionLabel: { fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
     uploadLink: { fontSize: '12px', color: '#0070CA', cursor: 'pointer', fontWeight: 500, textTransform: 'none', letterSpacing: 0 },
@@ -360,7 +381,9 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
         </div>
       </div>
       <div style={{ padding: '32px 40px', maxWidth: '780px' }}>
-        <SkeletonLine width="100px" height="11px" style={{ marginBottom: '14px' }} />
+        <SkeletonLine width="90px" height="11px" style={{ marginBottom: '14px' }} />
+        <SkeletonTaskRow /><SkeletonTaskRow /><SkeletonTaskRow />
+        <SkeletonLine width="100px" height="11px" style={{ margin: '28px 0 14px' }} />
         <SkeletonTaskRow /><SkeletonTaskRow />
         <SkeletonLine width="80px" height="11px" style={{ margin: '28px 0 14px' }} />
         <SkeletonTaskRow /><SkeletonTaskRow /><SkeletonTaskRow />
@@ -389,17 +412,18 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
           <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 2L4 7l5 5"/></svg>
           Back to dashboard
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={styles.title}>{instance.employees.full_name}</div>
-          <button onClick={() => setEditingEmployee(true)} style={{ fontSize: '12px', color: '#8a8a86', background: 'none', border: '1px solid #ebebe8', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+          <button onClick={() => setEditingEmployee(true)} style={{ fontSize: '12px', color: '#5f5f5c', background: 'none', border: '1px solid #d4d3cf', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+          <button onClick={handleDeleteEmployee} style={{ fontSize: '12px', color: '#c74848', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '4px 2px' }}>Delete</button>
         </div>
         <div style={styles.sub}>
           {instance.employees.roles?.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
         </div>
         <div style={styles.progressRow}>
           <span style={styles.progressText}>{completedTasksCount()} of {totalTasks()} tasks complete</span>
-          <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct()}%` }}></div></div>
-          <span style={styles.progressPct}>{pct()}%</span>
+          <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct()}%`, background: pct() === 100 ? '#2d7a4a' : '#0070CA' }}></div></div>
+          <span style={{ ...styles.progressPct, color: pct() === 100 ? '#2d7a4a' : '#0070CA' }}>{pct()}%</span>
         </div>
       </div>
 
@@ -558,7 +582,9 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
                           onBlur={e => { clearTimeout(noteTimers.current[tc.id]); saveNote(tc.id, e.target.value) }}
                           placeholder="Add a note about this task..."
                         />
-                        <div style={styles.noteHint}>Saves automatically.</div>
+                        <div style={{ ...styles.noteHint, color: noteSaveState[tc.id] === 'saved' ? '#2d7a4a' : '#a8a8a4' }}>
+                          {noteSaveState[tc.id] === 'saving' ? 'Saving…' : noteSaveState[tc.id] === 'saved' ? '✓ Saved' : 'Saves automatically.'}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -581,10 +607,6 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
               {inviting ? 'Sending...' : 'Invite to portal'}
             </button>
           )}
-          <button onClick={handleDeleteEmployee}
-            style={{ background: 'transparent', color: '#c74848', border: '1px solid #f5d6d6', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-            Delete employee
-          </button>
         </div>
       </div>
 
