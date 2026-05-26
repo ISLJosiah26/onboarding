@@ -6,6 +6,7 @@ import OnboardingPlan from './pages/OnboardingPlan'
 import Admin from './pages/Admin'
 import EmployeePortal from './pages/EmployeePortal'
 import SetPassword from './pages/SetPassword'
+import { pageToPath, pathToPage } from './config'
 
 
 function App() {
@@ -15,12 +16,19 @@ function App() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [page, setPage] = useState('dashboard')
+  const [page, setPage] = useState(pathToPage(window.location.pathname))
   const [selectedRole, setSelectedRole] = useState(null)
   const [activeInstanceId, setActiveInstanceId] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [forgotPassword, setForgotPassword] = useState(false)
   const [resetSent, setResetSent] = useState(false)
+
+  useEffect(() => {
+    const onPopState = () => setPage(pathToPage(window.location.pathname))
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
 
 useEffect(() => {
   const hash = window.location.hash
@@ -31,8 +39,7 @@ useEffect(() => {
     if (session) {
       fetchProfile(session.user.id)
       if (isInviteLink) {
-        setPage('set-password')
-        window.history.replaceState(null, '', window.location.pathname)
+        navigate('set-password', { replace: true })
       }
     } else {
       setProfileLoading(false)
@@ -44,8 +51,7 @@ useEffect(() => {
     if (session) {
       fetchProfile(session.user.id)
       if (_event === 'SIGNED_IN' && (hash.includes('type=invite') || hash.includes('type=recovery'))) {
-        setPage('set-password')
-        window.history.replaceState(null, '', window.location.pathname)
+        navigate('set-password', { replace: true })
       }
     } else {
       setUserProfile(null)
@@ -79,15 +85,16 @@ useEffect(() => {
   else setResetSent(true)
 }
 
+  function navigate(targetPage, opts = {}) {
+    const nextPath = pageToPath(targetPage)
+    if (opts.replace) window.history.replaceState({}, '', nextPath)
+    else if (window.location.pathname !== nextPath) window.history.pushState({}, '', nextPath)
+    setPage(targetPage)
+  }
+
   function handleNavigate(target) {
     setRefreshKey(k => k + 1)
-    if (target === 'active') {
-      setPage('new-onboarding-select')
-    } else if (['templates', 'documents', 'roles'].includes(target)) {
-      setPage(target)
-    } else {
-      setPage(target)
-    }
+    navigate(target === 'active' ? 'new-onboarding-select' : target)
   }
 
 if (!session) {
@@ -178,7 +185,7 @@ if (!session) {
   }
 
   if (page === 'set-password') {
-    return <SetPassword onComplete={() => setPage('dashboard')} />
+    return <SetPassword onComplete={() => navigate('dashboard')} />
   }
 
   if (userProfile?.role === 'employee') {
@@ -191,11 +198,11 @@ if (!session) {
         session={session}
         roleId={selectedRole.id}
         roleName={selectedRole.name}
-        onBack={() => { setRefreshKey(k => k + 1); setPage('dashboard') }}
+        onBack={() => { setRefreshKey(k => k + 1); navigate('dashboard') }}
         onNavigate={handleNavigate}
         onComplete={(instanceId) => {
           setActiveInstanceId(instanceId)
-          setPage('plan')
+          navigate('plan')
         }}
       />
     )
@@ -206,7 +213,7 @@ if (!session) {
       <OnboardingPlan
         session={session}
         instanceId={activeInstanceId}
-        onBack={() => { setRefreshKey(k => k + 1); setPage('dashboard') }}
+        onBack={() => { setRefreshKey(k => k + 1); navigate('dashboard') }}
         onNavigate={handleNavigate}
       />
     )
@@ -217,15 +224,15 @@ if (!session) {
       <Admin
         session={session}
         initialTab={page}
-        onBack={() => { setRefreshKey(k => k + 1); setPage('dashboard') }}
+        onBack={() => { setRefreshKey(k => k + 1); navigate('dashboard') }}
         onNavigate={handleNavigate}
         onStartOnboarding={(role) => {
           setSelectedRole(role)
-          setPage('new-onboarding')
+          navigate('new-onboarding')
         }}
         onViewOnboarding={(instanceId) => {
           setActiveInstanceId(instanceId)
-          setPage('plan')
+          navigate('plan')
         }}
       />
     )
@@ -238,11 +245,11 @@ if (!session) {
       onNavigate={handleNavigate}
       onStartOnboarding={(role) => {
         setSelectedRole(role)
-        setPage('new-onboarding')
+        navigate('new-onboarding')
       }}
       onViewOnboarding={(instanceId) => {
         setActiveInstanceId(instanceId)
-        setPage('plan')
+        navigate('plan')
       }}
     />
   )

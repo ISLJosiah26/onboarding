@@ -82,7 +82,7 @@ export default function Layout({ session, currentPage, onNavigate, children }) {
         </div>
 
         {NAV_ITEMS.map(item => (
-          <button key={item.id} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
+          <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
             <Icon type={item.icon} />
             {item.label}
           </button>
@@ -90,7 +90,7 @@ export default function Layout({ session, currentPage, onNavigate, children }) {
 
         <div style={styles.navSection}>Settings</div>
         {SETTINGS_ITEMS.map(item => (
-          <button key={item.id} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
+          <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
             <Icon type={item.icon} />
             {item.label}
           </button>

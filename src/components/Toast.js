@@ -15,7 +15,7 @@ export default function Toast({ message, type = 'success', onClose }) {
   const { bg, color } = colors[type] || colors.success
 
   return (
-    <div style={{
+    <div role="status" aria-live="polite" style={{
       position: 'fixed', bottom: '32px', left: '50%',
       transform: 'translateX(-50%)',
       background: bg, color,
