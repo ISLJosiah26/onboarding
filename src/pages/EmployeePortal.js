@@ -8,11 +8,11 @@ import { handleSupabaseError } from '../utils/handleError'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 
-const PHASE_START_DAYS = { 'Week 1': 0, 'Week 2': 7, '30 Day': 14, '60 Day': 30, '90 Day': 60 }
-
 function isPhaseUpcoming(phase, hireDate) {
+  if (phase === 'Week 1') return false
   const days = Math.floor((new Date() - new Date(hireDate)) / 86400000)
-  return days < PHASE_START_DAYS[phase]
+  const startDays = { 'Week 2': 7, '30 Day': 14, '60 Day': 30, '90 Day': 60 }
+  return days < (startDays[phase] ?? 0)
 }
 
 export default function EmployeePortal({ session, userProfile }) {
