@@ -3,10 +3,10 @@ import { supabase } from '../supabaseClient'
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
   { id: 'active', label: 'New onboarding', icon: 'people' },
-  { id: 'history', label: 'History', icon: 'check' },
 ]
 
 const SETTINGS_ITEMS = [
+  { id: 'history', label: 'History', icon: 'check' },
   { id: 'templates', label: 'Task templates', icon: 'lines' },
   { id: 'documents', label: 'Documents', icon: 'doc' },
   { id: 'roles', label: 'Roles', icon: 'circle' },
