@@ -5,8 +5,40 @@ import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 import Toast from '../components/Toast'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
+import { getHrEmail } from '../utils/getHrEmail'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
+const CURRENT_YEAR = new Date().getFullYear()
+
+const TYPE_OPTIONS = [
+  { value: 'vacation', label: 'Vacation' },
+  { value: 'sick', label: 'Sick Day' },
+  { value: 'personal', label: 'Personal' },
+  { value: 'other', label: 'Other' },
+]
+const TYPE_LABELS = { vacation: 'Vacation', sick: 'Sick Day', personal: 'Personal', other: 'Other' }
+
+const STATUS_STYLES = {
+  pending:   { background: '#fffbf0', color: '#d4901a' },
+  approved:  { background: '#f0faf4', color: '#2d7a4a' },
+  denied:    { background: '#fdf0f0', color: '#c74848' },
+  cancelled: { background: '#f4f3f1', color: '#8a8a86' },
+}
+
+function StatusPill({ status }) {
+  const s = STATUS_STYLES[status] || STATUS_STYLES.pending
+  return (
+    <span style={{ ...s, fontSize: '11px', fontWeight: 500, padding: '2px 9px', borderRadius: '10px', display: 'inline-block' }}>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
+  )
+}
+
+function fmtDateRange(start, end) {
+  const s = new Date(start + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
+  const e = new Date(end + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+  return s === e.replace(/,.*/, '') ? e : `${s} – ${e}`
+}
 
 function isPhaseUpcoming(phase, hireDate) {
   if (phase === 'Week 1') return false
@@ -29,197 +61,240 @@ export default function EmployeePortal({ session, userProfile }) {
   const [uploadingDocId, setUploadingDocId] = useState(null)
   const celebrationTimer = useRef(null)
 
+  // Time off state
+  const [timeOffBalance, setTimeOffBalance] = useState(null)
+  const [timeOffRequests, setTimeOffRequests] = useState([])
+  const [timeOffLoading, setTimeOffLoading] = useState(false)
+  const [timeOffFetched, setTimeOffFetched] = useState(false)
+  const [torStartDate, setTorStartDate] = useState('')
+  const [torEndDate, setTorEndDate] = useState('')
+  const [torType, setTorType] = useState('vacation')
+  const [torNotes, setTorNotes] = useState('')
+  const [torBusinessDays, setTorBusinessDays] = useState(null)
+  const [torCalculating, setTorCalculating] = useState(false)
+  const [torSubmitting, setTorSubmitting] = useState(false)
+  const [cancellingId, setCancellingId] = useState(null)
+
   useEffect(() => {
     fetchMyOnboarding()
   }, [])
 
-async function fetchMyOnboarding() {
-  try {
-    const { data: instanceData, error: instanceError } = await supabase
-      .from('onboarding_instances')
-      .select(`
-        id, status,
-        employees (id, full_name, hire_date, role_id, roles (name)),
-        task_completions (
-          id, completed, completed_at,
-          onboarding_templates (id, task_name, phase, owner, parent_id)
-        )
-      `)
-      .eq('employee_id', userProfile.employee_id)
-      .eq('status', 'active')
-      .single()
-
-    if (instanceError && instanceError.code !== 'PGRST116') {
-      showToast(handleSupabaseError(instanceError, 'Failed to load your onboarding.'), 'error')
+  useEffect(() => {
+    if (activeTab === 'time-off' && !timeOffFetched) {
+      fetchTimeOffData()
     }
+  }, [activeTab])
 
-    if (instanceData) {
-      setInstance(instanceData)
-      const byPhase = {}
-      const comp = {}
-      PHASES.forEach(p => byPhase[p] = [])
-      instanceData.task_completions.forEach(tc => {
-        const phase = tc.onboarding_templates.phase
-        if (byPhase[phase]) byPhase[phase].push(tc)
-        comp[tc.id] = tc.completed
-      })
-      setTasksByPhase(byPhase)
-      setCompletions(comp)
+  async function fetchMyOnboarding() {
+    try {
+      const { data: instanceData, error: instanceError } = await supabase
+        .from('onboarding_instances')
+        .select(`
+          id, status,
+          employees (id, full_name, hire_date, role_id, manager_id, roles (name)),
+          task_completions (
+            id, completed, completed_at,
+            onboarding_templates (id, task_name, phase, owner, parent_id)
+          )
+        `)
+        .eq('employee_id', userProfile.employee_id)
+        .eq('status', 'active')
+        .single()
+
+      if (instanceError && instanceError.code !== 'PGRST116') {
+        showToast(handleSupabaseError(instanceError, 'Failed to load your onboarding.'), 'error')
+      }
+
+      if (instanceData) {
+        setInstance(instanceData)
+        const byPhase = {}
+        const comp = {}
+        PHASES.forEach(p => byPhase[p] = [])
+        instanceData.task_completions.forEach(tc => {
+          const phase = tc.onboarding_templates.phase
+          if (byPhase[phase]) byPhase[phase].push(tc)
+          comp[tc.id] = tc.completed
+        })
+        setTasksByPhase(byPhase)
+        setCompletions(comp)
+      }
+
+      const roleId = instanceData?.employees?.role_id
+      if (roleId) {
+        const { data: docs } = await supabase
+          .from('documents')
+          .select('*')
+          .or(`role_id.is.null,role_id.eq.${roleId}`)
+        if (docs) setDocuments(docs)
+      } else {
+        const { data: docs } = await supabase
+          .from('documents')
+          .select('*')
+          .is('role_id', null)
+        if (docs) setDocuments(docs)
+      }
+
+      const { data: dc } = await supabase
+        .from('document_completions')
+        .select('*')
+        .eq('employee_id', userProfile.employee_id)
+
+      const map = {}
+      if (dc) dc.forEach(d => map[d.document_id] = d)
+      setDocCompletions(map)
+    } catch (err) {
+      showToast('Failed to load your onboarding. Please refresh.', 'error')
+      console.error('Failed to load onboarding:', err)
+    } finally {
+      setLoading(false)
     }
+  }
 
-   const roleId = instanceData?.employees?.role_id
-if (roleId) {
-  const { data: docs } = await supabase
-    .from('documents')
-    .select('*')
-    .or(`role_id.is.null,role_id.eq.${roleId}`)
-  if (docs) setDocuments(docs)
-} else {
-  const { data: docs } = await supabase
-    .from('documents')
-    .select('*')
-    .is('role_id', null)
-  if (docs) setDocuments(docs)
-}
-
-    const { data: dc } = await supabase
-      .from('document_completions')
+  async function fetchTimeOffData() {
+    setTimeOffLoading(true)
+    const { data: bal } = await supabase
+      .from('time_off_balances')
       .select('*')
       .eq('employee_id', userProfile.employee_id)
+      .eq('year', CURRENT_YEAR)
+      .maybeSingle()
+    setTimeOffBalance(bal || null)
 
-    const map = {}
-    if (dc) dc.forEach(d => map[d.document_id] = d)
-    setDocCompletions(map)
-  } catch (err) {
-    showToast('Failed to load your onboarding. Please refresh.', 'error')
-    console.error('Failed to load onboarding:', err)
-  } finally {
-    setLoading(false)
-  }
-}
+    const { data: reqs, error: reqsErr } = await supabase
+      .from('time_off_requests')
+      .select('*')
+      .eq('employee_id', userProfile.employee_id)
+      .order('created_at', { ascending: false })
+    if (reqsErr) showToast(handleSupabaseError(reqsErr, 'Failed to load requests.'), 'error')
+    setTimeOffRequests(reqs || [])
 
-async function toggleTask(completionId, current, e) {
-  if (e && e.stopPropagation) e.stopPropagation()
-  const newVal = !current
-  const newCompletions = { ...completions, [completionId]: newVal }
-  setCompletions(newCompletions)
-
-  const { error } = await supabase
-    .from('task_completions')
-    .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
-    .eq('id', completionId)
-
-  if (error) {
-    setCompletions(prev => ({ ...prev, [completionId]: current }))
-    showToast(handleSupabaseError(error, 'Failed to save. Please try again.'), 'error')
-    return
+    setTimeOffFetched(true)
+    setTimeOffLoading(false)
   }
 
-  if (newVal) {
-    const allTasks = Object.values(tasksByPhase).flat()
-    const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
-    const completedCount = parentTasks.filter(tc => {
-      const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-      if (subtasks.length === 0) return newCompletions[tc.id]
-      return subtasks.every(s => newCompletions[s.id])
-    }).length
+  async function calculateBusinessDays(start, end) {
+    if (!start || !end || end < start) { setTorBusinessDays(null); return }
+    setTorCalculating(true)
+    const { data, error } = await supabase.rpc('calculate_business_days', { p_start: start, p_end: end })
+    if (error) { showToast(handleSupabaseError(error, 'Failed to calculate days.'), 'error'); setTorCalculating(false); return }
+    setTorBusinessDays(data)
+    setTorCalculating(false)
+  }
 
-    if (completedCount === parentTasks.length) {
-      setCelebration('all')
-    } else {
-      PHASES.forEach(phase => {
-        const phaseTasks = allTasks.filter(tc => tc.onboarding_templates.phase === phase && !tc.onboarding_templates.parent_id)
-        if (phaseTasks.length === 0) return
-        const phaseComplete = phaseTasks.every(tc => {
-          const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-          if (subtasks.length === 0) return newCompletions[tc.id]
-          return subtasks.every(s => newCompletions[s.id])
-        })
-        if (phaseComplete) {
-          const prevPhaseComplete = phaseTasks.every(tc => {
-            const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-            if (subtasks.length === 0) return completions[tc.id]
-            return subtasks.every(s => completions[s.id])
-          })
-          if (!prevPhaseComplete) setCelebration(phase)
-        }
+  async function submitTimeOffRequest() {
+    if (!torStartDate || !torEndDate) { showToast('Please select start and end dates.', 'error'); return }
+    if (torEndDate < torStartDate) { showToast('End date must be on or after start date.', 'error'); return }
+    if (torBusinessDays === null) { showToast('Calculating business days, please wait.', 'error'); return }
+
+    setTorSubmitting(true)
+
+    const { error } = await supabase
+      .from('time_off_requests')
+      .insert({
+        employee_id: userProfile.employee_id,
+        start_date: torStartDate,
+        end_date: torEndDate,
+        business_days: torBusinessDays,
+        type: torType,
+        notes: torNotes.trim() || null,
+        status: 'pending',
       })
-    }
-    clearTimeout(celebrationTimer.current)
-    celebrationTimer.current = setTimeout(() => setCelebration(null), 3000)
-  }
-}
 
-async function toggleDocument(docId) {
-  const existing = docCompletions[docId]
-  if (existing) {
-    const newVal = !existing.signed
-    setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, signed: newVal } }))
+    if (error) { showToast(handleSupabaseError(error, 'Failed to submit request.'), 'error'); setTorSubmitting(false); return }
+
+    // Send notification emails
+    const employeeName = instance?.employees?.full_name || 'Employee'
+    const total = timeOffBalance ? Number(timeOffBalance.total_days) : 0
+    const used = timeOffBalance ? Number(timeOffBalance.used_days) : 0
+    const pendingDays = timeOffRequests.filter(r => r.status === 'pending').reduce((s, r) => s + Number(r.business_days), 0)
+    const remainingAfter = total - used - pendingDays - Number(torBusinessDays)
+
+    // Find other employees approved off during this period
+    const { data: overlapping } = await supabase
+      .from('time_off_requests')
+      .select('employee_id, start_date, end_date, employees!time_off_requests_employee_id_fkey(full_name)')
+      .eq('status', 'approved')
+      .neq('employee_id', userProfile.employee_id)
+      .lte('start_date', torEndDate)
+      .gte('end_date', torStartDate)
+
+    const overlapList = (overlapping || [])
+      .map(r => `${r.employees?.full_name}: ${fmtDateRange(r.start_date, r.end_date)}`)
+      .join('<br/>')
+
+    const emailBody = `
+<p><strong>${employeeName}</strong> has submitted a time off request.</p>
+<p>
+  <strong>Dates:</strong> ${fmtDateRange(torStartDate, torEndDate)}<br/>
+  <strong>Type:</strong> ${TYPE_LABELS[torType]}<br/>
+  <strong>Business days:</strong> ${torBusinessDays}<br/>
+  <strong>Remaining balance if approved:</strong> ${remainingAfter}d${torNotes.trim() ? `<br/><strong>Notes:</strong> ${torNotes.trim()}` : ''}
+</p>
+${overlapList ? `<p><strong>Other employees approved off during this period:</strong><br/>${overlapList}</p>` : ''}
+<p>Please review in the admin panel.</p>`
+
+    const hrEmail = await getHrEmail()
+    await supabase.functions.invoke('send-email', {
+      body: { to: hrEmail, subject: `Time off request: ${employeeName}`, html: emailBody }
+    })
+
+    // Email manager if set
+    const managerId = instance?.employees?.manager_id
+    if (managerId) {
+      const { data: mgr } = await supabase
+        .from('employees')
+        .select('email, full_name')
+        .eq('id', managerId)
+        .maybeSingle()
+      if (mgr?.email) {
+        await supabase.functions.invoke('send-email', {
+          body: { to: mgr.email, subject: `Time off request: ${employeeName}`, html: emailBody }
+        })
+      }
+    }
+
+    showToast('Request submitted.')
+    setTorStartDate('')
+    setTorEndDate('')
+    setTorType('vacation')
+    setTorNotes('')
+    setTorBusinessDays(null)
+    setTorSubmitting(false)
+    setTimeOffFetched(false)
+    await fetchTimeOffData()
+  }
+
+  async function cancelTimeOffRequest(req) {
+    setCancellingId(req.id)
+
+    if (req.status === 'approved') {
+      // Remove days from used_days
+      if (timeOffBalance) {
+        const newUsed = Math.max(0, Number(timeOffBalance.used_days) - Number(req.business_days))
+        const { error: balErr } = await supabase
+          .from('time_off_balances')
+          .update({ used_days: newUsed, updated_at: new Date().toISOString() })
+          .eq('id', timeOffBalance.id)
+        if (balErr) { showToast(handleSupabaseError(balErr, 'Failed to update balance.'), 'error'); setCancellingId(null); return }
+      }
+    }
+
     const { error } = await supabase
-      .from('document_completions')
-      .update({ signed: newVal, completed_at: newVal ? new Date().toISOString() : null })
-      .eq('id', existing.id)
-    if (error) {
-      setDocCompletions(prev => ({ ...prev, [docId]: existing }))
-      showToast(handleSupabaseError(error, 'Failed to save. Please try again.'), 'error')
-    }
-  } else {
-    const { data, error } = await supabase
-      .from('document_completions')
-      .insert({ employee_id: userProfile.employee_id, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString() })
-      .select().single()
-    if (error) {
-      showToast(handleSupabaseError(error, 'Failed to save. Please try again.'), 'error')
-    } else if (data) {
-      setDocCompletions(prev => ({ ...prev, [docId]: data }))
-    }
-  }
-}
+      .from('time_off_requests')
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .eq('id', req.id)
 
-async function handleEmployeeDocumentUpload(e, docId) {
-  const file = e.target.files[0]
-  if (!file) return
-  setUploadingDocId(docId)
+    if (error) { showToast(handleSupabaseError(error, 'Failed to cancel request.'), 'error'); setCancellingId(null); return }
 
-  const employeeId = userProfile.employee_id
-  const filePath = `${employeeId}/${docId}_${Date.now()}_${file.name}`
-
-  const { error: uploadError } = await supabase.storage
-    .from('employee-documents')
-    .upload(filePath, file, { upsert: true })
-
-  if (uploadError) {
-    showToast('Upload failed. Please try again.', 'error')
-    setUploadingDocId(null)
-    return
+    showToast('Request cancelled.')
+    setCancellingId(null)
+    setTimeOffFetched(false)
+    await fetchTimeOffData()
   }
 
-  const { data: urlData } = await supabase.storage
-    .from('employee-documents')
-    .createSignedUrl(filePath, 60 * 60 * 24 * 365)
-
-  const fileUrl = urlData?.signedUrl
-
-  const existing = docCompletions[docId]
-  if (existing) {
-    const { error } = await supabase
-      .from('document_completions')
-      .update({ completed_file_url: fileUrl, signed: true, completed_at: new Date().toISOString() })
-      .eq('id', existing.id)
-    if (error) { showToast('Failed to save upload.', 'error'); setUploadingDocId(null); return }
-    setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, completed_file_url: fileUrl, signed: true } }))
-  } else {
-    const { data, error } = await supabase
-      .from('document_completions')
-      .insert({ employee_id: employeeId, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString(), completed_file_url: fileUrl })
-      .select().single()
-    if (error) { showToast('Failed to save upload.', 'error'); setUploadingDocId(null); return }
-    if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
+  function pendingDays() {
+    return timeOffRequests.filter(r => r.status === 'pending').reduce((s, r) => s + Number(r.business_days), 0)
   }
-
-   showToast('Document uploaded successfully')
-   setUploadingDocId(null)
-}
 
   function totalTasks() {
     return Object.values(tasksByPhase).flat().filter(tc => !tc.onboarding_templates.parent_id).length
@@ -238,6 +313,129 @@ async function handleEmployeeDocumentUpload(e, docId) {
   function pct() {
     const t = totalTasks()
     return t > 0 ? Math.round((completedTasksCount() / t) * 100) : 0
+  }
+
+  async function toggleTask(completionId, current, e) {
+    if (e && e.stopPropagation) e.stopPropagation()
+    const newVal = !current
+    const newCompletions = { ...completions, [completionId]: newVal }
+    setCompletions(newCompletions)
+
+    const { error } = await supabase
+      .from('task_completions')
+      .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
+      .eq('id', completionId)
+
+    if (error) {
+      setCompletions(prev => ({ ...prev, [completionId]: current }))
+      showToast(handleSupabaseError(error, 'Failed to save. Please try again.'), 'error')
+      return
+    }
+
+    if (newVal) {
+      const allTasks = Object.values(tasksByPhase).flat()
+      const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
+      const completedCount = parentTasks.filter(tc => {
+        const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
+        if (subtasks.length === 0) return newCompletions[tc.id]
+        return subtasks.every(s => newCompletions[s.id])
+      }).length
+
+      if (completedCount === parentTasks.length) {
+        setCelebration('all')
+      } else {
+        PHASES.forEach(phase => {
+          const phaseTasks = allTasks.filter(tc => tc.onboarding_templates.phase === phase && !tc.onboarding_templates.parent_id)
+          if (phaseTasks.length === 0) return
+          const phaseComplete = phaseTasks.every(tc => {
+            const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
+            if (subtasks.length === 0) return newCompletions[tc.id]
+            return subtasks.every(s => newCompletions[s.id])
+          })
+          if (phaseComplete) {
+            const prevPhaseComplete = phaseTasks.every(tc => {
+              const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
+              if (subtasks.length === 0) return completions[tc.id]
+              return subtasks.every(s => completions[s.id])
+            })
+            if (!prevPhaseComplete) setCelebration(phase)
+          }
+        })
+      }
+      clearTimeout(celebrationTimer.current)
+      celebrationTimer.current = setTimeout(() => setCelebration(null), 3000)
+    }
+  }
+
+  async function toggleDocument(docId) {
+    const existing = docCompletions[docId]
+    if (existing) {
+      const newVal = !existing.signed
+      setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, signed: newVal } }))
+      const { error } = await supabase
+        .from('document_completions')
+        .update({ signed: newVal, completed_at: newVal ? new Date().toISOString() : null })
+        .eq('id', existing.id)
+      if (error) {
+        setDocCompletions(prev => ({ ...prev, [docId]: existing }))
+        showToast(handleSupabaseError(error, 'Failed to save. Please try again.'), 'error')
+      }
+    } else {
+      const { data, error } = await supabase
+        .from('document_completions')
+        .insert({ employee_id: userProfile.employee_id, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString() })
+        .select().single()
+      if (error) {
+        showToast(handleSupabaseError(error, 'Failed to save. Please try again.'), 'error')
+      } else if (data) {
+        setDocCompletions(prev => ({ ...prev, [docId]: data }))
+      }
+    }
+  }
+
+  async function handleEmployeeDocumentUpload(e, docId) {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploadingDocId(docId)
+
+    const employeeId = userProfile.employee_id
+    const filePath = `${employeeId}/${docId}_${Date.now()}_${file.name}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('employee-documents')
+      .upload(filePath, file, { upsert: true })
+
+    if (uploadError) {
+      showToast('Upload failed. Please try again.', 'error')
+      setUploadingDocId(null)
+      return
+    }
+
+    const { data: urlData } = await supabase.storage
+      .from('employee-documents')
+      .createSignedUrl(filePath, 60 * 60 * 24 * 365)
+
+    const fileUrl = urlData?.signedUrl
+
+    const existing = docCompletions[docId]
+    if (existing) {
+      const { error } = await supabase
+        .from('document_completions')
+        .update({ completed_file_url: fileUrl, signed: true, completed_at: new Date().toISOString() })
+        .eq('id', existing.id)
+      if (error) { showToast('Failed to save upload.', 'error'); setUploadingDocId(null); return }
+      setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, completed_file_url: fileUrl, signed: true } }))
+    } else {
+      const { data, error } = await supabase
+        .from('document_completions')
+        .insert({ employee_id: employeeId, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString(), completed_file_url: fileUrl })
+        .select().single()
+      if (error) { showToast('Failed to save upload.', 'error'); setUploadingDocId(null); return }
+      if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
+    }
+
+    showToast('Document uploaded successfully')
+    setUploadingDocId(null)
   }
 
   const checkIcon = (size = 9) => (
@@ -271,14 +469,26 @@ async function handleEmployeeDocumentUpload(e, docId) {
     chevron: (open) => ({ fontSize: '10px', color: '#a8a8a4', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }),
     subtaskCount: { fontSize: '11px', color: '#a8a8a4' },
     docRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 0', borderBottom: '1px solid #f0efeb', cursor: 'pointer' },
+    // Time off styles
+    balCard: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '20px', marginBottom: '24px' },
+    balGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' },
+    balStat: { textAlign: 'center' },
+    balNum: (warn) => ({ fontSize: '24px', fontWeight: 600, color: warn ? '#c74848' : '#1a1a1a', letterSpacing: '-0.5px' }),
+    balLabel: { fontSize: '11px', color: '#8a8a86', marginTop: '4px' },
+    formCard: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '20px', marginBottom: '24px' },
+    fieldLabel: { fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' },
+    fieldInput: { width: '100%', background: '#fff', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 12px', fontSize: '13px', color: '#1a1a1a', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' },
+    submitBtn: (disabled) => ({ background: disabled ? '#d4d3cf' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit' }),
+    torRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 0', borderBottom: '1px solid #f0efeb', flexWrap: 'wrap' },
+    cancelBtn: { fontSize: '12px', color: '#8a8a86', background: 'none', border: '1px solid #ebebe8', borderRadius: '5px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 },
   }
 
-if (loading) return (
-  <div style={styles.app}>
-    <div style={styles.topbar}>
-      <div style={styles.logo}>Integrated Launch</div>
-      <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
-    </div>
+  if (loading) return (
+    <div style={styles.app}>
+      <div style={styles.topbar}>
+        <div style={styles.logo}>Integrated Launch</div>
+        <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
+      </div>
       <div style={{ padding: '40px', maxWidth: '720px', margin: '0 auto' }}>
         <SkeletonLine width="200px" height="24px" style={{ marginBottom: '8px' }} />
         <SkeletonLine width="280px" height="13px" style={{ marginBottom: '24px' }} />
@@ -309,6 +519,13 @@ if (loading) return (
     </div>
   )
 
+  // Time off tab derived values
+  const torTotal = timeOffBalance ? Number(timeOffBalance.total_days) : 0
+  const torUsed = timeOffBalance ? Number(timeOffBalance.used_days) : 0
+  const torPending = pendingDays()
+  const torRemaining = torTotal - torUsed - torPending
+  const torExceedsBalance = torBusinessDays !== null && torRemaining - torBusinessDays < 0
+
   return (
     <div style={styles.app}>
       <div style={styles.topbar}>
@@ -333,6 +550,7 @@ if (loading) return (
       <div style={styles.tabs}>
         <button style={styles.tab(activeTab === 'checklist')} onClick={() => setActiveTab('checklist')}>My checklist</button>
         <button style={styles.tab(activeTab === 'documents')} onClick={() => setActiveTab('documents')}>Documents</button>
+        <button style={styles.tab(activeTab === 'time-off')} onClick={() => setActiveTab('time-off')}>Time Off</button>
       </div>
 
       <div style={styles.content}>
@@ -367,29 +585,29 @@ if (loading) return (
                           {hasSubtasks && <span style={styles.subtaskCount}>{completedSubs}/{subtasks.length}</span>}
                           {hasSubtasks && <span style={styles.chevron(isExpanded)}>▶</span>}
                         </div>
-{hasSubtasks && isExpanded && (
-  <div>
-    {PHASES.map(phase => {
-      const phaseSubtasks = subtasks.filter(s => s.onboarding_templates.phase === phase)
-      if (phaseSubtasks.length === 0) return null
-      return (
-        <div key={phase}>
-          <div style={{ fontSize: '10px', fontWeight: 600, color: '#c0bfbb', textTransform: 'uppercase', letterSpacing: '0.6px', padding: '8px 0 6px 32px', background: '#f7f6f4' }}>
-            {phase}
-          </div>
-          {phaseSubtasks.map(s => (
-            <div key={s.id} style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
-              <div style={styles.subtaskCheckbox(completions[s.id])}>
-                {completions[s.id] && checkIcon(7)}
-              </div>
-              <div style={styles.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
-            </div>
-          ))}
-        </div>
-      )
-    })}
-  </div>
-)}
+                        {hasSubtasks && isExpanded && (
+                          <div>
+                            {PHASES.map(p => {
+                              const phaseSubtasks = subtasks.filter(s => s.onboarding_templates.phase === p)
+                              if (phaseSubtasks.length === 0) return null
+                              return (
+                                <div key={p}>
+                                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#c0bfbb', textTransform: 'uppercase', letterSpacing: '0.6px', padding: '8px 0 6px 32px', background: '#f7f6f4' }}>
+                                    {p}
+                                  </div>
+                                  {phaseSubtasks.map(s => (
+                                    <div key={s.id} style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
+                                      <div style={styles.subtaskCheckbox(completions[s.id])}>
+                                        {completions[s.id] && checkIcon(7)}
+                                      </div>
+                                      <div style={styles.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -458,29 +676,183 @@ if (loading) return (
             })}
           </>
         )}
+
+        {activeTab === 'time-off' && (
+          <>
+            {timeOffLoading ? (
+              <>
+                <SkeletonLine width="100%" height="100px" style={{ marginBottom: '20px', borderRadius: '10px' }} />
+                <SkeletonLine width="100%" height="160px" style={{ marginBottom: '20px', borderRadius: '10px' }} />
+                <SkeletonTaskRow />
+                <SkeletonTaskRow />
+              </>
+            ) : (
+              <>
+                {/* Balance card */}
+                <div style={styles.balCard}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px' }}>
+                    {CURRENT_YEAR} Balance
+                  </div>
+                  <div style={styles.balGrid}>
+                    <div style={styles.balStat}>
+                      <div style={styles.balNum(false)}>{torTotal}</div>
+                      <div style={styles.balLabel}>Total days</div>
+                    </div>
+                    <div style={styles.balStat}>
+                      <div style={styles.balNum(false)}>{torUsed}</div>
+                      <div style={styles.balLabel}>Used</div>
+                    </div>
+                    <div style={styles.balStat}>
+                      <div style={{ ...styles.balNum(false), color: torPending > 0 ? '#d4901a' : '#1a1a1a' }}>{torPending}</div>
+                      <div style={styles.balLabel}>Pending</div>
+                    </div>
+                    <div style={styles.balStat}>
+                      <div style={styles.balNum(torRemaining < 0)}>{torRemaining}</div>
+                      <div style={styles.balLabel}>Remaining</div>
+                      {torRemaining < 0 && (
+                        <div style={{ fontSize: '10px', color: '#c74848', marginTop: '2px' }}>Over limit</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Request form */}
+                <div style={styles.formCard}>
+                  <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '16px' }}>Request time off</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={styles.fieldLabel}>Start date</label>
+                      <input
+                        type="date"
+                        style={styles.fieldInput}
+                        value={torStartDate}
+                        onChange={e => {
+                          setTorStartDate(e.target.value)
+                          if (torEndDate) calculateBusinessDays(e.target.value, torEndDate)
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={styles.fieldLabel}>End date</label>
+                      <input
+                        type="date"
+                        style={styles.fieldInput}
+                        value={torEndDate}
+                        min={torStartDate || undefined}
+                        onChange={e => {
+                          setTorEndDate(e.target.value)
+                          if (torStartDate) calculateBusinessDays(torStartDate, e.target.value)
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={styles.fieldLabel}>Type</label>
+                    <select
+                      style={styles.fieldInput}
+                      value={torType}
+                      onChange={e => setTorType(e.target.value)}
+                    >
+                      {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={styles.fieldLabel}>Notes (optional)</label>
+                    <textarea
+                      style={{ ...styles.fieldInput, resize: 'vertical', minHeight: '70px' }}
+                      placeholder="Any additional context..."
+                      value={torNotes}
+                      onChange={e => setTorNotes(e.target.value)}
+                    />
+                  </div>
+
+                  {torStartDate && torEndDate && (
+                    <div style={{ marginBottom: '16px', fontSize: '13px', color: '#5f5f5c' }}>
+                      {torCalculating ? (
+                        <span style={{ color: '#a8a8a4' }}>Calculating...</span>
+                      ) : torBusinessDays !== null ? (
+                        <span><strong>{torBusinessDays}</strong> business day{torBusinessDays !== 1 ? 's' : ''}</span>
+                      ) : null}
+                    </div>
+                  )}
+
+                  {torExceedsBalance && (
+                    <div style={{ fontSize: '12px', color: '#d4901a', background: '#fffbf0', border: '1px solid #f5e4b0', borderRadius: '6px', padding: '10px 12px', marginBottom: '16px' }}>
+                      This request exceeds your remaining balance by {Math.abs(torRemaining - torBusinessDays)}d. It can still be submitted.
+                    </div>
+                  )}
+
+                  <button
+                    style={styles.submitBtn(torSubmitting || !torStartDate || !torEndDate || torBusinessDays === null || torCalculating)}
+                    disabled={torSubmitting || !torStartDate || !torEndDate || torBusinessDays === null || torCalculating}
+                    onClick={submitTimeOffRequest}
+                  >
+                    {torSubmitting ? 'Submitting...' : 'Submit request'}
+                  </button>
+                </div>
+
+                {/* Request history */}
+                <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '12px' }}>History</div>
+                {timeOffRequests.length === 0 ? (
+                  <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '12px 0' }}>
+                    No requests yet. Submit your first request above.
+                  </div>
+                ) : (
+                  timeOffRequests.map(req => (
+                    <div key={req.id} style={styles.torRow}>
+                      <div style={{ flex: 1, minWidth: '140px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>
+                          {fmtDateRange(req.start_date, req.end_date)}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#8a8a86', marginTop: '2px' }}>
+                          {TYPE_LABELS[req.type]} · {req.business_days}d
+                        </div>
+                      </div>
+                      <StatusPill status={req.status} />
+                      {req.review_notes && (
+                        <div style={{ fontSize: '11px', color: '#8a8a86', fontStyle: 'italic', flex: 1 }}>
+                          {req.review_notes}
+                        </div>
+                      )}
+                      {(req.status === 'pending' || req.status === 'approved') && (
+                        <button
+                          style={styles.cancelBtn}
+                          disabled={cancellingId === req.id}
+                          onClick={() => cancelTimeOffRequest(req)}
+                        >
+                          {cancellingId === req.id ? '...' : 'Cancel'}
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+          </>
+        )}
       </div>
 
       {celebration && (
-  <div style={{
-    position: 'fixed', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
-    background: '#1a1a1a', color: '#fff', borderRadius: '12px',
-    padding: '16px 24px', fontSize: '14px', fontWeight: 500,
-    display: 'flex', alignItems: 'center', gap: '10px',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-    animation: 'slideUp 0.3s ease',
-    zIndex: 1000, fontFamily: 'Inter, -apple-system, sans-serif'
-  }}>
-    <span style={{ fontSize: '20px' }}>
-      {celebration === 'all' ? '🎉' : '✓'}
-    </span>
-    <span>
-      {celebration === 'all'
-        ? 'Onboarding complete! Great work.'
-        : `${celebration} complete!`}
-    </span>
-  </div>
-)}
-{toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
+        <div style={{
+          position: 'fixed', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
+          background: '#1a1a1a', color: '#fff', borderRadius: '12px',
+          padding: '16px 24px', fontSize: '14px', fontWeight: 500,
+          display: 'flex', alignItems: 'center', gap: '10px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          animation: 'slideUp 0.3s ease',
+          zIndex: 1000, fontFamily: 'Inter, -apple-system, sans-serif'
+        }}>
+          <span style={{ fontSize: '20px' }}>
+            {celebration === 'all' ? '🎉' : '✓'}
+          </span>
+          <span>
+            {celebration === 'all'
+              ? 'Onboarding complete! Great work.'
+              : `${celebration} complete!`}
+          </span>
+        </div>
+      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   )
 }

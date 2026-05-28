@@ -7,7 +7,9 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
   const [email, setEmail] = useState(employee.email || '')
   const [hireDate, setHireDate] = useState(employee.hire_date)
   const [roleId, setRoleId] = useState(employee.role_id)
+  const [managerId, setManagerId] = useState(employee.manager_id || '')
   const [roles, setRoles] = useState([])
+  const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -26,6 +28,7 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
 
   useEffect(() => {
     fetchRoles()
+    fetchEmployees()
   }, [])
 
   useEffect(() => {
@@ -39,6 +42,11 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
     if (data) setRoles(data)
   }
 
+  async function fetchEmployees() {
+    const { data } = await supabase.from('employees').select('id, full_name').order('full_name')
+    if (data) setEmployees(data)
+  }
+
   const roleChanged = roleId !== employee.role_id
 
 async function handleSave() {
@@ -49,11 +57,12 @@ async function handleSave() {
 
 const { error: updateError } = await supabase
   .from('employees')
-  .update({ 
-    full_name: fullName.trim(), 
-    email, 
-    hire_date: hireDate, 
-    role_id: roleId
+  .update({
+    full_name: fullName.trim(),
+    email,
+    hire_date: hireDate,
+    role_id: roleId,
+    manager_id: managerId || null
   })
   .eq('id', employee.id)
 
@@ -88,6 +97,7 @@ const { error: updateError } = await supabase
     await logAudit('employee_edited', 'employee', employee.id, { employee_name: fullName.trim() })
 
     const newRole = roles.find(r => r.id === roleId)
+    const newManager = employees.find(e => e.id === managerId) || null
     setLoading(false)
     onSave({
       ...employee,
@@ -95,7 +105,9 @@ const { error: updateError } = await supabase
       email,
       hire_date: hireDate,
       role_id: roleId,
-      roles: newRole ? { name: newRole.name } : employee.roles
+      manager_id: managerId || null,
+      roles: newRole ? { name: newRole.name } : employee.roles,
+      manager: newManager ? { id: newManager.id, full_name: newManager.full_name } : null
     })
   }
 
@@ -116,9 +128,16 @@ const { error: updateError } = await supabase
         <label style={styles.label}>Start date</label>
         <input style={styles.input} type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
         <label style={styles.label}>Role</label>
-        <select style={{ ...styles.input, marginBottom: '20px' }} value={roleId} onChange={e => setRoleId(e.target.value)}>
+        <select style={{ ...styles.input, marginBottom: '16px' }} value={roleId} onChange={e => setRoleId(e.target.value)}>
           <option value="">Select a role...</option>
           {roles.map(r => <option key={r.id} value={r.id}>{r.name} ({r.brand})</option>)}
+        </select>
+        <label style={styles.label}>Manager</label>
+        <select style={{ ...styles.input, marginBottom: '20px' }} value={managerId} onChange={e => setManagerId(e.target.value)}>
+          <option value="">No manager</option>
+          {employees.filter(e => e.id !== employee.id).map(e => (
+            <option key={e.id} value={e.id}>{e.full_name}</option>
+          ))}
         </select>
         <div style={styles.footer}>
           <button style={styles.btnSecondary} onClick={onClose}>Cancel</button>

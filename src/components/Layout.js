@@ -12,6 +12,10 @@ const SETTINGS_ITEMS = [
   { id: 'roles', label: 'Roles', icon: 'circle' },
 ]
 
+const EMPLOYEE_HUB_ITEMS = [
+  { id: 'time-off', label: 'Time Off', icon: 'calendar' },
+]
+
 const SYSTEM_ITEMS = [
   { id: 'super-admin-users', label: 'Users', icon: 'shield' },
   { id: 'super-admin-audit', label: 'Audit log', icon: 'audit' },
@@ -29,6 +33,7 @@ function Icon({ type }) {
   if (type === 'shield') return <svg {...common}><path d="M7 1L2 3.5v3.5c0 3 2.3 5.5 5 6.5 2.7-1 5-3.5 5-6.5V3.5L7 1z"/></svg>
   if (type === 'audit') return <svg {...common}><path d="M2 2h10v10H2z"/><path d="M4 5h6M4 7h4M4 9h5"/></svg>
   if (type === 'gear') return <svg {...common}><circle cx="7" cy="7" r="2"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.9 2.9l1.4 1.4M9.7 9.7l1.4 1.4M2.9 11.1l1.4-1.4M9.7 4.3l1.4-1.4"/></svg>
+  if (type === 'calendar') return <svg {...common}><rect x="1" y="3" width="12" height="10" rx="1"/><path d="M1 6h12M4 1v4M10 1v4"/></svg>
   return null
 }
 
@@ -99,6 +104,14 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
 
         <div style={styles.navSection}>Settings</div>
         {SETTINGS_ITEMS.map(item => (
+          <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
+            <Icon type={item.icon} />
+            {item.label}
+          </button>
+        ))}
+
+        <div style={styles.navSection}>Employee Hub</div>
+        {EMPLOYEE_HUB_ITEMS.map(item => (
           <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
             <Icon type={item.icon} />
             {item.label}
