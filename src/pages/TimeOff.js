@@ -19,9 +19,8 @@ const STATUS_STYLES = {
   cancelled: { background: '#f4f3f1', color: '#8a8a86' },
 }
 
-// Deterministic colour per employee, cycling through a palette
+// Deterministic colour per employee — no blue, since blue is reserved for today + UI accents
 const PALETTE = [
-  { bg: '#dbeafe', text: '#1d4ed8' },
   { bg: '#dcfce7', text: '#15803d' },
   { bg: '#fef3c7', text: '#b45309' },
   { bg: '#fce7f3', text: '#be185d' },
@@ -29,6 +28,7 @@ const PALETTE = [
   { bg: '#ccfbf1', text: '#0f766e' },
   { bg: '#ffe4e6', text: '#9f1239' },
   { bg: '#fef9c3', text: '#854d0e' },
+  { bg: '#f3e8ff', text: '#7e22ce' },
 ]
 
 function employeeColor(employeeId) {
@@ -503,13 +503,14 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
             </div>
 
             {/* Legend */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ fontSize: '12px', color: '#8a8a86' }}>Each employee has a unique colour.</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#5f5f5c' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#dcfce7' }} />
+                <div style={{ width: '28px', height: '14px', borderRadius: '3px', background: '#dcfce7' }} />
                 Approved
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#5f5f5c' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#fef3c7', border: '1.5px dashed #b45309' }} />
+                <div style={{ width: '28px', height: '14px', borderRadius: '3px', background: '#fef3c780', border: '1.5px dashed #b45309' }} />
                 Pending
               </div>
             </div>
