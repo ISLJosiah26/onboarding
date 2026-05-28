@@ -6,6 +6,7 @@ import { SkeletonRow } from '../components/Skeleton'
 import Toast from '../components/Toast'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
@@ -31,6 +32,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
   const [docStats, setDocStats] = useState({})
   const [offToday, setOffToday] = useState([])
   const { toast, hideToast } = useToast()
+  const { isMobile } = useWindowSize()
 
   useEffect(() => {
     fetchOnboardings()
@@ -109,19 +111,22 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
     return total > 0 && pct >= 90
   }).length
 
+  const p = isMobile ? '16px' : '40px'
+
   const styles = {
-    header: { padding: '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #ebebe8' },
+    header: { padding: isMobile ? '16px 16px 14px' : '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #ebebe8' },
     title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.4px' },
     sub: { fontSize: '13px', color: '#8a8a86', marginTop: '2px' },
-    btn: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px' },
+    btn: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' },
     statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#ebebe8', borderBottom: '1px solid #ebebe8' },
-    stat: { background: '#fafaf9', padding: '20px 40px' },
-    statLabel: { fontSize: '12px', color: '#8a8a86', marginBottom: '6px' },
-    statValue: { fontSize: '22px', fontWeight: 600, letterSpacing: '-0.5px' },
-    content: { padding: '0 40px', flex: 1 },
+    stat: { background: '#fafaf9', padding: isMobile ? '14px 16px' : '20px 40px' },
+    statLabel: { fontSize: '11px', color: '#8a8a86', marginBottom: '4px' },
+    statValue: { fontSize: isMobile ? '20px' : '22px', fontWeight: 600, letterSpacing: '-0.5px' },
+    content: { padding: isMobile ? '0' : `0 ${p}`, flex: 1 },
     tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #ebebe8', fontSize: '11px', color: '#8a8a86', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.4px', alignItems: 'center', gap: '16px' },
     tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #f0efeb', alignItems: 'center', gap: '16px', cursor: 'pointer' },
     avatar: { width: '26px', height: '26px', borderRadius: '50%', background: '#e8f0fe', color: '#0070CA', fontSize: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    avatarLg: { width: '36px', height: '36px', borderRadius: '9px', background: '#e8f0fe', color: '#0070CA', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
     rowName: { fontSize: '13px', fontWeight: 500, color: '#1a1a1a' },
     rowMeta: { fontSize: '12px', color: '#8a8a86', marginTop: '1px' },
     rowText: { fontSize: '13px', color: '#1a1a1a' },
@@ -130,9 +135,9 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
     progressTrack: { flex: 1, height: '4px', background: '#ebebe8', borderRadius: '2px', overflow: 'hidden' },
     progressFill: { height: '100%', background: '#0070CA' },
     progressText: { fontSize: '12px', fontWeight: 500, color: '#1a1a1a', minWidth: '32px' },
-    phasePill: { fontSize: '11px', padding: '3px 9px', borderRadius: '4px', background: '#eef5ff', color: '#0070CA', fontWeight: 500, width: 'fit-content' },
-    emptyState: { padding: '80px 40px', textAlign: 'center', color: '#8a8a86', fontSize: '14px' },
-    errorState: { padding: '80px 40px', textAlign: 'center', fontSize: '14px' }
+    phasePill: { fontSize: '11px', padding: '2px 7px', borderRadius: '4px', background: '#eef5ff', color: '#0070CA', fontWeight: 500 },
+    emptyState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center', color: '#8a8a86', fontSize: '14px' },
+    errorState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center', fontSize: '14px' }
   }
 
   return (
@@ -140,11 +145,11 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
       <div style={styles.header}>
         <div>
           <div style={styles.title}>Dashboard</div>
-          <div style={styles.sub}>Overview of active employee onboardings.</div>
+          {!isMobile && <div style={styles.sub}>Overview of active employee onboardings.</div>}
         </div>
         <button style={styles.btn} onClick={() => onNavigate('active')}>
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 2v10M2 7h10"/></svg>
-          New onboarding
+          {isMobile ? 'New' : 'New onboarding'}
         </button>
       </div>
 
@@ -154,23 +159,21 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
           <div style={styles.statValue}>{onboardings.length}</div>
         </div>
         <div style={styles.stat}>
-          <div style={styles.statLabel}>90%+ complete</div>
+          <div style={styles.statLabel}>90%+ done</div>
           <div style={styles.statValue}>{completingThisWeek}</div>
         </div>
         <div style={styles.stat}>
-          <div style={styles.statLabel}>Completed total</div>
+          <div style={styles.statLabel}>Completed</div>
           <div style={styles.statValue}>{completedCount}</div>
         </div>
       </div>
 
       {offToday.length > 0 && (
-        <div style={{ background: '#f0faf4', borderBottom: '1px solid #c3e8d1', padding: '10px 40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#2d7a4a" strokeWidth="1.5">
+        <div style={{ background: '#f0faf4', borderBottom: '1px solid #c3e8d1', padding: `10px ${p}`, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#2d7a4a" strokeWidth="1.5" style={{ flexShrink: 0 }}>
             <rect x="1" y="3" width="12" height="10" rx="1"/><path d="M1 6h12M4 1v4M10 1v4"/>
           </svg>
-          <span style={{ fontSize: '12px', color: '#2d7a4a', fontWeight: 500 }}>
-            Off today:
-          </span>
+          <span style={{ fontSize: '12px', color: '#2d7a4a', fontWeight: 500 }}>Off today:</span>
           <span style={{ fontSize: '12px', color: '#2d7a4a' }}>
             {offToday.map(r => r.employees?.full_name).filter(Boolean).join(', ')}
           </span>
@@ -179,14 +182,26 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
 
       <div style={styles.content}>
         {loading ? (
-          <>
-            <div style={styles.tableHeader}>
-              <div></div><div>Employee</div><div>Role</div>
-              <div>Progress</div><div>Phase</div>
-              <div style={{ textAlign: 'right' }}>Started</div>
-            </div>
-            <SkeletonRow /><SkeletonRow /><SkeletonRow /><SkeletonRow />
-          </>
+          isMobile ? (
+            [1,2,3,4].map(i => (
+              <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid #f0efeb', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ ...styles.avatarLg, background: '#f0efeb' }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ height: '13px', background: '#f0efeb', borderRadius: '4px', width: '55%', marginBottom: '8px' }} />
+                  <div style={{ height: '4px', background: '#f0efeb', borderRadius: '2px', width: '80%' }} />
+                </div>
+              </div>
+            ))
+          ) : (
+            <>
+              <div style={{ ...styles.tableHeader, padding: '14px 0' }}>
+                <div></div><div>Employee</div><div>Role</div>
+                <div>Progress</div><div>Phase</div>
+                <div style={{ textAlign: 'right' }}>Started</div>
+              </div>
+              <SkeletonRow /><SkeletonRow /><SkeletonRow /><SkeletonRow />
+            </>
+          )
         ) : fetchError ? (
           <div style={styles.errorState}>
             <div style={{ color: '#c74848', marginBottom: '12px' }}>{fetchError}</div>
@@ -195,7 +210,32 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
             </button>
           </div>
         ) : onboardings.length === 0 ? (
-          <div style={styles.emptyState}>No active onboardings. Click "New onboarding" to start one.</div>
+          <div style={styles.emptyState}>No active onboardings.</div>
+        ) : isMobile ? (
+          onboardings.map(o => {
+            const { pct } = calcProgress(o.task_completions)
+            const name = o.employees.full_name
+            const phase = getPhase(o.employees.hire_date)
+            return (
+              <div key={o.id} style={{ padding: '14px 16px', borderBottom: '1px solid #f0efeb', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }} onClick={() => onViewOnboarding(o.id)}>
+                <div style={styles.avatarLg}>{getInitials(name)}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>{name}</span>
+                    <span style={styles.phasePill}>{phase}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '8px' }}>{o.employees.roles?.name || 'Unknown role'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={styles.progressTrack}>
+                      <div style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? '#2d7a4a' : '#0070CA' }} />
+                    </div>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: pct === 100 ? '#2d7a4a' : '#1a1a1a', flexShrink: 0 }}>{pct}%</span>
+                  </div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#d4d3cf" strokeWidth="1.5" style={{ flexShrink: 0 }}><path d="M5 3l4 4-4 4"/></svg>
+              </div>
+            )
+          })
         ) : (
           <>
             <div style={styles.tableHeader}>
