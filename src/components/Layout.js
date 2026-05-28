@@ -10,6 +10,9 @@ const SETTINGS_ITEMS = [
   { id: 'templates', label: 'Task templates', icon: 'lines' },
   { id: 'documents', label: 'Documents', icon: 'doc' },
   { id: 'roles', label: 'Roles', icon: 'circle' },
+]
+
+const EMPLOYEE_HUB_ITEMS = [
   { id: 'time-off', label: 'Time Off', icon: 'calendar' },
 ]
 
@@ -101,6 +104,14 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
 
         <div style={styles.navSection}>Settings</div>
         {SETTINGS_ITEMS.map(item => (
+          <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
+            <Icon type={item.icon} />
+            {item.label}
+          </button>
+        ))}
+
+        <div style={styles.navSection}>Employee Hub</div>
+        {EMPLOYEE_HUB_ITEMS.map(item => (
           <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
             <Icon type={item.icon} />
             {item.label}

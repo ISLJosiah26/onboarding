@@ -8,6 +8,7 @@ import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 
 const CURRENT_YEAR = new Date().getFullYear()
+const TODAY = new Date().toISOString().slice(0, 10)
 
 const TYPE_LABELS = { vacation: 'Vacation', sick: 'Sick Day', personal: 'Personal', other: 'Other' }
 
@@ -17,6 +18,35 @@ const STATUS_STYLES = {
   denied:    { background: '#fdf0f0', color: '#c74848' },
   cancelled: { background: '#f4f3f1', color: '#8a8a86' },
 }
+
+// Deterministic colour per employee, cycling through a palette
+const PALETTE = [
+  { bg: '#dbeafe', text: '#1d4ed8' },
+  { bg: '#dcfce7', text: '#15803d' },
+  { bg: '#fef3c7', text: '#b45309' },
+  { bg: '#fce7f3', text: '#be185d' },
+  { bg: '#ede9fe', text: '#6d28d9' },
+  { bg: '#ccfbf1', text: '#0f766e' },
+  { bg: '#ffe4e6', text: '#9f1239' },
+  { bg: '#fef9c3', text: '#854d0e' },
+]
+
+function employeeColor(employeeId) {
+  let h = 0
+  for (let i = 0; i < (employeeId || '').length; i++) h = (h + employeeId.charCodeAt(i)) % PALETTE.length
+  return PALETTE[h]
+}
+
+function buildCalendarDays(year, month) {
+  const firstDow = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const cells = Array(firstDow).fill(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+  while (cells.length % 7 !== 0) cells.push(null)
+  return cells
+}
+
+function pad(n) { return String(n).padStart(2, '0') }
 
 function StatusPill({ status }) {
   const s = STATUS_STYLES[status] || STATUS_STYLES.pending
@@ -37,6 +67,9 @@ function fmtDateRange(start, end) {
   return s === e ? s : `${s} – ${e}`
 }
 
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
+const DOW_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+
 export default function TimeOff({ session, userProfile, onNavigate }) {
   const [subView, setSubView] = useState('requests')
   const [requests, setRequests] = useState([])
@@ -49,14 +82,16 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
   const [editTotalDays, setEditTotalDays] = useState('')
   const [savingBalanceId, setSavingBalanceId] = useState(null)
   const [expandedEmployeeId, setExpandedEmployeeId] = useState(null)
+  const [calYear, setCalYear] = useState(new Date().getFullYear())
+  const [calMonth, setCalMonth] = useState(new Date().getMonth())
   const { toast, showToast, hideToast } = useToast()
 
   useEffect(() => { fetchData() }, [subView])
 
   async function fetchData() {
     setLoading(true)
-    if (subView === 'requests') await fetchRequests()
-    else await fetchBalances()
+    if (subView === 'balances') await fetchBalances()
+    else await fetchRequests()
     setLoading(false)
   }
 
@@ -242,8 +277,18 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
     setLoading(false)
   }
 
+  function prevMonth() {
+    if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11) }
+    else setCalMonth(m => m - 1)
+  }
+
+  function nextMonth() {
+    if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0) }
+    else setCalMonth(m => m + 1)
+  }
+
   const s = {
-    page: { padding: '32px 40px', maxWidth: '960px' },
+    page: { padding: '32px 40px', maxWidth: '1000px' },
     title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1a1a1a', marginBottom: '4px' },
     sub: { fontSize: '13px', color: '#8a8a86', marginBottom: '28px' },
     subNav: { display: 'flex', borderBottom: '1px solid #ebebe8', marginBottom: '24px' },
@@ -258,6 +303,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
     btnEdit: { background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
     btnSave: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 11px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
     btnCancel: { background: 'transparent', color: '#8a8a86', border: '1px solid #ebebe8', borderRadius: '6px', padding: '5px 8px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
+    navBtn: { background: 'transparent', border: '1px solid #ebebe8', borderRadius: '6px', padding: '5px 10px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#5f5f5c', lineHeight: 1 },
   }
 
   const REQ_COLS = '1.4fr 1fr 80px 60px 100px 80px 180px'
@@ -272,18 +318,15 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
         <div style={s.subNav}>
           <button style={s.subTab(subView === 'requests')} onClick={() => setSubView('requests')}>Requests</button>
           <button style={s.subTab(subView === 'balances')} onClick={() => setSubView('balances')}>Balances</button>
+          <button style={s.subTab(subView === 'calendar')} onClick={() => setSubView('calendar')}>Calendar</button>
         </div>
 
+        {/* ── REQUESTS ── */}
         {subView === 'requests' && (
           <div style={s.card}>
             <div style={s.tHead(REQ_COLS)}>
-              <div>Employee</div>
-              <div>Dates</div>
-              <div>Type</div>
-              <div>Days</div>
-              <div>Status</div>
-              <div>After approval</div>
-              <div>Actions</div>
+              <div>Employee</div><div>Dates</div><div>Type</div><div>Days</div>
+              <div>Status</div><div>After approval</div><div>Actions</div>
             </div>
             {loading ? (
               [1,2,3].map(i => (
@@ -298,7 +341,6 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                 const remaining = getRemainingAfterApproval(req)
                 const overlapCount = getOverlapCount(req)
                 const busy = reviewingId === req.id
-
                 return (
                   <div key={req.id}>
                     <div style={s.tRow(REQ_COLS)}>
@@ -356,15 +398,12 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
           </div>
         )}
 
+        {/* ── BALANCES ── */}
         {subView === 'balances' && (
           <div style={s.card}>
             <div style={s.tHead(BAL_COLS)}>
-              <div>Employee</div>
-              <div>Total ({CURRENT_YEAR})</div>
-              <div>Used</div>
-              <div>Pending</div>
-              <div>Remaining</div>
-              <div></div>
+              <div>Employee</div><div>Total ({CURRENT_YEAR})</div><div>Used</div>
+              <div>Pending</div><div>Remaining</div><div></div>
             </div>
             {loading ? (
               [1,2,3].map(i => (
@@ -382,7 +421,6 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                 const remaining = total - used - pending
                 const isEditing = editingBalanceId === row.employee.id
                 const isExpanded = expandedEmployeeId === row.employee.id
-
                 return (
                   <div key={row.employee.id}>
                     <div
@@ -411,26 +449,18 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                       <div onClick={e => e.stopPropagation()}>
                         {isEditing ? (
                           <div style={{ display: 'flex', gap: '4px' }}>
-                            <button
-                              style={s.btnSave}
-                              disabled={savingBalanceId === row.employee.id}
-                              onClick={() => saveTotalDays(row)}
-                            >
+                            <button style={s.btnSave} disabled={savingBalanceId === row.employee.id} onClick={() => saveTotalDays(row)}>
                               {savingBalanceId === row.employee.id ? '...' : 'Save'}
                             </button>
                             <button style={s.btnCancel} onClick={() => setEditingBalanceId(null)}>✕</button>
                           </div>
                         ) : (
-                          <button
-                            style={s.btnEdit}
-                            onClick={() => { setEditingBalanceId(row.employee.id); setEditTotalDays(String(total)) }}
-                          >
+                          <button style={s.btnEdit} onClick={() => { setEditingBalanceId(row.employee.id); setEditTotalDays(String(total)) }}>
                             Edit
                           </button>
                         )}
                       </div>
                     </div>
-
                     {isExpanded && (
                       <div style={{ background: '#fafaf9', borderBottom: '1px solid #ebebe8' }}>
                         {row.requests.length === 0 ? (
@@ -451,6 +481,126 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                 )
               })
             )}
+          </div>
+        )}
+
+        {/* ── CALENDAR ── */}
+        {subView === 'calendar' && (
+          <div>
+            {/* Month navigation */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <button style={s.navBtn} onClick={prevMonth}>‹</button>
+              <div style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a1a', minWidth: '160px', textAlign: 'center' }}>
+                {MONTH_NAMES[calMonth]} {calYear}
+              </div>
+              <button style={s.navBtn} onClick={nextMonth}>›</button>
+              <button
+                style={{ ...s.navBtn, marginLeft: '8px', fontSize: '12px', color: '#8a8a86' }}
+                onClick={() => { setCalYear(new Date().getFullYear()); setCalMonth(new Date().getMonth()) }}
+              >
+                Today
+              </button>
+            </div>
+
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#5f5f5c' }}>
+                <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#dcfce7' }} />
+                Approved
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#5f5f5c' }}>
+                <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#fef3c7', border: '1.5px dashed #b45309' }} />
+                Pending
+              </div>
+            </div>
+
+            <div style={{ ...s.card, overflow: 'visible' }}>
+              {/* Day-of-week header */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid #ebebe8' }}>
+                {DOW_LABELS.map(d => (
+                  <div key={d} style={{ padding: '8px 10px', fontSize: '11px', fontWeight: 500, color: '#8a8a86', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center', borderRight: '1px solid #ebebe8' }}>
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              {loading ? (
+                <div style={{ padding: '40px', textAlign: 'center' }}>
+                  <SkeletonLine width="100%" height="200px" />
+                </div>
+              ) : (() => {
+                const cells = buildCalendarDays(calYear, calMonth)
+                const weeks = []
+                for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
+
+                return weeks.map((week, wi) => (
+                  <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: wi < weeks.length - 1 ? '1px solid #ebebe8' : 'none' }}>
+                    {week.map((day, di) => {
+                      if (!day) return (
+                        <div key={di} style={{ minHeight: '90px', background: '#fafaf9', borderRight: di < 6 ? '1px solid #ebebe8' : 'none' }} />
+                      )
+
+                      const dateStr = `${calYear}-${pad(calMonth + 1)}-${pad(day)}`
+                      const isToday = dateStr === TODAY
+                      const isWeekend = (di === 0 || di === 6)
+
+                      const dayReqs = requests.filter(r =>
+                        (r.status === 'approved' || r.status === 'pending') &&
+                        r.start_date <= dateStr && r.end_date >= dateStr
+                      )
+
+                      return (
+                        <div key={di} style={{
+                          minHeight: '90px',
+                          padding: '6px',
+                          background: isToday ? '#f0f7ff' : isWeekend ? '#fafaf9' : '#fff',
+                          borderRight: di < 6 ? '1px solid #ebebe8' : 'none',
+                          verticalAlign: 'top',
+                        }}>
+                          <div style={{
+                            fontSize: '12px',
+                            fontWeight: isToday ? 700 : 400,
+                            color: isToday ? '#0070CA' : isWeekend ? '#a8a8a4' : '#5f5f5c',
+                            textAlign: 'right',
+                            marginBottom: '4px',
+                            lineHeight: 1,
+                          }}>
+                            {isToday ? (
+                              <span style={{ background: '#0070CA', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>
+                                {day}
+                              </span>
+                            ) : day}
+                          </div>
+                          {dayReqs.map(req => {
+                            const color = employeeColor(req.employee_id)
+                            const isPending = req.status === 'pending'
+                            const firstName = req.employee?.full_name?.split(' ')[0] || '?'
+                            return (
+                              <div key={req.id} title={`${req.employee?.full_name} — ${TYPE_LABELS[req.type]}${isPending ? ' (pending)' : ''}`} style={{
+                                background: isPending ? `${color.bg}99` : color.bg,
+                                color: color.text,
+                                fontSize: '11px',
+                                fontWeight: 500,
+                                padding: '2px 5px',
+                                borderRadius: '3px',
+                                marginBottom: '2px',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                border: isPending ? `1px dashed ${color.text}` : 'none',
+                                opacity: isPending ? 0.8 : 1,
+                              }}>
+                                {firstName}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))
+              })()}
+            </div>
           </div>
         )}
       </div>
