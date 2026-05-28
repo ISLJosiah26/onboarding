@@ -12,6 +12,7 @@ export const ROUTES = {
   DOCUMENTS: '/documents',
   ROLES: '/roles',
   HISTORY: '/history',
+  TIME_OFF: '/time-off',
   SET_PASSWORD: '/set-password',
   SUPER_ADMIN_USERS: '/system/users',
   SUPER_ADMIN_AUDIT: '/system/audit',
@@ -26,6 +27,7 @@ export function pathToPage(pathname) {
   if (pathname === ROUTES.DOCUMENTS) return 'documents'
   if (pathname === ROUTES.ROLES) return 'roles'
   if (pathname === ROUTES.HISTORY) return 'history'
+  if (pathname === ROUTES.TIME_OFF) return 'time-off'
   if (pathname === ROUTES.SET_PASSWORD) return 'set-password'
   if (pathname === ROUTES.SUPER_ADMIN_USERS) return 'super-admin-users'
   if (pathname === ROUTES.SUPER_ADMIN_AUDIT) return 'super-admin-audit'
@@ -41,6 +43,7 @@ export function pageToPath(page) {
   if (page === 'documents') return ROUTES.DOCUMENTS
   if (page === 'roles') return ROUTES.ROLES
   if (page === 'history') return ROUTES.HISTORY
+  if (page === 'time-off') return ROUTES.TIME_OFF
   if (page === 'set-password') return ROUTES.SET_PASSWORD
   if (page === 'super-admin-users') return ROUTES.SUPER_ADMIN_USERS
   if (page === 'super-admin-audit') return ROUTES.SUPER_ADMIN_AUDIT

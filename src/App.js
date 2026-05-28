@@ -5,6 +5,7 @@ import NewOnboarding from './pages/NewOnboarding'
 import OnboardingPlan from './pages/OnboardingPlan'
 import Admin from './pages/Admin'
 import SuperAdmin from './pages/SuperAdmin'
+import TimeOff from './pages/TimeOff'
 import EmployeePortal from './pages/EmployeePortal'
 import SetPassword from './pages/SetPassword'
 import { pageToPath, pathToPage } from './config'
@@ -241,6 +242,16 @@ if (!session) {
         userProfile={userProfile}
         instanceId={activeInstanceId}
         onBack={() => { setRefreshKey(k => k + 1); navigate('dashboard') }}
+        onNavigate={handleNavigate}
+      />
+    )
+  }
+
+  if (page === 'time-off') {
+    return (
+      <TimeOff
+        session={session}
+        userProfile={userProfile}
         onNavigate={handleNavigate}
       />
     )
