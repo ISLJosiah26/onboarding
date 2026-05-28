@@ -7,6 +7,8 @@ import Toast from '../components/Toast'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 
+const TODAY = new Date().toISOString().slice(0, 10)
+
 function getInitials(name) {
   if (!name) return '?'
   return name.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().slice(0, 2) || '?'
@@ -27,11 +29,13 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(null)
   const [docStats, setDocStats] = useState({})
+  const [offToday, setOffToday] = useState([])
   const { toast, hideToast } = useToast()
 
   useEffect(() => {
     fetchOnboardings()
     fetchCompleted()
+    fetchOffToday()
   }, [refreshKey])
 
   async function fetchOnboardings() {
@@ -64,6 +68,16 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
     if (!error) setCompletedCount(count || 0)
   }
 
+  async function fetchOffToday() {
+    const { data } = await supabase
+      .from('time_off_requests')
+      .select('employee_id, employees!time_off_requests_employee_id_fkey(full_name)')
+      .eq('status', 'approved')
+      .lte('start_date', TODAY)
+      .gte('end_date', TODAY)
+    setOffToday(data || [])
+  }
+
   async function fetchDocStats(onboardingData) {
     if (!onboardingData || onboardingData.length === 0) return
     const employeeIds = onboardingData.map(o => o.employees.id)
@@ -74,11 +88,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
       .not('completed_file_url', 'is', null)
 
     const stats = {}
-    if (data) {
-      data.forEach(dc => {
-        stats[dc.employee_id] = (stats[dc.employee_id] || 0) + 1
-      })
-    }
+    if (data) data.forEach(dc => { stats[dc.employee_id] = (stats[dc.employee_id] || 0) + 1 })
     setDocStats(stats)
   }
 
@@ -152,6 +162,20 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
           <div style={styles.statValue}>{completedCount}</div>
         </div>
       </div>
+
+      {offToday.length > 0 && (
+        <div style={{ background: '#f0faf4', borderBottom: '1px solid #c3e8d1', padding: '10px 40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#2d7a4a" strokeWidth="1.5">
+            <rect x="1" y="3" width="12" height="10" rx="1"/><path d="M1 6h12M4 1v4M10 1v4"/>
+          </svg>
+          <span style={{ fontSize: '12px', color: '#2d7a4a', fontWeight: 500 }}>
+            Off today:
+          </span>
+          <span style={{ fontSize: '12px', color: '#2d7a4a' }}>
+            {offToday.map(r => r.employees?.full_name).filter(Boolean).join(', ')}
+          </span>
+        </div>
+      )}
 
       <div style={styles.content}>
         {loading ? (
