@@ -7,6 +7,7 @@ import Toast from '../components/Toast'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 const OWNERS = ['HR', 'Manager', 'IT']
@@ -32,6 +33,7 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [pickedBrand, setPickedBrand] = useState('')
   const [pickedRoleId, setPickedRoleId] = useState('')
   const { toast, showToast, hideToast } = useToast()
+  const { isMobile } = useWindowSize()
   const [taskLibrary, setTaskLibrary] = useState([])
   const [useLibraryTask, setUseLibraryTask] = useState(true)
   const [useLibrarySubtask, setUseLibrarySubtask] = useState(true)
@@ -244,11 +246,13 @@ async function handleAdminDocumentUpload(e) {
     if (role) onStartOnboarding(role)
   }
 
+  const p = isMobile ? '16px' : '40px'
+
   const styles = {
-    header: { padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' },
+    header: { padding: isMobile ? '16px 16px 12px' : '28px 40px 24px', borderBottom: '1px solid #ebebe8' },
     title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.4px' },
     sub: { fontSize: '13px', color: '#8a8a86', marginTop: '2px' },
-    content: { padding: '32px 40px', maxWidth: '780px' },
+    content: { padding: isMobile ? '20px 16px' : '32px 40px', maxWidth: '780px' },
     input: { border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 12px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#1a1a1a' },
     btnPrimary: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
     btnGhost: { background: 'none', border: 'none', color: '#a8a8a4', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: 0 },
@@ -259,14 +263,14 @@ async function handleAdminDocumentUpload(e) {
     phaseLabel: { fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '10px', marginTop: '24px' },
     pill: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f4f3f1', color: '#8a8a86', fontWeight: 500 },
     emptyState: { padding: '40px 0', textAlign: 'center', color: '#a8a8a4', fontSize: '13px' },
-    card: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '28px', maxWidth: '420px' }
+    card: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: isMobile ? '20px 16px' : '28px', maxWidth: '420px' }
   }
 
   function renderHeader(title, sub) {
     return (
       <div style={styles.header}>
         <div style={styles.title}>{title}</div>
-        <div style={styles.sub}>{sub}</div>
+        {sub && <div style={styles.sub}>{sub}</div>}
       </div>
     )
   }
@@ -279,20 +283,21 @@ function renderAdminHeader(title, sub) {
     { id: 'roles', label: 'Roles' },
   ]
   const tabStyle = (active) => ({
-    padding: '10px 16px', fontSize: '13px',
+    padding: '10px 14px', fontSize: '13px',
     fontWeight: active ? 500 : 400,
     color: active ? '#1a1a1a' : '#8a8a86',
     background: 'none', border: 'none',
     borderBottom: active ? '2px solid #1a1a1a' : '2px solid transparent',
     cursor: 'pointer', fontFamily: 'inherit', marginBottom: '-1px',
+    whiteSpace: 'nowrap', flexShrink: 0,
   })
   return (
     <div style={{ borderBottom: '1px solid #ebebe8' }}>
-      <div style={{ padding: '28px 40px 20px' }}>
+      <div style={{ padding: isMobile ? '16px 16px 12px' : '28px 40px 20px' }}>
         <div style={styles.title}>{title}</div>
         {sub && <div style={styles.sub}>{sub}</div>}
       </div>
-      <div style={{ display: 'flex', padding: '0 40px' }}>
+      <div style={{ display: 'flex', padding: `0 ${p}`, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
         {tabs.map(tab => (
           <button key={tab.id} style={tabStyle(initialTab === tab.id)} onClick={() => onNavigate(tab.id)}>
             {tab.label}
