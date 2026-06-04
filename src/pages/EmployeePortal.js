@@ -184,22 +184,13 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
 
   async function fetchTimeOffData() {
     setTimeOffLoading(true)
-    const { data: bal } = await supabase
-      .from('time_off_balances')
-      .select('*')
-      .eq('employee_id', userProfile.employee_id)
-      .eq('year', CURRENT_YEAR)
-      .maybeSingle()
+    const [{ data: bal }, { data: reqs, error: reqsErr }] = await Promise.all([
+      supabase.from('time_off_balances').select('*').eq('employee_id', userProfile.employee_id).eq('year', CURRENT_YEAR).maybeSingle(),
+      supabase.from('time_off_requests').select('*').eq('employee_id', userProfile.employee_id).order('created_at', { ascending: false }),
+    ])
     setTimeOffBalance(bal || null)
-
-    const { data: reqs, error: reqsErr } = await supabase
-      .from('time_off_requests')
-      .select('*')
-      .eq('employee_id', userProfile.employee_id)
-      .order('created_at', { ascending: false })
     if (reqsErr) showToast(handleSupabaseError(reqsErr, 'Failed to load requests.'), 'error')
     setTimeOffRequests(reqs || [])
-
     setTimeOffFetched(true)
     setTimeOffLoading(false)
   }
@@ -291,7 +282,7 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
     logAudit('time_off_requested', 'time_off_request', newReq.id, { type, days: businessDaysVal, start_date: startDate, end_date: endDate })
 
     // Send email to HR and manager (fire and forget)
-    const employeeName = instance?.employees?.full_name || 'Employee'
+    const employeeName = instance?.employees?.full_name || employee?.full_name || 'Employee'
     const total = timeOffBalance ? Number(timeOffBalance.total_days) : 0
     const used = timeOffBalance ? Number(timeOffBalance.used_days) : 0
     const currentPending = timeOffRequests.filter(r => r.status === 'pending' && r.id !== tempId).reduce((s, r) => s + Number(r.business_days), 0)
@@ -325,7 +316,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       supabase.functions.invoke('send-email', { body: { to: hrEmail, subject: `Time off request: ${employeeName}`, html: emailBody } })
     }
 
-    const managerId = instance?.employees?.manager_id
+    const managerId = instance?.employees?.manager_id || employee?.manager_id
     if (managerId) {
       const { data: mgr } = await supabase.from('employees').select('email').eq('id', managerId).maybeSingle()
       if (mgr?.email) {
@@ -358,7 +349,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     logAudit('time_off_cancelled', 'time_off_request', req.id, { type: req.type, days: req.business_days, previous_status: req.status })
 
     // Notify HR and manager (fire and forget)
-    const employeeName = instance?.employees?.full_name || 'Employee'
+    const employeeName = instance?.employees?.full_name || employee?.full_name || 'Employee'
     const cancelBody = `
 <p><strong>${employeeName}</strong> has cancelled their time off request.</p>
 <p>
@@ -373,7 +364,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       supabase.functions.invoke('send-email', { body: { to: hrEmail, subject: `Time off cancelled: ${employeeName}`, html: cancelBody } })
     }
 
-    const managerId = instance?.employees?.manager_id
+    const managerId = instance?.employees?.manager_id || employee?.manager_id
     if (managerId) {
       const { data: mgr } = await supabase.from('employees').select('email').eq('id', managerId).maybeSingle()
       if (mgr?.email) {
