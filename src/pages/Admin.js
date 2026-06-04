@@ -42,6 +42,8 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [uploadDocRole, setUploadDocRole] = useState('')
   const [uploadingDoc, setUploadingDoc] = useState(false)
   const [historyFilter, setHistoryFilter] = useState('all')
+  const [renamingDocId, setRenamingDocId] = useState(null)
+  const [renameValue, setRenameValue] = useState('')
 
   useEffect(() => { fetchRoles() }, [])
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
@@ -219,6 +221,18 @@ async function deleteCompanyResource(id) {
     showToast(handleSupabaseError(error, 'Failed to remove resource.'), 'error')
   } else {
     showToast('Resource removed')
+    fetchCompanyResources()
+  }
+}
+
+async function renameResource(id) {
+  const trimmed = renameValue.trim()
+  if (!trimmed) return
+  const { error } = await supabase.from('documents').update({ name: trimmed }).eq('id', id)
+  if (error) {
+    showToast(handleSupabaseError(error, 'Failed to rename resource.'), 'error')
+  } else {
+    setRenamingDocId(null)
     fetchCompanyResources()
   }
 }
@@ -734,13 +748,36 @@ if (initialTab === 'documents') {
           ) : (
             companyResources.map(doc => (
               <div key={doc.id} style={styles.row}>
-                <div>
-                  <div style={styles.rowName}>{doc.name}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {renamingDocId === doc.id ? (
+                    <input
+                      autoFocus
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') renameResource(doc.id)
+                        if (e.key === 'Escape') setRenamingDocId(null)
+                      }}
+                      style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', border: '1px solid #c8c8c4', borderRadius: '6px', padding: '4px 8px', fontFamily: 'inherit', outline: 'none', width: '100%', maxWidth: '340px' }}
+                    />
+                  ) : (
+                    <div style={styles.rowName}>{doc.name}</div>
+                  )}
                   <div style={styles.rowMuted}>{new Date(doc.uploaded_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                 </div>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                  <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>View</a>
-                  <button style={styles.btnGhost} onClick={() => deleteCompanyResource(doc.id)}>Remove</button>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+                  {renamingDocId === doc.id ? (
+                    <>
+                      <button style={styles.btnGhost} onClick={() => renameResource(doc.id)}>Save</button>
+                      <button style={styles.btnGhost} onClick={() => setRenamingDocId(null)}>Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>View</a>
+                      <button style={styles.btnGhost} onClick={() => { setRenamingDocId(doc.id); setRenameValue(doc.name) }}>Rename</button>
+                      <button style={styles.btnGhost} onClick={() => deleteCompanyResource(doc.id)}>Remove</button>
+                    </>
+                  )}
                 </div>
               </div>
             ))
