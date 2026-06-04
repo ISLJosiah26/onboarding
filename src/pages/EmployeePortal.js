@@ -85,6 +85,7 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
   const [docCompletions, setDocCompletions] = useState({})
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('checklist')
+  const [employee, setEmployee] = useState(null)
   const [celebration, setCelebration] = useState(null)
   const { toast, showToast, hideToast } = useToast()
   const [uploadingDocId, setUploadingDocId] = useState(null)
@@ -114,6 +115,14 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
 
   async function fetchMyOnboarding() {
     try {
+      // Always fetch the employee record so we have name/role in all cases
+      const { data: empData } = await supabase
+        .from('employees')
+        .select('id, full_name, hire_date, brand, role_id, roles(name)')
+        .eq('id', userProfile.employee_id)
+        .single()
+      if (empData) setEmployee(empData)
+
       const { data: instanceData, error: instanceError } = await supabase
         .from('onboarding_instances')
         .select(`
@@ -144,27 +153,30 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
         })
         setTasksByPhase(byPhase)
         setCompletions(comp)
-      }
 
-      const roleId = instanceData?.employees?.role_id
-      if (roleId) {
-        const { data: docs } = await supabase.from('documents').select('*').eq('is_company_resource', false).or(`role_id.is.null,role_id.eq.${roleId}`)
-        if (docs) setDocuments(docs)
-      } else {
-        const { data: docs } = await supabase.from('documents').select('*').eq('is_company_resource', false).is('role_id', null)
-        if (docs) setDocuments(docs)
+        const roleId = instanceData.employees?.role_id
+        if (roleId) {
+          const { data: docs } = await supabase.from('documents').select('*').eq('is_company_resource', false).or(`role_id.is.null,role_id.eq.${roleId}`)
+          if (docs) setDocuments(docs)
+        } else {
+          const { data: docs } = await supabase.from('documents').select('*').eq('is_company_resource', false).is('role_id', null)
+          if (docs) setDocuments(docs)
+        }
+
+        const { data: dc } = await supabase.from('document_completions').select('*').eq('employee_id', userProfile.employee_id)
+        const map = {}
+        if (dc) dc.forEach(d => map[d.document_id] = d)
+        setDocCompletions(map)
       }
 
       const { data: resources } = await supabase.from('documents').select('*').eq('is_company_resource', true).order('uploaded_at', { ascending: false })
       if (resources) setCompanyResources(resources)
 
-      const { data: dc } = await supabase.from('document_completions').select('*').eq('employee_id', userProfile.employee_id)
-      const map = {}
-      if (dc) dc.forEach(d => map[d.document_id] = d)
-      setDocCompletions(map)
+      // Default tab: onboarding checklist if active, otherwise company resources
+      setActiveTab(instanceData ? 'checklist' : 'company-resources')
     } catch (err) {
-      showToast('Failed to load your onboarding. Please refresh.', 'error')
-      console.error('Failed to load onboarding:', err)
+      showToast('Failed to load your portal. Please refresh.', 'error')
+      console.error('Failed to load portal:', err)
     } finally {
       setLoading(false)
     }
@@ -586,31 +598,10 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     </div>
   )
 
-  if (!instance) return (
-    <div style={styles.app}>
-      <div style={styles.topbar}>
-        <div style={styles.logo}>Integrated Launch</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {onSwitchToAdmin && (
-            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
-              ← Admin view
-            </button>
-          )}
-          <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
-        </div>
-      </div>
-      <div style={{ padding: '80px 40px', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
-        <div style={{ fontSize: '22px', marginBottom: '16px' }}>👋</div>
-        <div style={{ fontSize: '17px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.3px', marginBottom: '8px' }}>No active onboarding</div>
-        <div style={{ fontSize: '13px', color: '#8a8a86', lineHeight: 1.7, marginBottom: '24px' }}>
-          Your onboarding plan hasn't been set up yet.<br />Reach out to HR to get started.
-        </div>
-        <button onClick={() => supabase.auth.signOut()} style={{ fontSize: '13px', color: '#5f5f5c', background: 'none', border: '1px solid #ebebe8', borderRadius: '6px', padding: '8px 16px', cursor: 'pointer', fontFamily: 'inherit' }}>
-          Sign out
-        </button>
-      </div>
-    </div>
-  )
+  // Derive display values regardless of whether there is an active instance
+  const displayName = instance?.employees?.full_name || employee?.full_name || ''
+  const displayRole = instance?.employees?.roles?.name || employee?.roles?.name || ''
+  const displayHireDate = instance?.employees?.hire_date || employee?.hire_date
 
   const torTotal = timeOffBalance ? Number(timeOffBalance.total_days) : 0
   const torUsed = timeOffBalance ? Number(timeOffBalance.used_days) : 0
@@ -635,22 +626,29 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       </div>
 
       <div style={styles.hero}>
-        <div style={styles.name}>Welcome, {instance.employees.full_name.split(' ')[0]}</div>
-        <div style={styles.sub}>{instance.employees.roles?.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
-        <div style={styles.progressWrap}>
-          <div style={styles.progressRow}>
-            <span style={{ fontSize: '12px', color: '#8a8a86' }}>{completedTasksCount()} of {totalTasks()} tasks complete</span>
-            <span style={{ fontSize: '12px', fontWeight: 500, color: '#0070CA' }}>{pct()}%</span>
-          </div>
-          <div style={styles.progressTrack}>
-            <div style={{ ...styles.progressFill, width: `${pct()}%` }} />
-          </div>
+        <div style={styles.name}>Welcome, {displayName.split(' ')[0]}</div>
+        <div style={styles.sub}>
+          {displayRole && `${displayRole} · `}
+          {instance && displayHireDate
+            ? `Started ${new Date(displayHireDate).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`
+            : (employee?.brand || userProfile?.brand || '')}
         </div>
+        {instance && (
+          <div style={styles.progressWrap}>
+            <div style={styles.progressRow}>
+              <span style={{ fontSize: '12px', color: '#8a8a86' }}>{completedTasksCount()} of {totalTasks()} tasks complete</span>
+              <span style={{ fontSize: '12px', fontWeight: 500, color: '#0070CA' }}>{pct()}%</span>
+            </div>
+            <div style={styles.progressTrack}>
+              <div style={{ ...styles.progressFill, width: `${pct()}%` }} />
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={styles.tabs}>
-        <button style={styles.tab(activeTab === 'checklist')} onClick={() => setActiveTab('checklist')}>My checklist</button>
-        <button style={styles.tab(activeTab === 'documents')} onClick={() => setActiveTab('documents')}>My Documents</button>
+        {instance && <button style={styles.tab(activeTab === 'checklist')} onClick={() => setActiveTab('checklist')}>My checklist</button>}
+        {instance && <button style={styles.tab(activeTab === 'documents')} onClick={() => setActiveTab('documents')}>My Documents</button>}
         <button style={styles.tab(activeTab === 'company-resources')} onClick={() => setActiveTab('company-resources')}>Company Resources</button>
         <button style={styles.tab(activeTab === 'time-off')} onClick={() => setActiveTab('time-off')}>Time Off</button>
       </div>
@@ -662,7 +660,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
               const allTasks = tasksByPhase[phase] || []
               const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
               if (parentTasks.length === 0) return null
-              const upcoming = isPhaseUpcoming(phase, instance.employees.hire_date)
+              const upcoming = isPhaseUpcoming(phase, displayHireDate)
               return (
                 <div key={phase} style={{ opacity: upcoming ? 0.4 : 1, pointerEvents: upcoming ? 'none' : 'auto' }}>
                   <div style={{ ...styles.phaseLabel, display: 'flex', alignItems: 'center', gap: '8px' }}>
