@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
 import Toast from '../components/Toast'
@@ -148,8 +148,8 @@ function UsersTab() {
     if (data) setAllEmployees(data)
   }
 
-  const linkedEmployeeIds = new Set(users.filter(u => u.employee_id).map(u => u.employee_id))
-  const unlinkedEmployees = allEmployees.filter(e => !linkedEmployeeIds.has(e.id))
+  const linkedEmployeeIds = useMemo(() => new Set(users.filter(u => u.employee_id).map(u => u.employee_id)), [users])
+  const unlinkedEmployees = useMemo(() => allEmployees.filter(e => !linkedEmployeeIds.has(e.id)), [allEmployees, linkedEmployeeIds])
 
   async function sendInviteToEmployee(employee, role) {
     setInviting(true)

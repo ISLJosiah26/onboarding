@@ -149,7 +149,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                 {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin' || userProfile?.role === 'manager') && (
                   <>
                     <div style={drawerSection}>Employee Hub</div>
-                    {EMPLOYEE_HUB_ITEMS.map(item => (
+                    {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && EMPLOYEE_HUB_ITEMS.map(item => (
                       <button key={item.id} style={drawerBtn(currentPage === item.id)} onClick={() => { onNavigate(item.id); setDrawerOpen(false) }}>
                         <Icon type={item.icon} size={17} />
                         {item.label}
@@ -254,7 +254,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
         {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin' || userProfile?.role === 'manager') && (
           <>
             <div style={styles.navSection}>Employee Hub</div>
-            {EMPLOYEE_HUB_ITEMS.map(item => (
+            {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && EMPLOYEE_HUB_ITEMS.map(item => (
               <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
                 <Icon type={item.icon} />
                 {item.label}
