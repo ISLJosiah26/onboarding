@@ -92,6 +92,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
     const { data: docs } = await supabase
       .from('documents')
       .select('*')
+      .eq('is_company_resource', false)
       .or(`role_id.is.null,role_id.eq.${roleId}`)
 
     if (docs) setDocuments(docs)

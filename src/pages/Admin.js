@@ -17,6 +17,8 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [selectedRole, setSelectedRole] = useState(null)
   const [templates, setTemplates] = useState([])
   const [documents, setDocuments] = useState([])
+  const [companyResources, setCompanyResources] = useState([])
+  const [uploadingResource, setUploadingResource] = useState(false)
   const [history, setHistory] = useState([])
   const [modal, setModal] = useState(null)
 
@@ -44,6 +46,7 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   useEffect(() => { fetchRoles() }, [])
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
   useEffect(() => { if (initialTab === 'documents') fetchDocuments() }, [initialTab])
+  useEffect(() => { if (initialTab === 'company-resources') fetchCompanyResources() }, [initialTab])
   useEffect(() => { if (initialTab === 'history') fetchHistory() }, [initialTab])
     useEffect(() => { if (initialTab === 'templates') fetchTaskLibrary() }, [initialTab])
 
@@ -58,8 +61,13 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   }
 
   async function fetchDocuments() {
-    const { data } = await supabase.from('documents').select('*').order('uploaded_at', { ascending: false })
+    const { data } = await supabase.from('documents').select('*').eq('is_company_resource', false).order('uploaded_at', { ascending: false })
     if (data) setDocuments(data)
+  }
+
+  async function fetchCompanyResources() {
+    const { data } = await supabase.from('documents').select('*').eq('is_company_resource', true).order('uploaded_at', { ascending: false })
+    if (data) setCompanyResources(data)
   }
 
   async function fetchHistory() {
@@ -205,6 +213,50 @@ async function deleteDocument(id) {
   }
 }
 
+async function deleteCompanyResource(id) {
+  const { error } = await supabase.from('documents').delete().eq('id', id)
+  if (error) {
+    showToast(handleSupabaseError(error, 'Failed to remove resource.'), 'error')
+  } else {
+    showToast('Resource removed')
+    fetchCompanyResources()
+  }
+}
+
+async function handleCompanyResourceUpload(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  setUploadingResource(true)
+
+  const filePath = `documents/${Date.now()}_${file.name}`
+  const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
+
+  if (uploadError) {
+    showToast(handleSupabaseError(uploadError, 'Upload failed.'), 'error')
+    setUploadingResource(false)
+    return
+  }
+
+  const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath)
+
+  const { error: insertError } = await supabase.from('documents').insert({
+    name: file.name,
+    file_url: urlData.publicUrl,
+    role_id: null,
+    is_company_resource: true,
+  })
+
+  if (insertError) {
+    showToast(handleSupabaseError(insertError, 'Failed to save resource.'), 'error')
+    await supabase.storage.from('documents').remove([filePath])
+  } else {
+    showToast('Resource uploaded')
+    fetchCompanyResources()
+  }
+  setUploadingResource(false)
+  e.target.value = ''
+}
+
 async function handleAdminDocumentUpload(e) {
   const file = e.target.files[0]
   if (!file) return
@@ -279,7 +331,8 @@ function renderAdminHeader(title, sub) {
   const tabs = [
     { id: 'history', label: 'History' },
     { id: 'templates', label: 'Task templates' },
-    { id: 'documents', label: 'Documents' },
+    { id: 'documents', label: 'My Documents' },
+    { id: 'company-resources', label: 'Company Resources' },
     { id: 'roles', label: 'Roles' },
   ]
   const tabStyle = (active) => ({
@@ -661,6 +714,42 @@ if (initialTab === 'documents') {
     </Layout>
   )
 }
+
+  if (initialTab === 'company-resources') {
+    return (
+      <Layout session={session} userProfile={userProfile} currentPage="company-resources" onNavigate={onNavigate}>
+        {renderAdminHeader('Company Resources', '')}
+        <div style={styles.content}>
+          <div style={{ marginBottom: '28px', padding: '20px', background: '#fafaf9', border: '1px solid #ebebe8', borderRadius: '10px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', marginBottom: '16px' }}>Upload company resource</div>
+            <label style={{ ...styles.btnPrimary, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              {uploadingResource ? 'Uploading...' : '+ Upload document'}
+              <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
+                onChange={handleCompanyResourceUpload} disabled={uploadingResource} />
+            </label>
+          </div>
+
+          {companyResources.length === 0 ? (
+            <div style={styles.emptyState}>No company resources yet. Upload one above.</div>
+          ) : (
+            companyResources.map(doc => (
+              <div key={doc.id} style={styles.row}>
+                <div>
+                  <div style={styles.rowName}>{doc.name}</div>
+                  <div style={styles.rowMuted}>{new Date(doc.uploaded_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                </div>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                  <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>View</a>
+                  <button style={styles.btnGhost} onClick={() => deleteCompanyResource(doc.id)}>Remove</button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        {renderModal()}
+      </Layout>
+    )
+  }
 
   return (
     <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>

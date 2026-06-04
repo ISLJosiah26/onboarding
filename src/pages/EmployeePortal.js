@@ -81,6 +81,7 @@ export default function EmployeePortal({ session, userProfile }) {
   const [completions, setCompletions] = useState({})
   const [expandedTasks, setExpandedTasks] = useState({})
   const [documents, setDocuments] = useState([])
+  const [companyResources, setCompanyResources] = useState([])
   const [docCompletions, setDocCompletions] = useState({})
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('checklist')
@@ -147,12 +148,15 @@ export default function EmployeePortal({ session, userProfile }) {
 
       const roleId = instanceData?.employees?.role_id
       if (roleId) {
-        const { data: docs } = await supabase.from('documents').select('*').or(`role_id.is.null,role_id.eq.${roleId}`)
+        const { data: docs } = await supabase.from('documents').select('*').eq('is_company_resource', false).or(`role_id.is.null,role_id.eq.${roleId}`)
         if (docs) setDocuments(docs)
       } else {
-        const { data: docs } = await supabase.from('documents').select('*').is('role_id', null)
+        const { data: docs } = await supabase.from('documents').select('*').eq('is_company_resource', false).is('role_id', null)
         if (docs) setDocuments(docs)
       }
+
+      const { data: resources } = await supabase.from('documents').select('*').eq('is_company_resource', true).order('uploaded_at', { ascending: false })
+      if (resources) setCompanyResources(resources)
 
       const { data: dc } = await supabase.from('document_completions').select('*').eq('employee_id', userProfile.employee_id)
       const map = {}
@@ -625,7 +629,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
       <div style={styles.tabs}>
         <button style={styles.tab(activeTab === 'checklist')} onClick={() => setActiveTab('checklist')}>My checklist</button>
-        <button style={styles.tab(activeTab === 'documents')} onClick={() => setActiveTab('documents')}>Documents</button>
+        <button style={styles.tab(activeTab === 'documents')} onClick={() => setActiveTab('documents')}>My Documents</button>
+        <button style={styles.tab(activeTab === 'company-resources')} onClick={() => setActiveTab('company-resources')}>Company Resources</button>
         <button style={styles.tab(activeTab === 'time-off')} onClick={() => setActiveTab('time-off')}>Time Off</button>
       </div>
 
@@ -739,6 +744,21 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 </div>
               )
             })}
+          </>
+        )}
+
+        {activeTab === 'company-resources' && (
+          <>
+            {companyResources.length === 0 ? (
+              <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No company resources have been added yet.</div>
+            ) : (
+              companyResources.map(doc => (
+                <div key={doc.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0efeb', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ flex: 1, fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>{doc.name}</div>
+                  <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none', flexShrink: 0 }}>View</a>
+                </div>
+              ))
+            )}
           </>
         )}
 
