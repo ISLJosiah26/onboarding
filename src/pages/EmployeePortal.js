@@ -75,7 +75,7 @@ function isPhaseUpcoming(phase, hireDate) {
   return days < (startDays[phase] ?? 0)
 }
 
-export default function EmployeePortal({ session, userProfile }) {
+export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }) {
   const [instance, setInstance] = useState(null)
   const [tasksByPhase, setTasksByPhase] = useState({})
   const [completions, setCompletions] = useState({})
@@ -568,7 +568,14 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     <div style={styles.app}>
       <div style={styles.topbar}>
         <div style={styles.logo}>Integrated Launch</div>
-        <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {onSwitchToAdmin && (
+            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+              ← Admin view
+            </button>
+          )}
+          <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
+        </div>
       </div>
       <div style={{ padding: '40px', maxWidth: '720px', margin: '0 auto' }}>
         <SkeletonLine width="200px" height="24px" style={{ marginBottom: '8px' }} />
@@ -583,7 +590,14 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     <div style={styles.app}>
       <div style={styles.topbar}>
         <div style={styles.logo}>Integrated Launch</div>
-        <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {onSwitchToAdmin && (
+            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+              ← Admin view
+            </button>
+          )}
+          <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
+        </div>
       </div>
       <div style={{ padding: '80px 40px', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
         <div style={{ fontSize: '22px', marginBottom: '16px' }}>👋</div>
@@ -610,7 +624,14 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     <div style={styles.app}>
       <div style={styles.topbar}>
         <div style={styles.logo}>Integrated Launch</div>
-        <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {onSwitchToAdmin && (
+            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+              ← Admin view
+            </button>
+          )}
+          <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
+        </div>
       </div>
 
       <div style={styles.hero}>

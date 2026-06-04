@@ -24,6 +24,7 @@ function App() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [forgotPassword, setForgotPassword] = useState(false)
   const [resetSent, setResetSent] = useState(false)
+  const [employeeView, setEmployeeView] = useState(() => localStorage.getItem('il-view-mode') === 'employee')
 
   useEffect(() => {
     const onPopState = () => setPage(pathToPage(window.location.pathname))
@@ -95,6 +96,11 @@ useEffect(() => {
   }
 
   function handleNavigate(target) {
+    if (target === 'employee-hub') {
+      localStorage.setItem('il-view-mode', 'employee')
+      setEmployeeView(true)
+      return
+    }
     setRefreshKey(k => k + 1)
     navigate(target === 'active' ? 'new-onboarding-select' : target)
   }
@@ -204,6 +210,19 @@ if (!session) {
 
   if (userProfile?.role === 'employee') {
     return <EmployeePortal session={session} userProfile={userProfile} />
+  }
+
+  if (employeeView && userProfile?.employee_id) {
+    return (
+      <EmployeePortal
+        session={session}
+        userProfile={userProfile}
+        onSwitchToAdmin={() => {
+          localStorage.removeItem('il-view-mode')
+          setEmployeeView(false)
+        }}
+      />
+    )
   }
 
   if (page === 'super-admin-users' || page === 'super-admin-audit' || page === 'super-admin-settings') {

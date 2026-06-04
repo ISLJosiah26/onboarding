@@ -40,6 +40,7 @@ function Icon({ type, size = 14 }) {
   if (type === 'gear') return <svg {...c}><circle cx="7" cy="7" r="2"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.9 2.9l1.4 1.4M9.7 9.7l1.4 1.4M2.9 11.1l1.4-1.4M9.7 4.3l1.4-1.4"/></svg>
   if (type === 'calendar') return <svg {...c}><rect x="1" y="3" width="12" height="10" rx="1"/><path d="M1 6h12M4 1v4M10 1v4"/></svg>
   if (type === 'folder') return <svg {...c}><path d="M1 4a1 1 0 0 1 1-1h3l2 2h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"/></svg>
+  if (type === 'person') return <svg {...c}><circle cx="7" cy="4.5" r="2.5"/><path d="M1.5 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
   if (type === 'dots') return <svg width={size} height={size} viewBox="0 0 14 14" fill="currentColor"><circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/><circle cx="11" cy="7" r="1.3"/></svg>
   return null
 }
@@ -145,7 +146,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                   </button>
                 ))}
 
-                {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
+                {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin' || userProfile?.role === 'manager') && (
                   <>
                     <div style={drawerSection}>Employee Hub</div>
                     {EMPLOYEE_HUB_ITEMS.map(item => (
@@ -154,6 +155,12 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                         {item.label}
                       </button>
                     ))}
+                    {userProfile?.employee_id && (
+                      <button style={drawerBtn(false)} onClick={() => { onNavigate('employee-hub'); setDrawerOpen(false) }}>
+                        <Icon type="person" size={17} />
+                        My portal
+                      </button>
+                    )}
                   </>
                 )}
 
@@ -244,7 +251,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
           </button>
         ))}
 
-        {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
+        {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin' || userProfile?.role === 'manager') && (
           <>
             <div style={styles.navSection}>Employee Hub</div>
             {EMPLOYEE_HUB_ITEMS.map(item => (
@@ -253,6 +260,12 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                 {item.label}
               </button>
             ))}
+            {userProfile?.employee_id && (
+              <button style={styles.navItem(false)} onClick={() => onNavigate('employee-hub')}>
+                <Icon type="person" />
+                My portal
+              </button>
+            )}
           </>
         )}
 
