@@ -561,7 +561,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     balLabel: { fontSize: '11px', color: '#8a8a86', marginTop: '4px' },
     formCard: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '20px', marginBottom: '24px' },
     fieldLabel: { fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' },
-    fieldInput: { width: '100%', background: '#fff', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 12px', fontSize: '13px', color: '#1a1a1a', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' },
+    fieldInput: { width: '100%', minWidth: 0, background: '#fff', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 12px', fontSize: '13px', color: '#1a1a1a', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none' },
     submitBtn: (disabled) => ({ background: disabled ? '#d4d3cf' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit' }),
     torRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 0', borderBottom: '1px solid #f0efeb', flexWrap: 'wrap' },
     cancelBtn: { fontSize: '12px', color: '#8a8a86', background: 'none', border: '1px solid #ebebe8', borderRadius: '5px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 },
@@ -822,7 +822,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
                   {/* Date pickers */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '8px' }}>
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <label style={styles.fieldLabel}>Start date</label>
                       <input
                         type="date"
@@ -838,7 +838,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                         }}
                       />
                     </div>
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <label style={styles.fieldLabel}>End date</label>
                       <input
                         type="date"
