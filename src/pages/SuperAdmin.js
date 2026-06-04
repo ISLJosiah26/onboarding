@@ -6,6 +6,7 @@ import Toast from '../components/Toast'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const ACTION_LABELS = {
   onboarding_created: 'Onboarding created',
@@ -57,7 +58,10 @@ const s = {
   }),
   filterRow: { display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' },
   filterSelect: { border: '1px solid #ebebe8', borderRadius: '6px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: '#fff', color: '#1a1a1a', outline: 'none' },
-  filterInput: { border: '1px solid #ebebe8', borderRadius: '6px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: '#fff', color: '#1a1a1a', outline: 'none' },
+  filterInput: { border: '1px solid #ebebe8', borderRadius: '6px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: '#fff', color: '#1a1a1a', outline: 'none', minWidth: 0, WebkitAppearance: 'none', appearance: 'none', boxSizing: 'border-box' },
+  card: { border: '1px solid #ebebe8', borderRadius: '10px', padding: '14px 16px', marginBottom: '10px', background: '#fff' },
+  cardGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px' },
+  cardLabel: { fontSize: '11px', color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: '3px' },
   logRow: { display: 'flex', gap: '16px', padding: '12px 0', borderBottom: '1px solid #f0efeb', alignItems: 'flex-start' },
   logTime: { fontSize: '12px', color: '#a8a8a4', whiteSpace: 'nowrap', minWidth: '140px' },
   logUser: { fontSize: '12px', color: '#5f5f5c', minWidth: '160px' },
@@ -94,6 +98,7 @@ const PAGE_MAP = {
 
 export default function SuperAdmin({ session, userProfile, currentPage, onNavigate }) {
   const tab = TAB_MAP[currentPage] || 'Users'
+  const { isMobile } = useWindowSize()
 
   function setTab(t) {
     onNavigate(PAGE_MAP[t])
@@ -101,16 +106,16 @@ export default function SuperAdmin({ session, userProfile, currentPage, onNaviga
 
   return (
     <Layout session={session} userProfile={userProfile} currentPage={currentPage} onNavigate={onNavigate}>
-      <div style={s.header}>
+      <div style={{ ...s.header, padding: isMobile ? '20px 16px 0' : '28px 40px 0' }}>
         <div style={s.title}>System</div>
-        <div style={s.tabBar}>
+        <div style={{ ...s.tabBar, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
           {['Users', 'Audit Log', 'System Settings'].map(t => (
-            <button key={t} style={s.tab(tab === t)} onClick={() => setTab(t)}>{t}</button>
+            <button key={t} style={{ ...s.tab(tab === t), whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => setTab(t)}>{t}</button>
           ))}
         </div>
       </div>
 
-      <div style={s.content}>
+      <div style={{ ...s.content, padding: isMobile ? '20px 16px' : '32px 40px' }}>
         {tab === 'Users' && <UsersTab />}
         {tab === 'Audit Log' && <AuditLogTab />}
         {tab === 'System Settings' && <SystemSettingsTab />}
@@ -132,6 +137,7 @@ function UsersTab() {
   const [pendingRole, setPendingRole] = useState('employee')
   const [inviting, setInviting] = useState(false)
   const { toast, showToast, hideToast } = useToast()
+  const { isMobile } = useWindowSize()
 
   useEffect(() => { fetchUsers(); fetchAllEmployees() }, [])
 
@@ -262,8 +268,8 @@ function UsersTab() {
                   <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '8px 0' }}>All employees already have a login.</div>
                 ) : (
                   unlinkedEmployees.map(emp => (
-                    <div key={emp.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f0efeb' }}>
-                      <div style={{ flex: 1 }}>
+                    <div key={emp.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f0efeb', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '160px' }}>
                         <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>{emp.full_name}</div>
                         <div style={{ fontSize: '12px', color: '#8a8a86' }}>{emp.email}{emp.brand ? ` · ${emp.brand}` : ''}</div>
                       </div>
@@ -289,28 +295,30 @@ function UsersTab() {
               )}
 
               {inviteMode === 'manual' && (
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                  <div>
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '8px', flexWrap: 'wrap', alignItems: isMobile ? 'stretch' : 'flex-end' }}>
+                  <div style={{ flex: isMobile ? 'none' : 1, minWidth: 0 }}>
                     <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Email</div>
                     <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && sendManualInvite()}
                       placeholder="name@example.com"
-                      style={{ border: '1px solid #ebebe8', borderRadius: '6px', padding: '7px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', minWidth: '220px', color: '#1a1a1a' }} />
+                      style={{ border: '1px solid #ebebe8', borderRadius: '6px', padding: '7px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', minWidth: isMobile ? 0 : '220px', width: isMobile ? '100%' : undefined, boxSizing: 'border-box', color: '#1a1a1a' }} />
                   </div>
-                  <div>
-                    <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Role</div>
-                    <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} style={s.filterSelect}>
-                      {CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Brand</div>
-                    <select value={inviteBrand} onChange={e => setInviteBrand(e.target.value)} style={s.filterSelect}>
-                      <option value="">—</option>
-                      <option value="ISL">ISL</option>
-                      <option value="AS">AS</option>
-                      <option value="ADS">ADS</option>
-                    </select>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ flex: isMobile ? 1 : 'none' }}>
+                      <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Role</div>
+                      <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} style={{ ...s.filterSelect, width: isMobile ? '100%' : undefined }}>
+                        {CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ flex: isMobile ? 1 : 'none' }}>
+                      <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Brand</div>
+                      <select value={inviteBrand} onChange={e => setInviteBrand(e.target.value)} style={{ ...s.filterSelect, width: isMobile ? '100%' : undefined }}>
+                        <option value="">—</option>
+                        <option value="ISL">ISL</option>
+                        <option value="AS">AS</option>
+                        <option value="ADS">ADS</option>
+                      </select>
+                    </div>
                   </div>
                   <button onClick={sendManualInvite} disabled={inviting || !inviteEmail.trim()}
                     style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: inviting || !inviteEmail.trim() ? 'default' : 'pointer', fontFamily: 'inherit', opacity: inviting || !inviteEmail.trim() ? 0.5 : 1 }}>
@@ -323,60 +331,113 @@ function UsersTab() {
         )}
       </div>
 
-      {/* ── Users table ── */}
-      <table style={s.table}>
-        <thead>
-          <tr>
-            <th style={s.th}>User</th>
-            <th style={s.th}>Role</th>
-            <th style={s.th}>Brand</th>
-            <th style={s.th}>Created</th>
-            <th style={s.th}>Last sign in</th>
-            <th style={s.th}>Status</th>
-            <th style={s.th}></th>
-          </tr>
-        </thead>
-        <tbody>
+      {/* ── Users list ── */}
+      {isMobile ? (
+        <div>
           {users.map(u => (
-            <tr key={u.id}>
-              <td style={s.td}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div key={u.id} style={s.card}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                   <span style={s.statusDot(!u.deactivated)} />
-                  <div style={{ fontSize: 13, color: '#1a1a1a' }}>{u.email}</div>
+                  <div style={{ fontSize: 13, color: '#1a1a1a', wordBreak: 'break-all' }}>{u.email}</div>
                 </div>
-              </td>
-              <td style={s.td}>
-                {u.role === 'super_admin' ? (
-                  <span style={s.badge('super_admin')}>super_admin</span>
-                ) : (
-                  <select
-                    style={s.select}
-                    value={u.role || 'none'}
-                    onChange={e => handleRoleChange(u.id, e.target.value, u.email)}
-                    disabled={!u.role || u.role === 'none'}
-                  >
-                    {!u.role || u.role === 'none'
-                      ? <option value="none">No profile</option>
-                      : CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)
-                    }
-                  </select>
-                )}
-              </td>
-              <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.brand || '—'}</span></td>
-              <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'}</span></td>
-              <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}</span></td>
-              <td style={s.td}><span style={{ fontSize: 12, color: u.deactivated ? '#c74848' : '#2d7a4a', fontWeight: 500 }}>{u.deactivated ? 'Deactivated' : 'Active'}</span></td>
-              <td style={s.td}>
-                {u.role !== 'super_admin' && u.role && u.role !== 'none' && (
-                  <button style={s.btnSmall(u.deactivated ? false : true)} onClick={() => handleToggleDeactivated(u.id, u.deactivated, u.email)}>
-                    {u.deactivated ? 'Reactivate' : 'Deactivate'}
-                  </button>
-                )}
-              </td>
-            </tr>
+                <span style={{ fontSize: 12, color: u.deactivated ? '#c74848' : '#2d7a4a', fontWeight: 500, whiteSpace: 'nowrap' }}>{u.deactivated ? 'Deactivated' : 'Active'}</span>
+              </div>
+              <div style={s.cardGrid}>
+                <div>
+                  <div style={s.cardLabel}>Role</div>
+                  {u.role === 'super_admin' ? (
+                    <span style={s.badge('super_admin')}>super_admin</span>
+                  ) : (
+                    <select
+                      style={{ ...s.select, width: '100%' }}
+                      value={u.role || 'none'}
+                      onChange={e => handleRoleChange(u.id, e.target.value, u.email)}
+                      disabled={!u.role || u.role === 'none'}
+                    >
+                      {!u.role || u.role === 'none'
+                        ? <option value="none">No profile</option>
+                        : CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)
+                      }
+                    </select>
+                  )}
+                </div>
+                <div>
+                  <div style={s.cardLabel}>Brand</div>
+                  <div style={{ fontSize: 13, color: '#5f5f5c' }}>{u.brand || '—'}</div>
+                </div>
+                <div>
+                  <div style={s.cardLabel}>Created</div>
+                  <div style={{ fontSize: 13, color: '#5f5f5c' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'}</div>
+                </div>
+                <div>
+                  <div style={s.cardLabel}>Last sign in</div>
+                  <div style={{ fontSize: 13, color: '#5f5f5c' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}</div>
+                </div>
+              </div>
+              {u.role !== 'super_admin' && u.role && u.role !== 'none' && (
+                <button style={{ ...s.btnSmall(u.deactivated ? false : true), marginTop: '12px', width: '100%', padding: '8px' }} onClick={() => handleToggleDeactivated(u.id, u.deactivated, u.email)}>
+                  {u.deactivated ? 'Reactivate' : 'Deactivate'}
+                </button>
+              )}
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      ) : (
+        <table style={s.table}>
+          <thead>
+            <tr>
+              <th style={s.th}>User</th>
+              <th style={s.th}>Role</th>
+              <th style={s.th}>Brand</th>
+              <th style={s.th}>Created</th>
+              <th style={s.th}>Last sign in</th>
+              <th style={s.th}>Status</th>
+              <th style={s.th}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(u => (
+              <tr key={u.id}>
+                <td style={s.td}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={s.statusDot(!u.deactivated)} />
+                    <div style={{ fontSize: 13, color: '#1a1a1a' }}>{u.email}</div>
+                  </div>
+                </td>
+                <td style={s.td}>
+                  {u.role === 'super_admin' ? (
+                    <span style={s.badge('super_admin')}>super_admin</span>
+                  ) : (
+                    <select
+                      style={s.select}
+                      value={u.role || 'none'}
+                      onChange={e => handleRoleChange(u.id, e.target.value, u.email)}
+                      disabled={!u.role || u.role === 'none'}
+                    >
+                      {!u.role || u.role === 'none'
+                        ? <option value="none">No profile</option>
+                        : CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)
+                      }
+                    </select>
+                  )}
+                </td>
+                <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.brand || '—'}</span></td>
+                <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'}</span></td>
+                <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}</span></td>
+                <td style={s.td}><span style={{ fontSize: 12, color: u.deactivated ? '#c74848' : '#2d7a4a', fontWeight: 500 }}>{u.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                <td style={s.td}>
+                  {u.role !== 'super_admin' && u.role && u.role !== 'none' && (
+                    <button style={s.btnSmall(u.deactivated ? false : true)} onClick={() => handleToggleDeactivated(u.id, u.deactivated, u.email)}>
+                      {u.deactivated ? 'Reactivate' : 'Deactivate'}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       {users.length === 0 && <div style={s.empty}>No users found.</div>}
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </>
@@ -389,6 +450,7 @@ function AuditLogTab() {
   const [filterAction, setFilterAction] = useState('')
   const [filterFrom, setFilterFrom] = useState('')
   const [filterTo, setFilterTo] = useState('')
+  const { isMobile } = useWindowSize()
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
@@ -468,15 +530,32 @@ function AuditLogTab() {
         <div style={s.empty}>No audit log entries yet.</div>
       ) : (
         logs.map(log => (
-          <div key={log.id} style={s.logRow}>
-            <div style={s.logTime}>{formatTime(log.created_at)}</div>
-            <div style={s.logUser}>{log.user_email || 'Unknown'}</div>
-            <div style={{ flex: 1 }}>
-              <div style={s.logAction}>{ACTION_LABELS[log.action] || log.action}</div>
-              {describeEntity(log) && (
-                <div style={s.logEntity}>{describeEntity(log)}</div>
-              )}
-            </div>
+          <div key={log.id} style={isMobile ? { ...s.logRow, flexDirection: 'column', gap: '4px' } : s.logRow}>
+            {isMobile ? (
+              <>
+                <div style={{ flex: 1 }}>
+                  <div style={s.logAction}>{ACTION_LABELS[log.action] || log.action}</div>
+                  {describeEntity(log) && (
+                    <div style={s.logEntity}>{describeEntity(log)}</div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '2px' }}>
+                  <span style={{ ...s.logTime, minWidth: 0 }}>{formatTime(log.created_at)}</span>
+                  <span style={{ ...s.logUser, minWidth: 0 }}>{log.user_email || 'Unknown'}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={s.logTime}>{formatTime(log.created_at)}</div>
+                <div style={s.logUser}>{log.user_email || 'Unknown'}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={s.logAction}>{ACTION_LABELS[log.action] || log.action}</div>
+                  {describeEntity(log) && (
+                    <div style={s.logEntity}>{describeEntity(log)}</div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         ))
       )}
@@ -489,6 +568,7 @@ function SystemSettingsTab() {
   const [values, setValues] = useState({})
   const [saving, setSaving] = useState({})
   const { toast, showToast, hideToast } = useToast()
+  const { isMobile } = useWindowSize()
 
   useEffect(() => { fetchSettings() }, [])
 
@@ -527,17 +607,17 @@ function SystemSettingsTab() {
   return (
     <>
       {settings.map(setting => (
-        <div key={setting.key} style={s.settingRow}>
-          <div style={s.settingKey}>{labelFor(setting.key)}</div>
+        <div key={setting.key} style={isMobile ? { ...s.settingRow, flexDirection: 'column', alignItems: 'stretch', gap: '8px' } : s.settingRow}>
+          <div style={isMobile ? { ...s.settingKey, minWidth: 0 } : s.settingKey}>{labelFor(setting.key)}</div>
           <input
-            style={s.settingInput}
+            style={isMobile ? { ...s.settingInput, flex: 'none', maxWidth: 'none', width: '100%', boxSizing: 'border-box' } : s.settingInput}
             type="text"
             value={values[setting.key] ?? ''}
             onChange={e => setValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
             onKeyDown={e => e.key === 'Enter' && handleSave(setting.key)}
           />
           <button
-            style={s.btnSave}
+            style={isMobile ? { ...s.btnSave, alignSelf: 'flex-start' } : s.btnSave}
             onClick={() => handleSave(setting.key)}
             disabled={saving[setting.key]}
           >
