@@ -121,10 +121,19 @@ export default function SuperAdmin({ session, userProfile, currentPage, onNaviga
 
 function UsersTab() {
   const [users, setUsers] = useState([])
+  const [allEmployees, setAllEmployees] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showInvitePanel, setShowInvitePanel] = useState(false)
+  const [inviteMode, setInviteMode] = useState('employees')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState('employee')
+  const [inviteBrand, setInviteBrand] = useState('')
+  const [pendingInvite, setPendingInvite] = useState(null)
+  const [pendingRole, setPendingRole] = useState('employee')
+  const [inviting, setInviting] = useState(false)
   const { toast, showToast, hideToast } = useToast()
 
-  useEffect(() => { fetchUsers() }, [])
+  useEffect(() => { fetchUsers(); fetchAllEmployees() }, [])
 
   async function fetchUsers() {
     setLoading(true)
@@ -132,6 +141,48 @@ function UsersTab() {
     if (error) showToast(handleSupabaseError(error, 'Failed to load users.'), 'error')
     else setUsers(data || [])
     setLoading(false)
+  }
+
+  async function fetchAllEmployees() {
+    const { data } = await supabase.from('employees').select('id, full_name, email, brand').order('full_name')
+    if (data) setAllEmployees(data)
+  }
+
+  const linkedEmployeeIds = new Set(users.filter(u => u.employee_id).map(u => u.employee_id))
+  const unlinkedEmployees = allEmployees.filter(e => !linkedEmployeeIds.has(e.id))
+
+  async function sendInviteToEmployee(employee, role) {
+    setInviting(true)
+    const { data, error } = await supabase.functions.invoke('invite-user', {
+      body: { email: employee.email, role, employee_id: employee.id, brand: employee.brand },
+    })
+    setInviting(false)
+    if (error || data?.error) {
+      showToast(data?.error || 'Failed to send invite.', 'error')
+    } else {
+      showToast(`Invite sent to ${employee.email}`)
+      setPendingInvite(null)
+      fetchUsers()
+      fetchAllEmployees()
+    }
+  }
+
+  async function sendManualInvite() {
+    if (!inviteEmail.trim()) return
+    setInviting(true)
+    const { data, error } = await supabase.functions.invoke('invite-user', {
+      body: { email: inviteEmail.trim(), role: inviteRole, brand: inviteBrand || null },
+    })
+    setInviting(false)
+    if (error || data?.error) {
+      showToast(data?.error || 'Failed to send invite.', 'error')
+    } else {
+      showToast(`Invite sent to ${inviteEmail}`)
+      setInviteEmail('')
+      setInviteRole('employee')
+      setInviteBrand('')
+      fetchUsers()
+    }
   }
 
   async function handleRoleChange(userId, newRole, userEmail) {
@@ -166,10 +217,113 @@ function UsersTab() {
     }
   }
 
+  const inviteTabStyle = (active) => ({
+    padding: '8px 14px', fontSize: '12px', fontWeight: active ? 500 : 400,
+    color: active ? '#1a1a1a' : '#8a8a86', background: 'none', border: 'none',
+    borderBottom: active ? '2px solid #1a1a1a' : '2px solid transparent',
+    cursor: 'pointer', fontFamily: 'inherit', marginBottom: '-1px',
+  })
+
   if (loading) return <div style={s.empty}>Loading...</div>
 
   return (
     <>
+      {/* ── Invite panel ── */}
+      <div style={{ marginBottom: '28px', border: '1px solid #ebebe8', borderRadius: '10px', overflow: 'hidden' }}>
+        <button
+          onClick={() => setShowInvitePanel(o => !o)}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', background: showInvitePanel ? '#fafaf9' : '#fff', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>Invite a user</span>
+            {unlinkedEmployees.length > 0 && (
+              <span style={{ fontSize: '11px', fontWeight: 500, background: '#e8f4ff', color: '#0070CA', padding: '1px 7px', borderRadius: '10px' }}>
+                {unlinkedEmployees.length} employee{unlinkedEmployees.length !== 1 ? 's' : ''} without login
+              </span>
+            )}
+          </div>
+          <span style={{ fontSize: '11px', color: '#a8a8a4' }}>{showInvitePanel ? '▲' : '▼'}</span>
+        </button>
+
+        {showInvitePanel && (
+          <div style={{ borderTop: '1px solid #ebebe8' }}>
+            <div style={{ display: 'flex', padding: '0 20px', borderBottom: '1px solid #ebebe8' }}>
+              <button style={inviteTabStyle(inviteMode === 'employees')} onClick={() => setInviteMode('employees')}>
+                Employees without login ({unlinkedEmployees.length})
+              </button>
+              <button style={inviteTabStyle(inviteMode === 'manual')} onClick={() => setInviteMode('manual')}>
+                Invite by email
+              </button>
+            </div>
+
+            <div style={{ padding: '16px 20px' }}>
+              {inviteMode === 'employees' && (
+                unlinkedEmployees.length === 0 ? (
+                  <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '8px 0' }}>All employees already have a login.</div>
+                ) : (
+                  unlinkedEmployees.map(emp => (
+                    <div key={emp.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f0efeb' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>{emp.full_name}</div>
+                        <div style={{ fontSize: '12px', color: '#8a8a86' }}>{emp.email}{emp.brand ? ` · ${emp.brand}` : ''}</div>
+                      </div>
+                      {pendingInvite === emp.id ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <select value={pendingRole} onChange={e => setPendingRole(e.target.value)} style={s.select}>
+                            {CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                          </select>
+                          <button onClick={() => sendInviteToEmployee(emp, pendingRole)} disabled={inviting}
+                            style={{ ...s.btnSmall(false), background: '#1a1a1a', color: '#fff', border: 'none' }}>
+                            {inviting ? 'Sending…' : 'Confirm & send'}
+                          </button>
+                          <button onClick={() => setPendingInvite(null)} style={s.btnSmall(false)}>Cancel</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => { setPendingInvite(emp.id); setPendingRole('employee') }} style={s.btnSmall(false)}>
+                          Send invite
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )
+              )}
+
+              {inviteMode === 'manual' && (
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                  <div>
+                    <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Email</div>
+                    <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && sendManualInvite()}
+                      placeholder="name@example.com"
+                      style={{ border: '1px solid #ebebe8', borderRadius: '6px', padding: '7px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', minWidth: '220px', color: '#1a1a1a' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Role</div>
+                    <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} style={s.filterSelect}>
+                      {CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Brand</div>
+                    <select value={inviteBrand} onChange={e => setInviteBrand(e.target.value)} style={s.filterSelect}>
+                      <option value="">—</option>
+                      <option value="ISL">ISL</option>
+                      <option value="AS">AS</option>
+                      <option value="ADS">ADS</option>
+                    </select>
+                  </div>
+                  <button onClick={sendManualInvite} disabled={inviting || !inviteEmail.trim()}
+                    style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: inviting || !inviteEmail.trim() ? 'default' : 'pointer', fontFamily: 'inherit', opacity: inviting || !inviteEmail.trim() ? 0.5 : 1 }}>
+                    {inviting ? 'Sending…' : 'Send invite'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Users table ── */}
       <table style={s.table}>
         <thead>
           <tr>
@@ -188,9 +342,7 @@ function UsersTab() {
               <td style={s.td}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={s.statusDot(!u.deactivated)} />
-                  <div>
-                    <div style={{ fontSize: 13, color: '#1a1a1a' }}>{u.email}</div>
-                  </div>
+                  <div style={{ fontSize: 13, color: '#1a1a1a' }}>{u.email}</div>
                 </div>
               </td>
               <td style={s.td}>
@@ -205,37 +357,18 @@ function UsersTab() {
                   >
                     {!u.role || u.role === 'none'
                       ? <option value="none">No profile</option>
-                      : CHANGEABLE_ROLES.map(r => (
-                          <option key={r} value={r}>{r}</option>
-                        ))
+                      : CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)
                     }
                   </select>
                 )}
               </td>
-              <td style={s.td}>
-                <span style={{ fontSize: 12, color: '#8a8a86' }}>{u.brand || '—'}</span>
-              </td>
-              <td style={s.td}>
-                <span style={{ fontSize: 12, color: '#8a8a86' }}>
-                  {u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'}
-                </span>
-              </td>
-              <td style={s.td}>
-                <span style={{ fontSize: 12, color: '#8a8a86' }}>
-                  {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}
-                </span>
-              </td>
-              <td style={s.td}>
-                <span style={{ fontSize: 12, color: u.deactivated ? '#c74848' : '#2d7a4a', fontWeight: 500 }}>
-                  {u.deactivated ? 'Deactivated' : 'Active'}
-                </span>
-              </td>
+              <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.brand || '—'}</span></td>
+              <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'}</span></td>
+              <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}</span></td>
+              <td style={s.td}><span style={{ fontSize: 12, color: u.deactivated ? '#c74848' : '#2d7a4a', fontWeight: 500 }}>{u.deactivated ? 'Deactivated' : 'Active'}</span></td>
               <td style={s.td}>
                 {u.role !== 'super_admin' && u.role && u.role !== 'none' && (
-                  <button
-                    style={s.btnSmall(u.deactivated ? false : true)}
-                    onClick={() => handleToggleDeactivated(u.id, u.deactivated, u.email)}
-                  >
+                  <button style={s.btnSmall(u.deactivated ? false : true)} onClick={() => handleToggleDeactivated(u.id, u.deactivated, u.email)}>
                     {u.deactivated ? 'Reactivate' : 'Deactivate'}
                   </button>
                 )}
