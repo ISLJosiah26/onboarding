@@ -248,6 +248,10 @@ if (!session) {
   }
 
   if (page === 'time-off') {
+    if (userProfile?.role !== 'admin' && userProfile?.role !== 'super_admin') {
+      navigate('dashboard')
+      return null
+    }
     return (
       <TimeOff
         session={session}
@@ -257,7 +261,7 @@ if (!session) {
     )
   }
 
-  if (page === 'new-onboarding-select' || page === 'templates' || page === 'documents' || page === 'roles' || page === 'history') {
+  if (page === 'new-onboarding-select' || page === 'templates' || page === 'documents' || page === 'company-resources' || page === 'roles' || page === 'history') {
     return (
       <Admin
         session={session}

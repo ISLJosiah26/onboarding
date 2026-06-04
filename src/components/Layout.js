@@ -10,7 +10,8 @@ const NAV_ITEMS = [
 const SETTINGS_ITEMS = [
   { id: 'history', label: 'History', icon: 'check' },
   { id: 'templates', label: 'Task templates', icon: 'lines' },
-  { id: 'documents', label: 'Documents', icon: 'doc' },
+  { id: 'documents', label: 'My Documents', icon: 'doc' },
+  { id: 'company-resources', label: 'Company Resources', icon: 'folder' },
   { id: 'roles', label: 'Roles', icon: 'circle' },
 ]
 
@@ -38,6 +39,7 @@ function Icon({ type, size = 14 }) {
   if (type === 'audit') return <svg {...c}><path d="M2 2h10v10H2z"/><path d="M4 5h6M4 7h4M4 9h5"/></svg>
   if (type === 'gear') return <svg {...c}><circle cx="7" cy="7" r="2"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.9 2.9l1.4 1.4M9.7 9.7l1.4 1.4M2.9 11.1l1.4-1.4M9.7 4.3l1.4-1.4"/></svg>
   if (type === 'calendar') return <svg {...c}><rect x="1" y="3" width="12" height="10" rx="1"/><path d="M1 6h12M4 1v4M10 1v4"/></svg>
+  if (type === 'folder') return <svg {...c}><path d="M1 4a1 1 0 0 1 1-1h3l2 2h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"/></svg>
   if (type === 'dots') return <svg width={size} height={size} viewBox="0 0 14 14" fill="currentColor"><circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/><circle cx="11" cy="7" r="1.3"/></svg>
   return null
 }
@@ -105,10 +107,12 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
             <Icon type="people" size={19} />
             <span>Onboarding</span>
           </button>
-          <button style={tab(currentPage === 'time-off')} onClick={() => { setDrawerOpen(false); onNavigate('time-off') }}>
-            <Icon type="calendar" size={19} />
-            <span>Time Off</span>
-          </button>
+          {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
+            <button style={tab(currentPage === 'time-off')} onClick={() => { setDrawerOpen(false); onNavigate('time-off') }}>
+              <Icon type="calendar" size={19} />
+              <span>Time Off</span>
+            </button>
+          )}
           <button style={tab(isMoreActive || drawerOpen)} onClick={() => setDrawerOpen(o => !o)}>
             <Icon type="dots" size={19} />
             <span>More</span>
@@ -141,13 +145,17 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                   </button>
                 ))}
 
-                <div style={drawerSection}>Employee Hub</div>
-                {EMPLOYEE_HUB_ITEMS.map(item => (
-                  <button key={item.id} style={drawerBtn(currentPage === item.id)} onClick={() => { onNavigate(item.id); setDrawerOpen(false) }}>
-                    <Icon type={item.icon} size={17} />
-                    {item.label}
-                  </button>
-                ))}
+                {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
+                  <>
+                    <div style={drawerSection}>Employee Hub</div>
+                    {EMPLOYEE_HUB_ITEMS.map(item => (
+                      <button key={item.id} style={drawerBtn(currentPage === item.id)} onClick={() => { onNavigate(item.id); setDrawerOpen(false) }}>
+                        <Icon type={item.icon} size={17} />
+                        {item.label}
+                      </button>
+                    ))}
+                  </>
+                )}
 
                 {userProfile?.role === 'super_admin' && (
                   <>
@@ -236,13 +244,17 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
           </button>
         ))}
 
-        <div style={styles.navSection}>Employee Hub</div>
-        {EMPLOYEE_HUB_ITEMS.map(item => (
-          <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
-            <Icon type={item.icon} />
-            {item.label}
-          </button>
-        ))}
+        {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
+          <>
+            <div style={styles.navSection}>Employee Hub</div>
+            {EMPLOYEE_HUB_ITEMS.map(item => (
+              <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
+                <Icon type={item.icon} />
+                {item.label}
+              </button>
+            ))}
+          </>
+        )}
 
         {userProfile?.role === 'super_admin' && (
           <>
