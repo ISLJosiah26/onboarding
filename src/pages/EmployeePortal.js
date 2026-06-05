@@ -18,12 +18,33 @@ function getInitials(name) {
 }
 
 const TYPE_OPTIONS = [
-  { value: 'vacation', label: 'Vacation' },
-  { value: 'sick', label: 'Sick Day' },
-  { value: 'personal', label: 'Personal' },
+  { value: 'personal_vacation', label: 'Personal / Vacation' },
+  { value: 'professional_development', label: 'Professional Development Training' },
+  { value: 'volunteer', label: 'Volunteer Day' },
+  { value: 'work_from_wherever', label: 'Work from Wherever Week' },
+  { value: 'bereavement', label: 'Bereavement Leave' },
+  { value: 'care_day', label: 'Care Day' },
   { value: 'other', label: 'Other' },
 ]
-const TYPE_LABELS = { vacation: 'Vacation', sick: 'Sick Day', personal: 'Personal', other: 'Other' }
+const TYPE_LABELS = {
+  personal_vacation: 'Personal / Vacation',
+  professional_development: 'Professional Development Training',
+  volunteer: 'Volunteer Day',
+  work_from_wherever: 'Work from Wherever Week',
+  bereavement: 'Bereavement Leave',
+  care_day: 'Care Day',
+  other: 'Other',
+  vacation: 'Vacation',
+  sick: 'Sick Day',
+  personal: 'Personal',
+}
+
+const FLEXIBILITY_OPTIONS = [
+  { value: 'firm', label: 'Firm' },
+  { value: 'moderately_adjustable', label: 'Moderately Adjustable' },
+  { value: 'flexible', label: 'Flexible' },
+  { value: 'other', label: 'Other' },
+]
 
 const STATUS_STYLES = {
   pending:   { background: '#fffbf0', color: '#d4901a' },
@@ -103,12 +124,15 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
   const [timeOffFetched, setTimeOffFetched] = useState(false)
   const [torStartDate, setTorStartDate] = useState('')
   const [torEndDate, setTorEndDate] = useState('')
-  const [torType, setTorType] = useState('vacation')
+  const [torType, setTorType] = useState('personal_vacation')
   const [torNotes, setTorNotes] = useState('')
   const [torBusinessDays, setTorBusinessDays] = useState(null)
   const [torCalculating, setTorCalculating] = useState(false)
   const [torSubmitting, setTorSubmitting] = useState(false)
-  const [torIsHalfDay, setTorIsHalfDay] = useState(false)
+  const [torDayPortion, setTorDayPortion] = useState('full')
+  const [torVolunteeringWith, setTorVolunteeringWith] = useState('')
+  const [torFlexibility, setTorFlexibility] = useState('')
+  const [torFlexibilityNote, setTorFlexibilityNote] = useState('')
   const [cancellingId, setCancellingId] = useState(null)
   const [confirmCancelReq, setConfirmCancelReq] = useState(null)
 
@@ -213,10 +237,9 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
     setTorCalculating(false)
   }
 
-  function toggleHalfDay() {
-    const next = !torIsHalfDay
-    setTorIsHalfDay(next)
-    if (next) {
+  function handleDayPortionChange(portion) {
+    setTorDayPortion(portion)
+    if (portion !== 'full') {
       if (torStartDate) setTorEndDate(torStartDate)
       setTorBusinessDays(0.5)
       setTorCalculating(false)
@@ -230,12 +253,18 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
     if (!torStartDate || !torEndDate) { showToast('Please select start and end dates.', 'error'); return }
     if (torEndDate < torStartDate) { showToast('End date must be on or after start date.', 'error'); return }
 
+    if (!torFlexibility) { showToast('Please select a flexibility option.', 'error'); return }
+
     const startDate = torStartDate
     const endDate = torEndDate
     const type = torType
     const notesVal = torNotes.trim()
-    const isHalfDay = torIsHalfDay
+    const dayPortion = torDayPortion
+    const isHalfDay = dayPortion !== 'full'
     const businessDaysVal = isHalfDay ? 0.5 : torBusinessDays
+    const volunteeringWith = torType === 'volunteer' ? torVolunteeringWith.trim() : null
+    const flexibility = torFlexibility
+    const flexibilityNote = torFlexibility === 'other' ? torFlexibilityNote.trim() : null
 
     if (businessDaysVal === null || torCalculating) { showToast('Calculating business days, please wait.', 'error'); return }
 
@@ -253,16 +282,23 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
       notes: notesVal || null,
       status: 'pending',
       is_half_day: isHalfDay,
+      day_portion: dayPortion,
+      volunteering_with: volunteeringWith,
+      flexibility,
+      flexibility_note: flexibilityNote,
       created_at: new Date().toISOString(),
     }, ...prev])
 
     // Reset form fields but keep torSubmitting=true to prevent double-submit
     setTorStartDate('')
     setTorEndDate('')
-    setTorType('vacation')
+    setTorType('personal_vacation')
     setTorNotes('')
     setTorBusinessDays(null)
-    setTorIsHalfDay(false)
+    setTorDayPortion('full')
+    setTorVolunteeringWith('')
+    setTorFlexibility('')
+    setTorFlexibilityNote('')
 
     const { data: newReq, error } = await supabase
       .from('time_off_requests')
@@ -275,6 +311,10 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
         notes: notesVal || null,
         status: 'pending',
         is_half_day: isHalfDay,
+        day_portion: dayPortion,
+        volunteering_with: volunteeringWith,
+        flexibility,
+        flexibility_note: flexibilityNote,
       })
       .select()
       .single()
@@ -310,13 +350,15 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
       .map(r => `${r.employees?.full_name}: ${fmtDateRange(r.start_date, r.end_date)}`)
       .join('<br/>')
 
+    const dayPortionLabel = dayPortion === 'am' ? ' (AM)' : dayPortion === 'pm' ? ' (PM)' : ''
     const emailBody = `
 <p><strong>${employeeName}</strong> has submitted a time off request.</p>
 <p>
   <strong>Dates:</strong> ${fmtDateRange(startDate, endDate)}<br/>
-  <strong>Type:</strong> ${TYPE_LABELS[type]}<br/>
-  <strong>Business days:</strong> ${businessDaysVal}${isHalfDay ? ' (half day)' : ''}<br/>
-  <strong>Remaining balance if approved:</strong> ${remainingAfter}d${notesVal ? `<br/><strong>Notes:</strong> ${notesVal}` : ''}
+  <strong>Type:</strong> ${TYPE_LABELS[type] || type}<br/>
+  <strong>Business days:</strong> ${businessDaysVal}${dayPortionLabel}<br/>
+  <strong>Flexibility:</strong> ${FLEXIBILITY_OPTIONS.find(f => f.value === flexibility)?.label || flexibility}${flexibilityNote ? ` — ${flexibilityNote}` : ''}<br/>
+  <strong>Remaining balance if approved:</strong> ${remainingAfter}d${volunteeringWith ? `<br/><strong>Volunteering with:</strong> ${volunteeringWith}` : ''}${notesVal ? `<br/><strong>Notes:</strong> ${notesVal}` : ''}
 </p>
 ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/>${overlapList}</p>` : ''}
 <p>Please review in the admin panel.</p>`
@@ -618,9 +660,9 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
   const torUsed = timeOffBalance ? Number(timeOffBalance.used_days) : 0
   const torPending = pendingDays()
   const torRemaining = torTotal - torUsed - torPending
-  const businessDaysPreview = torIsHalfDay ? 0.5 : torBusinessDays
+  const businessDaysPreview = torDayPortion !== 'full' ? 0.5 : torBusinessDays
   const torExceedsBalance = businessDaysPreview !== null && torRemaining - businessDaysPreview < 0
-  const submitDisabled = torSubmitting || !torStartDate || !torEndDate || (!torIsHalfDay && (torBusinessDays === null || torCalculating))
+  const submitDisabled = torSubmitting || !torStartDate || !torEndDate || !torFlexibility || (torDayPortion === 'full' && (torBusinessDays === null || torCalculating))
 
   return (
     <div style={styles.app}>
@@ -853,10 +895,10 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
                 {/* Request form */}
                 <div style={styles.formCard}>
-                  <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '16px' }}>Request time off</div>
+                  <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '20px' }}>Request time off</div>
 
-                  {/* Date pickers */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '8px' }}>
+                  {/* Leave dates */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
                     <div style={{ minWidth: 0 }}>
                       <label style={styles.fieldLabel}>Start date</label>
                       <input
@@ -865,7 +907,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                         value={torStartDate}
                         onChange={e => {
                           setTorStartDate(e.target.value)
-                          if (torIsHalfDay) {
+                          if (torDayPortion !== 'full') {
                             setTorEndDate(e.target.value)
                           } else if (torEndDate) {
                             calculateBusinessDays(e.target.value, torEndDate)
@@ -877,10 +919,10 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                       <label style={styles.fieldLabel}>End date</label>
                       <input
                         type="date"
-                        style={{ ...styles.fieldInput, background: torIsHalfDay ? '#f4f3f1' : '#fff', color: torIsHalfDay ? '#a8a8a4' : '#1a1a1a' }}
+                        style={{ ...styles.fieldInput, background: torDayPortion !== 'full' ? '#f4f3f1' : '#fff', color: torDayPortion !== 'full' ? '#a8a8a4' : '#1a1a1a' }}
                         value={torEndDate}
                         min={torStartDate || undefined}
-                        disabled={torIsHalfDay}
+                        disabled={torDayPortion !== 'full'}
                         onChange={e => {
                           setTorEndDate(e.target.value)
                           if (torStartDate) calculateBusinessDays(torStartDate, e.target.value)
@@ -889,71 +931,102 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                     </div>
                   </div>
 
-                  {/* Half-day toggle */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <button
-                      onClick={toggleHalfDay}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '8px',
-                        fontSize: '12px', color: torIsHalfDay ? '#0070CA' : '#8a8a86',
-                        background: torIsHalfDay ? '#f0f7ff' : 'transparent',
-                        border: `1px solid ${torIsHalfDay ? '#cce0f5' : '#ebebe8'}`,
-                        borderRadius: '5px', padding: '5px 10px',
-                        cursor: 'pointer', fontFamily: 'inherit',
-                      }}
-                    >
-                      <span style={{ width: '14px', height: '14px', borderRadius: '3px', border: `1.5px solid ${torIsHalfDay ? '#0070CA' : '#d4d3cf'}`, background: torIsHalfDay ? '#0070CA' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {torIsHalfDay && <svg width="8" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>}
-                      </span>
-                      Half day
-                    </button>
-                  </div>
-
-                  {/* Type selector */}
-                  <div style={{ marginBottom: '14px' }}>
-                    <label style={styles.fieldLabel}>Type</label>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {TYPE_OPTIONS.map(o => {
-                        const active = torType === o.value
+                  {/* AM / PM / Full day */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={styles.fieldLabel}>Duration</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {[{ value: 'full', label: 'Full day(s)' }, { value: 'am', label: 'AM' }, { value: 'pm', label: 'PM' }].map(opt => {
+                        const active = torDayPortion === opt.value
                         return (
-                          <button
-                            key={o.value}
-                            onClick={() => setTorType(o.value)}
-                            style={{
-                              display: 'inline-flex', alignItems: 'center', gap: '6px',
-                              padding: '7px 13px',
-                              border: `1.5px solid ${active ? '#1a1a1a' : '#ebebe8'}`,
-                              borderRadius: '7px',
-                              background: active ? '#1a1a1a' : '#fff',
-                              color: active ? '#fff' : '#5f5f5c',
-                              fontSize: '13px', fontWeight: active ? 500 : 400,
-                              cursor: 'pointer', fontFamily: 'inherit',
-                            }}
-                          >
-                            <TypeIcon type={o.value} size={13} />
-                            {o.label}
+                          <button key={opt.value} onClick={() => handleDayPortionChange(opt.value)}
+                            style={{ padding: '6px 14px', border: `1.5px solid ${active ? '#1a1a1a' : '#ebebe8'}`, borderRadius: '6px', background: active ? '#1a1a1a' : '#fff', color: active ? '#fff' : '#5f5f5c', fontSize: '13px', fontWeight: active ? 500 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+                            {opt.label}
                           </button>
                         )
                       })}
                     </div>
                   </div>
 
+                  {/* Type of leave */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={styles.fieldLabel}>Type of leave</label>
+                    <div style={{ border: '1px solid #ebebe8', borderRadius: '8px', overflow: 'hidden' }}>
+                      {TYPE_OPTIONS.map((o, i) => {
+                        const active = torType === o.value
+                        return (
+                          <label key={o.value} onClick={() => setTorType(o.value)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', cursor: 'pointer', background: active ? '#fafaf9' : '#fff', borderTop: i > 0 ? '1px solid #f0efeb' : 'none' }}>
+                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `1.5px solid ${active ? '#1a1a1a' : '#d4d3cf'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.12s' }}>
+                              {active && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1a1a1a' }} />}
+                            </div>
+                            <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: active ? 500 : 400 }}>{o.label}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Volunteering with (conditional) */}
+                  {torType === 'volunteer' && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={styles.fieldLabel}>Who will you be volunteering with?</label>
+                      <input
+                        type="text"
+                        style={styles.fieldInput}
+                        placeholder="Organization name"
+                        value={torVolunteeringWith}
+                        onChange={e => setTorVolunteeringWith(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                  )}
+
                   {/* Notes */}
-                  <div style={{ marginBottom: '16px' }}>
+                  <div style={{ marginBottom: '20px' }}>
                     <label style={styles.fieldLabel}>Notes (optional)</label>
                     <textarea
-                      style={{ ...styles.fieldInput, resize: 'vertical', minHeight: '70px' }}
+                      style={{ ...styles.fieldInput, resize: 'vertical', minHeight: '64px' }}
                       placeholder="Any additional context..."
                       value={torNotes}
                       onChange={e => setTorNotes(e.target.value)}
                     />
                   </div>
 
+                  {/* Flexibility */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={styles.fieldLabel}>Flexibility <span style={{ color: '#c74848' }}>*</span></label>
+                    <div style={{ fontSize: '11px', color: '#a0a09c', marginBottom: '8px' }}>In case of conflicting business issues or overlapping leave requests</div>
+                    <div style={{ border: '1px solid #ebebe8', borderRadius: '8px', overflow: 'hidden' }}>
+                      {FLEXIBILITY_OPTIONS.map((o, i) => {
+                        const active = torFlexibility === o.value
+                        return (
+                          <label key={o.value} onClick={() => setTorFlexibility(o.value)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', cursor: 'pointer', background: active ? '#fafaf9' : '#fff', borderTop: i > 0 ? '1px solid #f0efeb' : 'none' }}>
+                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `1.5px solid ${active ? '#1a1a1a' : '#d4d3cf'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.12s' }}>
+                              {active && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1a1a1a' }} />}
+                            </div>
+                            <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: active ? 500 : 400 }}>{o.label}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                    {torFlexibility === 'other' && (
+                      <input
+                        type="text"
+                        style={{ ...styles.fieldInput, marginTop: '8px' }}
+                        placeholder="Please describe..."
+                        value={torFlexibilityNote}
+                        onChange={e => setTorFlexibilityNote(e.target.value)}
+                        autoFocus
+                      />
+                    )}
+                  </div>
+
                   {/* Business days display */}
                   {torStartDate && torEndDate && (
                     <div style={{ marginBottom: '16px', fontSize: '13px', color: '#5f5f5c' }}>
-                      {torIsHalfDay ? (
-                        <span style={{ color: '#0070CA', fontWeight: 500 }}>½ day</span>
+                      {torDayPortion !== 'full' ? (
+                        <span style={{ fontWeight: 500 }}>½ day ({torDayPortion.toUpperCase()})</span>
                       ) : torCalculating ? (
                         <span style={{ color: '#a8a8a4' }}>Calculating...</span>
                       ) : torBusinessDays !== null ? (
@@ -988,7 +1061,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                           </span>
                         </div>
                         <div style={{ fontSize: '11px', color: '#8a8a86', marginTop: '2px' }}>
-                          {TYPE_LABELS[req.type]} · {req.business_days}d{req.is_half_day ? ' (half day)' : ''}
+                          {TYPE_LABELS[req.type] || req.type} · {req.business_days}d{req.day_portion && req.day_portion !== 'full' ? ` (${req.day_portion.toUpperCase()})` : req.is_half_day ? ' (half day)' : ''}
                         </div>
                       </div>
                       <StatusPill status={req.status} />
