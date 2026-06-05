@@ -303,9 +303,13 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
       body: { email: instance.employees.email, employeeId: instance.employees.id, brand: instance.employees.roles?.brand || 'ISL' }
     })
     if (error || data?.error) {
-      showToast('Failed to send invite. Please try again.', 'error')
+      showToast(data?.error || 'Failed to send invite. Please try again.', 'error')
     } else {
-      setInviteSent(true)
+      if (data?.alreadyInvited) {
+        showToast('This employee already has portal access.', 'success')
+      } else {
+        setInviteSent(true)
+      }
     }
     setInviting(false)
   }
