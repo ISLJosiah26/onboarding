@@ -143,7 +143,7 @@ async function addRole() {
     fetchTemplateCounts()
     if (!newTask) return
 
-    if (!taskLibrary.some(t => t.task_name === addedName)) {
+    if (!taskLibrary.some(t => t.task_name.toLowerCase() === addedName.toLowerCase())) {
       await supabase.from('task_library').insert({ task_name: addedName })
       fetchTaskLibrary()
     }
@@ -180,7 +180,7 @@ async function addRole() {
       lines.map(name => ({ role_id: selectedRole.id, task_name: name, phase: bulkPhase, owner: bulkOwner }))
     )
     if (error) { showToast(handleSupabaseError(error, 'Failed to add tasks.'), 'error'); return }
-    const newNames = lines.filter(name => !taskLibrary.some(t => t.task_name === name))
+    const newNames = lines.filter(name => !taskLibrary.some(t => t.task_name.toLowerCase() === name.toLowerCase()))
     if (newNames.length > 0) {
       await supabase.from('task_library').insert(newNames.map(name => ({ task_name: name })))
       fetchTaskLibrary()
@@ -573,6 +573,7 @@ function renderModal() {
                     const active = selectedRole?.id === r.id
                     return (
                       <button key={r.id}
+                        className={`il-role-item${active ? ' il-active' : ''}`}
                         onClick={() => { setSelectedRole(r); setAddingTaskToPhase(null); setBulkMode(false) }}
                         style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 16px', border: 'none', background: active ? '#f0efeb' : 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}>
                         <div style={{ fontSize: '13px', fontWeight: active ? 500 : 400, color: '#1a1a1a', letterSpacing: '-0.1px' }}>{r.name}</div>

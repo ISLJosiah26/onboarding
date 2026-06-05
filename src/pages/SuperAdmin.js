@@ -389,6 +389,7 @@ function AuditLogTab() {
   const [filterAction, setFilterAction] = useState('')
   const [filterFrom, setFilterFrom] = useState('')
   const [filterTo, setFilterTo] = useState('')
+  const [logLimit, setLogLimit] = useState(100)
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
@@ -396,7 +397,7 @@ function AuditLogTab() {
       .from('audit_log')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(500)
+      .limit(logLimit)
 
     if (filterAction) query = query.eq('action', filterAction)
     if (filterFrom) query = query.gte('created_at', filterFrom + 'T00:00:00')
@@ -405,7 +406,7 @@ function AuditLogTab() {
     const { data } = await query
     setLogs(data || [])
     setLoading(false)
-  }, [filterAction, filterFrom, filterTo])
+  }, [filterAction, filterFrom, filterTo, logLimit])
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
@@ -431,7 +432,7 @@ function AuditLogTab() {
   return (
     <>
       <div style={s.filterRow}>
-        <select style={s.filterSelect} value={filterAction} onChange={e => setFilterAction(e.target.value)}>
+        <select style={s.filterSelect} value={filterAction} onChange={e => { setFilterAction(e.target.value); setLogLimit(100) }}>
           <option value="">All actions</option>
           {Object.entries(ACTION_LABELS).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
@@ -441,7 +442,7 @@ function AuditLogTab() {
           style={s.filterInput}
           type="date"
           value={filterFrom}
-          onChange={e => setFilterFrom(e.target.value)}
+          onChange={e => { setFilterFrom(e.target.value); setLogLimit(100) }}
           placeholder="From"
         />
         <span style={{ fontSize: 12, color: '#a8a8a4' }}>to</span>
@@ -449,13 +450,13 @@ function AuditLogTab() {
           style={s.filterInput}
           type="date"
           value={filterTo}
-          onChange={e => setFilterTo(e.target.value)}
+          onChange={e => { setFilterTo(e.target.value); setLogLimit(100) }}
           placeholder="To"
         />
         {(filterAction || filterFrom || filterTo) && (
           <button
             style={{ fontSize: 12, color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-            onClick={() => { setFilterAction(''); setFilterFrom(''); setFilterTo('') }}
+            onClick={() => { setFilterAction(''); setFilterFrom(''); setFilterTo(''); setLogLimit(100) }}
           >
             Clear
           </button>
@@ -467,18 +468,27 @@ function AuditLogTab() {
       ) : logs.length === 0 ? (
         <div style={s.empty}>No audit log entries yet.</div>
       ) : (
-        logs.map(log => (
-          <div key={log.id} style={s.logRow}>
-            <div style={s.logTime}>{formatTime(log.created_at)}</div>
-            <div style={s.logUser}>{log.user_email || 'Unknown'}</div>
-            <div style={{ flex: 1 }}>
-              <div style={s.logAction}>{ACTION_LABELS[log.action] || log.action}</div>
-              {describeEntity(log) && (
-                <div style={s.logEntity}>{describeEntity(log)}</div>
-              )}
+        <>
+          {logs.map(log => (
+            <div key={log.id} style={s.logRow}>
+              <div style={s.logTime}>{formatTime(log.created_at)}</div>
+              <div style={s.logUser}>{log.user_email || 'Unknown'}</div>
+              <div style={{ flex: 1 }}>
+                <div style={s.logAction}>{ACTION_LABELS[log.action] || log.action}</div>
+                {describeEntity(log) && (
+                  <div style={s.logEntity}>{describeEntity(log)}</div>
+                )}
+              </div>
             </div>
-          </div>
-        ))
+          ))}
+          {logs.length >= logLimit && (
+            <button
+              onClick={() => setLogLimit(l => l + 100)}
+              style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '16px 0', display: 'block', width: '100%', textAlign: 'center' }}>
+              Load more
+            </button>
+          )}
+        </>
       )}
     </>
   )

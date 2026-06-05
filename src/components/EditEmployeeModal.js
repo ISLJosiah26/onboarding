@@ -67,7 +67,7 @@ const { error: updateError } = await supabase
   })
   .eq('id', employee.id)
 
-    if (updateError) { setError(updateError.message); setLoading(false); return }
+    if (updateError) { setError('Failed to save employee details. Please try again.'); setLoading(false); return }
 
     if (roleChanged && instanceId) {
       const { data: newTasks, error: fetchTasksError } = await supabase
@@ -77,14 +77,21 @@ const { error: updateError } = await supabase
 
       if (fetchTasksError) { setError('Failed to load tasks for the new role.'); setLoading(false); return }
 
-      const { error: deleteError } = await supabase.from('task_completions').delete().eq('instance_id', instanceId)
-      if (deleteError) { setError('Failed to update task list.'); setLoading(false); return }
+      // Snapshot existing IDs before touching them
+      const { data: existingCompletions } = await supabase
+        .from('task_completions').select('id').eq('instance_id', instanceId)
 
+      // Insert new tasks first — if this fails, old tasks are still intact
       if (newTasks && newTasks.length > 0) {
         const { error: insertError } = await supabase.from('task_completions').insert(
           newTasks.map(t => ({ instance_id: instanceId, template_task_id: t.id, completed: false }))
         )
-        if (insertError) { setError('Failed to create new tasks.'); setLoading(false); return }
+        if (insertError) { setError('Failed to create new task list.'); setLoading(false); return }
+      }
+
+      // Delete old tasks by known IDs — non-fatal if this fails (employee has duplicate tasks rather than none)
+      if (existingCompletions && existingCompletions.length > 0) {
+        await supabase.from('task_completions').delete().in('id', existingCompletions.map(c => c.id))
       }
     }
 

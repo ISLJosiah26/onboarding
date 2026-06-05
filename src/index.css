@@ -120,6 +120,19 @@ a:focus-visible {
   animation: modalSlideUp 0.18s ease forwards;
 }
 
+/* Role list items in templates panel */
+.il-role-item {
+  transition: background 0.1s ease;
+}
+.il-role-item:not(.il-active):hover {
+  background: #f5f4f0 !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
