@@ -44,13 +44,20 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [historyFilter, setHistoryFilter] = useState('all')
   const [renamingDocId, setRenamingDocId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
+  const [addingTaskToPhase, setAddingTaskToPhase] = useState(null)
+  const [bulkMode, setBulkMode] = useState(false)
+  const [bulkText, setBulkText] = useState('')
+  const [bulkPhase, setBulkPhase] = useState('Week 1')
+  const [bulkOwner, setBulkOwner] = useState('HR')
+  const [templateCounts, setTemplateCounts] = useState({})
+  const [showLibrary, setShowLibrary] = useState(false)
 
   useEffect(() => { fetchRoles() }, [])
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
   useEffect(() => { if (initialTab === 'documents') fetchDocuments() }, [initialTab])
   useEffect(() => { if (initialTab === 'company-resources') fetchCompanyResources() }, [initialTab])
   useEffect(() => { if (initialTab === 'history') fetchHistory() }, [initialTab])
-    useEffect(() => { if (initialTab === 'templates') fetchTaskLibrary() }, [initialTab])
+  useEffect(() => { if (initialTab === 'templates') { fetchTaskLibrary(); fetchTemplateCounts() } }, [initialTab])
 
   async function fetchRoles() {
     const { data } = await supabase.from('roles').select('*').order('name')
@@ -86,6 +93,14 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   if (data) setTaskLibrary(data)
 }
 
+async function fetchTemplateCounts() {
+  const { data } = await supabase.from('onboarding_templates').select('role_id, parent_id')
+  if (!data) return
+  const counts = {}
+  data.filter(t => !t.parent_id).forEach(t => { counts[t.role_id] = (counts[t.role_id] || 0) + 1 })
+  setTemplateCounts(counts)
+}
+
 async function addRole() {
   if (!newRoleName.trim()) return
   const { error } = await supabase.from('roles').insert({ name: newRoleName.trim(), brand: newRoleBrand })
@@ -114,22 +129,26 @@ async function addRole() {
     })
   }
 
-  async function addTask() {
+  async function addTask(phase) {
     if (!newTaskName.trim() || !selectedRole) return
 
     const { data: newTask } = await supabase
       .from('onboarding_templates')
-      .insert({ role_id: selectedRole.id, task_name: newTaskName.trim(), phase: newTaskPhase, owner: newTaskOwner })
+      .insert({ role_id: selectedRole.id, task_name: newTaskName.trim(), phase, owner: newTaskOwner })
       .select().single()
 
+    const addedName = newTaskName.trim()
     setNewTaskName('')
+    setAddingTaskToPhase(null)
+    setUseLibraryTask(true)
     fetchTemplates(selectedRole.id)
+    fetchTemplateCounts()
     if (!newTask) return
 
-    if (!taskLibrary.some(t => t.task_name === newTaskName.trim())) {
-  await supabase.from('task_library').insert({ task_name: newTaskName.trim() })
-  fetchTaskLibrary()
-}
+    if (!taskLibrary.some(t => t.task_name === addedName)) {
+      await supabase.from('task_library').insert({ task_name: addedName })
+      fetchTaskLibrary()
+    }
 
     const { data: roleEmployees } = await supabase.from('employees').select('id').eq('role_id', selectedRole.id)
     if (!roleEmployees || roleEmployees.length === 0) return
@@ -154,6 +173,31 @@ async function addRole() {
         }
       })
     }
+  }
+
+  async function addBulkTasks() {
+    const lines = bulkText.split('\n').map(l => l.trim()).filter(Boolean)
+    if (!lines.length || !selectedRole) return
+    const { error } = await supabase.from('onboarding_templates').insert(
+      lines.map(name => ({ role_id: selectedRole.id, task_name: name, phase: bulkPhase, owner: bulkOwner }))
+    )
+    if (error) { showToast(handleSupabaseError(error, 'Failed to add tasks.'), 'error'); return }
+    const newNames = lines.filter(name => !taskLibrary.some(t => t.task_name === name))
+    if (newNames.length > 0) {
+      await supabase.from('task_library').insert(newNames.map(name => ({ task_name: name })))
+      fetchTaskLibrary()
+    }
+    setBulkText('')
+    setBulkMode(false)
+    fetchTemplates(selectedRole.id)
+    fetchTemplateCounts()
+    showToast(`${lines.length} task${lines.length !== 1 ? 's' : ''} added`)
+  }
+
+  async function deleteLibraryTask(id) {
+    const { error } = await supabase.from('task_library').delete().eq('id', id)
+    if (error) { showToast(handleSupabaseError(error, 'Failed to remove.'), 'error'); return }
+    fetchTaskLibrary()
   }
 
   async function deleteTask(id, name) {
@@ -188,11 +232,12 @@ async function saveTaskEdit(id) {
 
 async function addSubtask(parentId) {
   if (!newSubtaskName.trim()) return
+  const parent = templates.find(t => t.id === parentId)
   const { error } = await supabase.from('onboarding_templates').insert({
     role_id: selectedRole.id,
     task_name: newSubtaskName.trim(),
-    phase: newSubtaskPhase,
-    owner: templates.find(t => t.id === parentId)?.owner,
+    phase: parent?.phase || 'Week 1',
+    owner: parent?.owner,
     parent_id: parentId
   })
   if (error) {
@@ -515,156 +560,255 @@ function renderModal() {
     return (
       <Layout session={session} userProfile={userProfile} currentPage="templates" onNavigate={onNavigate}>
         {renderAdminHeader('Task templates', '')}
-        <div style={styles.content}>
-          <label style={styles.label}>Select a role to manage its tasks</label>
-          <select style={{ ...styles.input, width: '100%', maxWidth: '320px', marginBottom: '24px' }}
-            value={selectedRole?.id || ''}
-            onChange={e => { const role = roles.find(r => r.id === e.target.value); setSelectedRole(role || null) }}>
-            <option value="">Select a role...</option>
-            {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-          </select>
 
-          {selectedRole && (
-            <>
-<div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-  <div style={{ flex: 1, minWidth: '200px' }}>
-    {useLibraryTask ? (
-      <select style={{ ...styles.input, width: '100%' }} value={newTaskName}
-        onChange={e => {
-          if (e.target.value === '__custom__') { setUseLibraryTask(false); setNewTaskName('') }
-          else setNewTaskName(e.target.value)
-        }}>
-        <option value="">Select from library...</option>
-        {taskLibrary.map(t => <option key={t.id} value={t.task_name}>{t.task_name}</option>)}
-        <option value="__custom__">+ Custom task</option>
-      </select>
-    ) : (
-      <div style={{ display: 'flex', gap: '6px' }}>
-        <input style={{ ...styles.input, flex: 1 }} placeholder="Task name"
-          value={newTaskName} onChange={e => setNewTaskName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addTask()} autoFocus />
-        <button style={{ ...styles.btnGhost, fontSize: '11px', color: '#a8a8a4' }}
-          onClick={() => { setUseLibraryTask(true); setNewTaskName('') }}>
-          Use library
-        </button>
-      </div>
-    )}
-  </div>
-  <select style={styles.input} value={newTaskPhase} onChange={e => setNewTaskPhase(e.target.value)}>
-    {PHASES.map(p => <option key={p}>{p}</option>)}
-  </select>
-  <select style={styles.input} value={newTaskOwner} onChange={e => setNewTaskOwner(e.target.value)}>
-    {OWNERS.map(o => <option key={o}>{o}</option>)}
-  </select>
-  <button style={styles.btnPrimary} onClick={addTask}>Add task</button>
-</div>
-{useLibraryTask && (
-  <button style={{ ...styles.btnGhost, fontSize: '11px', color: '#0070CA', marginTop: '-16px', marginBottom: '16px' }}
-    onClick={() => { setUseLibraryTask(false); setNewTaskName('') }}>
-    + Type a custom task instead
-  </button>
-)}
+        <div style={{ display: 'flex', minHeight: 'calc(100vh - 130px)' }}>
 
-              {PHASES.map(phase => {
-                const phaseTasks = templates.filter(t => t.phase === phase && !t.parent_id)
-                if (phaseTasks.length === 0) return null
-                return (
-                  <div key={phase}>
-                    <div style={styles.phaseLabel}>{phase}</div>
-                    {phaseTasks.map(t => {
-                      const subtasks = templates.filter(s => s.parent_id === t.id)
-                      return (
-                        <div key={t.id}>
-                          <div style={styles.row}>
-                            {editingTask === t.id ? (
-                              <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
-                                <input style={{ ...styles.input, flex: 1, marginBottom: 0 }} value={editingTaskName}
-                                  onChange={e => setEditingTaskName(e.target.value)}
-                                  onKeyDown={e => { if (e.key === 'Enter') saveTaskEdit(t.id); if (e.key === 'Escape') setEditingTask(null) }}
-                                  autoFocus />
-                                <button style={styles.btnPrimary} onClick={() => saveTaskEdit(t.id)}>Save</button>
-                                <button style={styles.btnGhost} onClick={() => setEditingTask(null)}>Cancel</button>
+          {/* Left panel: role list */}
+          <div style={{ width: isMobile ? '140px' : '200px', flexShrink: 0, borderRight: '1px solid #e8e8e4', overflowY: 'auto', padding: '12px 0' }}>
+            {['ISL', 'AS', 'ADS'].map(brand => {
+              const brandRoles = roles.filter(r => r.brand === brand)
+              if (brandRoles.length === 0) return null
+              return (
+                <div key={brand}>
+                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#a0a09c', textTransform: 'uppercase', letterSpacing: '0.4px', padding: '10px 16px 4px' }}>{brand}</div>
+                  {brandRoles.map(r => {
+                    const active = selectedRole?.id === r.id
+                    return (
+                      <button key={r.id}
+                        onClick={() => { setSelectedRole(r); setAddingTaskToPhase(null); setBulkMode(false) }}
+                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 16px', border: 'none', background: active ? '#f0efeb' : 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        <div style={{ fontSize: '13px', fontWeight: active ? 500 : 400, color: '#1a1a1a', letterSpacing: '-0.1px' }}>{r.name}</div>
+                        <div style={{ fontSize: '11px', color: '#a0a09c', marginTop: '1px' }}>{templateCounts[r.id] || 0} tasks</div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
+            {roles.length === 0 && (
+              <div style={{ padding: '16px', fontSize: '12px', color: '#a0a09c' }}>
+                No roles.{' '}
+                <button onClick={() => onNavigate('roles')} style={{ color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '12px', padding: 0 }}>Add roles</button>
+              </div>
+            )}
+          </div>
+
+          {/* Right panel: task editor */}
+          <div style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+            {!selectedRole ? (
+              <div style={{ padding: '40px', color: '#a0a09c', fontSize: '13px' }}>Select a role to manage its tasks.</div>
+            ) : (
+              <>
+                {/* Role header */}
+                <div style={{ padding: '20px 32px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f0efeb' }}>
+                  <div>
+                    <span style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.2px' }}>{selectedRole.name}</span>
+                    <span style={{ fontSize: '12px', color: '#a0a09c', marginLeft: '8px' }}>{selectedRole.brand} · {templateCounts[selectedRole.id] || 0} tasks</span>
+                  </div>
+                  <button
+                    onClick={() => { setBulkMode(v => !v); setAddingTaskToPhase(null) }}
+                    style={{ fontSize: '12px', color: bulkMode ? '#5f5f5c' : '#0070CA', background: 'none', border: '1px solid ' + (bulkMode ? '#d4d3cf' : 'transparent'), borderRadius: '5px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {bulkMode ? 'Cancel' : 'Bulk add'}
+                  </button>
+                </div>
+
+                <div style={{ padding: '20px 32px', maxWidth: '640px' }}>
+
+                  {/* Bulk add */}
+                  {bulkMode && (
+                    <div style={{ background: '#fafaf9', border: '1px solid #e8e8e4', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', marginBottom: '4px' }}>Bulk add tasks</div>
+                      <div style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '10px' }}>One task name per line</div>
+                      <textarea
+                        autoFocus
+                        style={{ width: '100%', height: '110px', resize: 'vertical', border: '1px solid #e8e8e4', borderRadius: '6px', padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', background: '#fff' }}
+                        placeholder={'Complete tax forms\nSet up laptop\nMeet with manager'}
+                        value={bulkText}
+                        onChange={e => setBulkText(e.target.value)}
+                      />
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <select style={styles.input} value={bulkPhase} onChange={e => setBulkPhase(e.target.value)}>
+                          {PHASES.map(ph => <option key={ph}>{ph}</option>)}
+                        </select>
+                        <select style={styles.input} value={bulkOwner} onChange={e => setBulkOwner(e.target.value)}>
+                          {OWNERS.map(o => <option key={o}>{o}</option>)}
+                        </select>
+                        <button style={{ ...styles.btnPrimary, opacity: !bulkText.trim() ? 0.5 : 1 }} disabled={!bulkText.trim()} onClick={addBulkTasks}>
+                          Add {bulkText.split('\n').filter(l => l.trim()).length || ''} tasks
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Phases */}
+                  {PHASES.map(phase => {
+                    const phaseTasks = templates.filter(t => t.phase === phase && !t.parent_id)
+                    const isAddingToThis = addingTaskToPhase === phase
+                    return (
+                      <div key={phase} style={{ marginBottom: '28px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: '#a0a09c', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{phase}</span>
+                          {phaseTasks.length > 0 && <span style={{ fontSize: '11px', color: '#c8c7c3' }}>{phaseTasks.length}</span>}
+                        </div>
+
+                        {phaseTasks.length === 0 && !isAddingToThis && (
+                          <div style={{ fontSize: '12px', color: '#d4d3cf', paddingBottom: '6px' }}>No tasks</div>
+                        )}
+
+                        {phaseTasks.map(t => {
+                          const subtasks = templates.filter(s => s.parent_id === t.id)
+                          return (
+                            <div key={t.id}>
+                              <div style={styles.row}>
+                                {editingTask === t.id ? (
+                                  <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
+                                    <input style={{ ...styles.input, flex: 1 }} value={editingTaskName}
+                                      onChange={e => setEditingTaskName(e.target.value)}
+                                      onKeyDown={e => { if (e.key === 'Enter') saveTaskEdit(t.id); if (e.key === 'Escape') setEditingTask(null) }}
+                                      autoFocus />
+                                    <button style={styles.btnPrimary} onClick={() => saveTaskEdit(t.id)}>Save</button>
+                                    <button style={styles.btnGhost} onClick={() => setEditingTask(null)}>Cancel</button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                                      <span style={styles.rowName}>{t.task_name}</span>
+                                      <span style={styles.pill}>{t.owner}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+                                      <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setEditingTask(t.id); setEditingTaskName(t.task_name) }}>Edit</button>
+                                      <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setAddingSubtaskTo(addingSubtaskTo === t.id ? null : t.id); setNewSubtaskName('') }}>+ Subtask</button>
+                                      <button style={styles.btnGhost} onClick={() => deleteTask(t.id, t.task_name)}>Remove</button>
+                                    </div>
+                                  </>
+                                )}
                               </div>
-                            ) : (
-                              <>
-                                <div>
-                                  <span style={styles.rowName}>{t.task_name}</span>
-                                  <span style={{ ...styles.pill, marginLeft: '10px' }}>{t.owner}</span>
-                                </div>
-                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                  <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setEditingTask(t.id); setEditingTaskName(t.task_name) }}>Edit</button>
-                                  <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setAddingSubtaskTo(t.id); setNewSubtaskName('') }}>+ Subtask</button>
-                                  <button style={styles.btnGhost} onClick={() => deleteTask(t.id, t.task_name)}>Remove</button>
-                                </div>
-                              </>
-                            )}
-                          </div>
 
-                          {subtasks.map(s => (
-                            <div key={s.id} style={{ ...styles.row, paddingLeft: '20px', background: '#fafaf9' }}>
-                              {editingTask === s.id ? (
-                                <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
-                                  <input style={{ ...styles.input, flex: 1, marginBottom: 0 }} value={editingTaskName}
-                                    onChange={e => setEditingTaskName(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') saveTaskEdit(s.id); if (e.key === 'Escape') setEditingTask(null) }}
-                                    autoFocus />
-                                  <button style={styles.btnPrimary} onClick={() => saveTaskEdit(s.id)}>Save</button>
-                                  <button style={styles.btnGhost} onClick={() => setEditingTask(null)}>Cancel</button>
+                              {subtasks.map(s => (
+                                <div key={s.id} style={{ ...styles.row, paddingLeft: '20px', background: '#fafaf9' }}>
+                                  {editingTask === s.id ? (
+                                    <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
+                                      <input style={{ ...styles.input, flex: 1 }} value={editingTaskName}
+                                        onChange={e => setEditingTaskName(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') saveTaskEdit(s.id); if (e.key === 'Escape') setEditingTask(null) }}
+                                        autoFocus />
+                                      <button style={styles.btnPrimary} onClick={() => saveTaskEdit(s.id)}>Save</button>
+                                      <button style={styles.btnGhost} onClick={() => setEditingTask(null)}>Cancel</button>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ color: '#d4d3cf', fontSize: '12px' }}>↳</span>
+                                        <span style={{ ...styles.rowName, color: '#5f5f5c' }}>{s.task_name}</span>
+                                      </div>
+                                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                        <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setEditingTask(s.id); setEditingTaskName(s.task_name) }}>Edit</button>
+                                        <button style={styles.btnGhost} onClick={() => deleteTask(s.id, s.task_name)}>Remove</button>
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
-                              ) : (
-                                <>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ color: '#d4d3cf', fontSize: '12px' }}>↳</span>
-                                    <span style={{ ...styles.rowName, color: '#5f5f5c' }}>{s.task_name}</span>
+                              ))}
+
+                              {addingSubtaskTo === t.id && (
+                                <div style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '12px', background: '#fafaf9', borderBottom: '1px solid #f0efeb' }}>
+                                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    {useLibrarySubtask ? (
+                                      <select style={{ ...styles.input, flex: 1, minWidth: '160px' }} value={newSubtaskName}
+                                        onChange={e => {
+                                          if (e.target.value === '__custom__') { setUseLibrarySubtask(false); setNewSubtaskName('') }
+                                          else setNewSubtaskName(e.target.value)
+                                        }}>
+                                        <option value="">Select from library...</option>
+                                        {taskLibrary.map(tl => <option key={tl.id} value={tl.task_name}>{tl.task_name}</option>)}
+                                        <option value="__custom__">+ Custom subtask</option>
+                                      </select>
+                                    ) : (
+                                      <input style={{ ...styles.input, flex: 1, minWidth: '160px' }} placeholder="Subtask name"
+                                        value={newSubtaskName} onChange={e => setNewSubtaskName(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && addSubtask(t.id)} autoFocus />
+                                    )}
+                                    <button style={styles.btnPrimary} onClick={() => addSubtask(t.id)}>Add</button>
+                                    <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => { setAddingSubtaskTo(null); setUseLibrarySubtask(true) }}>Cancel</button>
                                   </div>
-                                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                    <button style={{ ...styles.btnGhost, color: '#0070CA' }} onClick={() => { setEditingTask(s.id); setEditingTaskName(s.task_name) }}>Edit</button>
-                                    <button style={styles.btnGhost} onClick={() => deleteTask(s.id, s.task_name)}>Remove</button>
-                                  </div>
-                                </>
+                                </div>
                               )}
                             </div>
-                          ))}
+                          )
+                        })}
 
-                          {addingSubtaskTo === t.id && (
-                            <div style={{ paddingLeft: '20px', paddingBottom: '12px', paddingTop: '8px', background: '#fafaf9', borderBottom: '1px solid #f0efeb' }}>
-<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-  {useLibrarySubtask ? (
-    <select style={{ ...styles.input, flex: 1, minWidth: '160px' }} value={newSubtaskName}
-      onChange={e => {
-        if (e.target.value === '__custom__') {
-          setUseLibrarySubtask(false)
-          setNewSubtaskName('')
-        } else {
-          setNewSubtaskName(e.target.value)
-        }
-      }}>
-      <option value="">Select from library...</option>
-      {taskLibrary.map(t => <option key={t.id} value={t.task_name}>{t.task_name}</option>)}
-      <option value="__custom__">+ Custom subtask</option>
-    </select>
-  ) : (
-    <input style={{ ...styles.input, flex: 1, minWidth: '160px' }} placeholder="Subtask name"
-      value={newSubtaskName} onChange={e => setNewSubtaskName(e.target.value)}
-      onKeyDown={e => e.key === 'Enter' && addSubtask(t.id)} autoFocus />
-  )}
-  <select style={styles.input} value={newSubtaskPhase} onChange={e => setNewSubtaskPhase(e.target.value)}>
-    {PHASES.map(p => <option key={p}>{p}</option>)}
-  </select>
-  <button style={styles.btnPrimary} onClick={() => addSubtask(t.id)}>Add</button>
-  <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => { setAddingSubtaskTo(null); setUseLibrarySubtask(true) }}>Cancel</button>
-</div>
+                        {/* Per-phase add */}
+                        {isAddingToThis ? (
+                          <div style={{ marginTop: '8px', padding: '12px', background: '#fafaf9', border: '1px solid #e8e8e4', borderRadius: '7px' }}>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                              {useLibraryTask ? (
+                                <select style={{ ...styles.input, flex: 1, minWidth: '180px' }} value={newTaskName}
+                                  onChange={e => {
+                                    if (e.target.value === '__custom__') { setUseLibraryTask(false); setNewTaskName('') }
+                                    else setNewTaskName(e.target.value)
+                                  }}>
+                                  <option value="">Select from library...</option>
+                                  {taskLibrary.map(tl => <option key={tl.id} value={tl.task_name}>{tl.task_name}</option>)}
+                                  <option value="__custom__">+ Custom task</option>
+                                </select>
+                              ) : (
+                                <input style={{ ...styles.input, flex: 1, minWidth: '180px' }} placeholder="Task name"
+                                  value={newTaskName} onChange={e => setNewTaskName(e.target.value)}
+                                  onKeyDown={e => e.key === 'Enter' && addTask(phase)} autoFocus />
+                              )}
+                              <select style={styles.input} value={newTaskOwner} onChange={e => setNewTaskOwner(e.target.value)}>
+                                {OWNERS.map(o => <option key={o}>{o}</option>)}
+                              </select>
+                              <button style={styles.btnPrimary} onClick={() => addTask(phase)}>Add</button>
+                              <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => { setAddingTaskToPhase(null); setUseLibraryTask(true); setNewTaskName('') }}>Cancel</button>
                             </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })}
-            </>
+                            {!useLibraryTask && (
+                              <button style={{ ...styles.btnGhost, fontSize: '11px', color: '#a0a09c', marginTop: '6px' }}
+                                onClick={() => { setUseLibraryTask(true); setNewTaskName('') }}>
+                                Use library instead
+                              </button>
+                            )}
+                          </div>
+                        ) : !bulkMode && (
+                          <button
+                            onClick={() => { setAddingTaskToPhase(phase); setNewTaskName(''); setNewTaskOwner('HR'); setUseLibraryTask(true) }}
+                            style={{ fontSize: '12px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0', fontFamily: 'inherit', display: 'block' }}>
+                            + Add task
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Task library management */}
+        <div style={{ borderTop: '1px solid #e8e8e4', padding: '16px 32px', marginLeft: isMobile ? '140px' : '200px' }}>
+          <button
+            onClick={() => setShowLibrary(v => !v)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>Task library</span>
+            <span style={{ fontSize: '11px', color: '#a0a09c' }}>({taskLibrary.length})</span>
+            <span style={{ fontSize: '9px', color: '#a0a09c', marginLeft: '2px' }}>{showLibrary ? '▲' : '▼'}</span>
+          </button>
+          {showLibrary && (
+            <div style={{ marginTop: '12px', maxWidth: '480px' }}>
+              <div style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '10px' }}>Tasks saved to the library appear in the dropdown when adding. Remove typos or outdated entries here.</div>
+              {taskLibrary.length === 0 ? (
+                <div style={{ fontSize: '12px', color: '#a0a09c' }}>Library is empty.</div>
+              ) : taskLibrary.map(t => (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0efeb' }}>
+                  <span style={{ fontSize: '13px', color: '#1a1a1a' }}>{t.task_name}</span>
+                  <button style={styles.btnGhost} onClick={() => deleteLibraryTask(t.id)}>Remove</button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
+
         {renderModal()}
       </Layout>
     )
