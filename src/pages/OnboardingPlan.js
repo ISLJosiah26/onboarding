@@ -32,12 +32,22 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
   const [fetchError, setFetchError] = useState(null)
   const { toast, showToast, hideToast } = useToast()
   const noteTimers = useRef({})
+  const pendingNoteSaves = useRef({})
   const [noteSaveState, setNoteSaveState] = useState({})
 
   useEffect(() => {
     fetchPlan()
     fetchDocuments()
   }, [instanceId])
+
+  useEffect(() => {
+    return () => {
+      Object.values(noteTimers.current).forEach(clearTimeout)
+      Object.entries(pendingNoteSaves.current).forEach(([id, value]) => {
+        supabase.from('task_completions').update({ notes: value }).eq('id', id)
+      })
+    }
+  }, [])
 
   async function fetchPlan() {
     setFetchError(null)
@@ -142,8 +152,12 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
 
   function handleNoteChange(completionId, value) {
     setNotes(prev => ({ ...prev, [completionId]: value }))
+    pendingNoteSaves.current[completionId] = value
     clearTimeout(noteTimers.current[completionId])
-    noteTimers.current[completionId] = setTimeout(() => saveNote(completionId, value), 1000)
+    noteTimers.current[completionId] = setTimeout(() => {
+      saveNote(completionId, value)
+      delete pendingNoteSaves.current[completionId]
+    }, 1000)
   }
 
   async function toggleDocument(docId, e) {
@@ -236,7 +250,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
         await supabase.from('onboarding_instances').update({ status: 'completed' }).eq('id', instanceId)
         await logAudit('onboarding_completed', 'onboarding_instance', instanceId, { employee_name: instance.employees.full_name })
         const hrEmail = await getHrEmail()
-        await supabase.functions.invoke('send-email', {
+        if (hrEmail) await supabase.functions.invoke('send-email', {
           body: {
             to: hrEmail,
             subject: `Onboarding complete: ${instance.employees.full_name}`,

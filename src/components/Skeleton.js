@@ -4,7 +4,7 @@ export function SkeletonLine({ width = '100%', height = '13px', style = {} }) {
       width, height,
       background: 'linear-gradient(90deg, #f0efeb 25%, #e8e7e3 50%, #f0efeb 75%)',
       backgroundSize: '200% 100%',
-      animation: 'shimmer 1.5s infinite',
+      animation: 'shimmer 1.5s infinite, fadeIn 0.1s ease 0.28s both',
       borderRadius: '4px',
       ...style
     }} />

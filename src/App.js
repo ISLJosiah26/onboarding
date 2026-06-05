@@ -101,6 +101,7 @@ useEffect(() => {
       setEmployeeView(true)
       return
     }
+    if (target === 'active') setSelectedRole(null)
     setRefreshKey(k => k + 1)
     navigate(target === 'active' ? 'new-onboarding-select' : target)
   }

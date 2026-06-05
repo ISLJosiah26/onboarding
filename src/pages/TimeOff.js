@@ -12,7 +12,18 @@ import { useWindowSize } from '../hooks/useWindowSize'
 const CURRENT_YEAR = new Date().getFullYear()
 const TODAY = new Date().toISOString().slice(0, 10)
 
-const TYPE_LABELS = { vacation: 'Vacation', sick: 'Sick Day', personal: 'Personal', other: 'Other' }
+const TYPE_LABELS = {
+  personal_vacation: 'Personal / Vacation',
+  professional_development: 'Professional Development',
+  volunteer: 'Volunteer Day',
+  work_from_wherever: 'Work from Wherever Week',
+  bereavement: 'Bereavement Leave',
+  care_day: 'Care Day',
+  vacation: 'Vacation',
+  sick: 'Sick Day',
+  personal: 'Personal',
+  other: 'Other',
+}
 
 const STATUS_STYLES = {
   pending:   { background: '#fffbf0', color: '#d4901a' },
@@ -295,19 +306,45 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
     const notes = reviewNotes[req.id] || ''
     const bal = getBalForEmployee(req.employee_id)
 
+    // Update balance first, track previous state for rollback
+    let prevUsedDays = null
+    let createdBalId = null
+
     if (bal) {
-      const { error: balErr } = await supabase.from('time_off_balances').update({ used_days: Number(bal.used_days) + Number(req.business_days), updated_at: new Date().toISOString() }).eq('id', bal.id)
+      prevUsedDays = Number(bal.used_days)
+      const { error: balErr } = await supabase.from('time_off_balances')
+        .update({ used_days: prevUsedDays + Number(req.business_days), updated_at: new Date().toISOString() })
+        .eq('id', bal.id)
       if (balErr) { showToast(handleSupabaseError(balErr, 'Failed to update balance.'), 'error'); setReviewingId(null); return }
     } else {
-      const { error: balErr } = await supabase.from('time_off_balances').insert({ employee_id: req.employee_id, year: CURRENT_YEAR, total_days: 0, used_days: Number(req.business_days) })
+      const { data: newBal, error: balErr } = await supabase.from('time_off_balances')
+        .insert({ employee_id: req.employee_id, year: CURRENT_YEAR, total_days: 0, used_days: Number(req.business_days) })
+        .select().single()
       if (balErr) { showToast(handleSupabaseError(balErr, 'Failed to create balance.'), 'error'); setReviewingId(null); return }
+      createdBalId = newBal?.id
     }
 
-    const { error } = await supabase.from('time_off_requests').update({ status: 'approved', review_notes: notes || null, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', req.id)
-    if (error) { showToast(handleSupabaseError(error, 'Failed to approve.'), 'error'); setReviewingId(null); return }
+    // Approve the request — roll back balance if this fails
+    const { error } = await supabase.from('time_off_requests')
+      .update({ status: 'approved', review_notes: notes || null, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq('id', req.id)
+
+    if (error) {
+      if (bal && prevUsedDays !== null) {
+        await supabase.from('time_off_balances')
+          .update({ used_days: prevUsedDays, updated_at: new Date().toISOString() })
+          .eq('id', bal.id)
+      } else if (createdBalId) {
+        await supabase.from('time_off_balances').delete().eq('id', createdBalId)
+      }
+      showToast(handleSupabaseError(error, 'Failed to approve request.'), 'error')
+      setReviewingId(null)
+      return
+    }
 
     logAudit('time_off_approved', 'time_off_request', req.id, { employee_id: req.employee_id, days: req.business_days, type: req.type })
 
+    let emailFailed = false
     if (req.employee?.email) {
       const { error: emailErr } = await supabase.functions.invoke('send-email', {
         body: {
@@ -316,15 +353,15 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
           html: `<p>Hi ${req.employee.full_name},</p>
 <p>Your time off request has been <strong>approved</strong>.</p>
 <p><strong>Dates:</strong> ${fmtDateRange(req.start_date, req.end_date)}<br/>
-<strong>Type:</strong> ${TYPE_LABELS[req.type]}<br/>
+<strong>Type:</strong> ${TYPE_LABELS[req.type] || req.type}<br/>
 <strong>Business days:</strong> ${req.business_days}${notes ? `<br/><strong>Notes:</strong> ${notes}` : ''}</p>
 <p>Enjoy your time off!</p>`
         }
       })
-      if (emailErr) console.error('Failed to send approval email:', emailErr)
+      if (emailErr) emailFailed = true
     }
 
-    showToast('Request approved.')
+    showToast(emailFailed ? 'Approved — email to employee failed to send.' : 'Request approved.')
     setReviewingId(null)
     await fetchData()
   }
@@ -337,6 +374,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
 
     logAudit('time_off_denied', 'time_off_request', req.id, { employee_id: req.employee_id, days: req.business_days, type: req.type })
 
+    let emailFailed = false
     if (req.employee?.email) {
       const { error: emailErr } = await supabase.functions.invoke('send-email', {
         body: {
@@ -345,15 +383,15 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
           html: `<p>Hi ${req.employee.full_name},</p>
 <p>Your time off request has been <strong>denied</strong>.</p>
 <p><strong>Dates:</strong> ${fmtDateRange(req.start_date, req.end_date)}<br/>
-<strong>Type:</strong> ${TYPE_LABELS[req.type]}<br/>
+<strong>Type:</strong> ${TYPE_LABELS[req.type] || req.type}<br/>
 <strong>Business days:</strong> ${req.business_days}${notes ? `<br/><strong>Reason:</strong> ${notes}` : ''}</p>
 <p>Please reach out to HR if you have questions.</p>`
         }
       })
-      if (emailErr) console.error('Failed to send denial email:', emailErr)
+      if (emailErr) emailFailed = true
     }
 
-    showToast('Request denied.')
+    showToast(emailFailed ? 'Denied — email to employee failed to send.' : 'Request denied.')
     setReviewingId(null)
     await fetchData()
   }
