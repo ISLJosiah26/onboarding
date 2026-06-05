@@ -86,7 +86,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
           background: '#fff', borderBottom: '1px solid #e8e8e4',
           height: '52px', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '10px',
         }}>
-          <div style={{ width: '22px', height: '22px', background: '#1a1a1a', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 600, flexShrink: 0, letterSpacing: '-0.2px' }}>IL</div>
+          <div style={{ width: '22px', height: '22px', background: '#0070CA', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 600, flexShrink: 0, letterSpacing: '-0.2px' }}>IL</div>
           <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1a1a1a' }}>Integrated Launch</div>
         </div>
 
@@ -193,14 +193,12 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
   const navItem = (active) => ({
     display: 'flex', alignItems: 'center', gap: '10px',
     padding: '7px 12px',
-    paddingLeft: active ? '10px' : '12px',
     borderRadius: '6px', fontSize: '13px',
     color: active ? '#1a1a1a' : '#6b6b67',
     background: active ? '#f0efeb' : 'transparent',
     fontWeight: active ? 500 : 400,
     cursor: 'pointer',
     border: 'none',
-    borderLeft: active ? '2px solid #1a1a1a' : '2px solid transparent',
     fontFamily: 'inherit', width: '100%', textAlign: 'left',
     letterSpacing: '-0.1px',
   })
@@ -218,7 +216,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
       }}>
         {/* Brand */}
         <div style={{ padding: '22px 12px 20px', display: 'flex', alignItems: 'center', gap: '9px' }}>
-          <div style={{ width: '24px', height: '24px', background: '#1a1a1a', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 600, letterSpacing: '-0.2px', flexShrink: 0 }}>IL</div>
+          <div style={{ width: '24px', height: '24px', background: '#0070CA', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 600, letterSpacing: '-0.2px', flexShrink: 0 }}>IL</div>
           <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1a1a1a' }}>Integrated Launch</div>
         </div>
 
