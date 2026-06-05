@@ -1,14 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
+@keyframes tabFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes backdropFadeIn {
+  from { background: rgba(0,0,0,0); }
+  to { background: rgba(0,0,0,0.3); }
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 :root {
-  --bg: #fafaf9;
+  --bg: #f7f6f3;
   --surface: #fff;
-  --border: #ebebe8;
+  --border: #e8e8e4;
   --text: #1a1a1a;
-  --muted: #8a8a86;
+  --muted: #6b6b67;
+  --subtle: #a0a09c;
   --brand: #0070CA;
   --focus: #2563eb;
 }
@@ -19,21 +42,17 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.1px;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-button,
-input,
-select,
-textarea {
+button, input, select, textarea {
   font: inherit;
 }
 
@@ -46,6 +65,61 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+/* Primary button */
+.il-btn {
+  transition: filter 0.12s ease;
+}
+.il-btn:not([disabled]):hover {
+  filter: brightness(0.88);
+}
+
+/* Ghost / secondary button */
+.il-btn-ghost {
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.il-btn-ghost:not([disabled]):hover {
+  background: #eeede9 !important;
+  color: #1a1a1a !important;
+}
+
+/* Sidebar nav items */
+.il-nav-item {
+  transition: background 0.1s ease, color 0.1s ease;
+}
+.il-nav-item:not(.il-nav-active):hover {
+  background: #f5f4f0 !important;
+  color: #1a1a1a !important;
+}
+
+/* Table / list rows */
+.il-row {
+  transition: background 0.1s ease;
+}
+.il-row:hover {
+  background: #fafaf8 !important;
+}
+
+/* Tab content fade */
+.il-tab-content {
+  animation: tabFadeIn 0.15s ease;
+}
+
+/* Checkbox */
+.il-checkbox {
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.il-checkbox:active {
+  transform: scale(0.86) !important;
+}
+
+/* Modal */
+.il-backdrop {
+  animation: backdropFadeIn 0.16s ease forwards;
+}
+.il-modal {
+  animation: modalSlideUp 0.18s ease forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -53,9 +127,4 @@ a:focus-visible {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }

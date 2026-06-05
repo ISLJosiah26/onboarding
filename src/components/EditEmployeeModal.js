@@ -11,6 +11,7 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
   const [roles, setRoles] = useState([])
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(false)
+  const [optionsLoading, setOptionsLoading] = useState(true)
   const [error, setError] = useState('')
 
   const styles = {
@@ -26,10 +27,6 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
     warning: { fontSize: '12px', color: '#d4901a', marginBottom: '12px', padding: '10px 12px', background: '#fffbf0', border: '1px solid #f5e4b0', borderRadius: '6px' }
   }
 
-  useEffect(() => {
-    fetchRoles()
-    fetchEmployees()
-  }, [])
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -46,6 +43,10 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
     const { data } = await supabase.from('employees').select('id, full_name').order('full_name')
     if (data) setEmployees(data)
   }
+
+  useEffect(() => {
+    Promise.all([fetchRoles(), fetchEmployees()]).finally(() => setOptionsLoading(false))
+  }, [])
 
   const roleChanged = roleId !== employee.role_id
 
@@ -112,8 +113,8 @@ const { error: updateError } = await supabase
   }
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modal}>
+    <div className="il-backdrop" style={styles.overlay}>
+      <div className="il-modal" style={{ ...styles.modal, boxShadow: '0 4px 24px rgba(0,0,0,0.10)' }}>
         <div style={styles.title}>Edit employee</div>
         {error && <div style={styles.error}>{error}</div>}
         {roleChanged && (
@@ -128,17 +129,25 @@ const { error: updateError } = await supabase
         <label style={styles.label}>Start date</label>
         <input style={styles.input} type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
         <label style={styles.label}>Role</label>
-        <select style={{ ...styles.input, marginBottom: '16px' }} value={roleId} onChange={e => setRoleId(e.target.value)}>
-          <option value="">Select a role...</option>
-          {roles.map(r => <option key={r.id} value={r.id}>{r.name} ({r.brand})</option>)}
-        </select>
+        {optionsLoading ? (
+          <div style={{ ...styles.input, background: '#f7f6f3', color: '#a0a09c', marginBottom: '16px' }}>Loading roles…</div>
+        ) : (
+          <select style={{ ...styles.input, marginBottom: '16px' }} value={roleId} onChange={e => setRoleId(e.target.value)}>
+            <option value="">Select a role...</option>
+            {roles.map(r => <option key={r.id} value={r.id}>{r.name} ({r.brand})</option>)}
+          </select>
+        )}
         <label style={styles.label}>Manager</label>
-        <select style={{ ...styles.input, marginBottom: '20px' }} value={managerId} onChange={e => setManagerId(e.target.value)}>
-          <option value="">No manager</option>
-          {employees.filter(e => e.id !== employee.id).map(e => (
-            <option key={e.id} value={e.id}>{e.full_name}</option>
-          ))}
-        </select>
+        {optionsLoading ? (
+          <div style={{ ...styles.input, background: '#f7f6f3', color: '#a0a09c', marginBottom: '20px' }}>Loading employees…</div>
+        ) : (
+          <select style={{ ...styles.input, marginBottom: '20px' }} value={managerId} onChange={e => setManagerId(e.target.value)}>
+            <option value="">No manager</option>
+            {employees.filter(e => e.id !== employee.id).map(e => (
+              <option key={e.id} value={e.id}>{e.full_name}</option>
+            ))}
+          </select>
+        )}
         <div style={styles.footer}>
           <button style={styles.btnSecondary} onClick={onClose}>Cancel</button>
           <button style={styles.btnPrimary} onClick={handleSave} disabled={loading}>{loading ? 'Saving...' : 'Save changes'}</button>

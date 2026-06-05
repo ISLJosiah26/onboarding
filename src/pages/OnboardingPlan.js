@@ -509,11 +509,19 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
             return subtasks.every(s => completions[s.id])
           })
 
+          const completedInPhase = parentTasks.filter(tc => {
+            const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
+            if (subtasks.length === 0) return completions[tc.id]
+            return subtasks.every(s => completions[s.id])
+          }).length
+
           return (
             <div key={phase} style={styles.section}>
-              <div style={styles.sectionLabel}>
-                <span style={{ color: phaseComplete ? '#0070CA' : '#a8a8a4' }}>{phase}</span>
-                {phaseComplete && <span style={{ fontSize: '11px', color: '#0070CA', textTransform: 'none', letterSpacing: 0 }}>Complete</span>}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', paddingBottom: '10px', borderBottom: `1px solid ${phaseComplete ? '#c3e8d1' : '#f0efeb'}`, transition: 'border-color 0.25s ease' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: phaseComplete ? '#2d7a4a' : '#a0a09c', textTransform: 'uppercase', letterSpacing: '0.4px', transition: 'color 0.25s ease' }}>{phase}</span>
+                <span style={{ fontSize: '11px', color: phaseComplete ? '#2d7a4a' : '#a0a09c', fontWeight: 400, transition: 'color 0.25s ease' }}>
+                  {completedInPhase}/{parentTasks.length}{phaseComplete ? ' · Complete' : ''}
+                </span>
               </div>
 
               {parentTasks.map(tc => {
@@ -528,7 +536,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
 
                 return (
                   <div key={tc.id}>
-                    <div style={styles.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [tc.id]: !prev[tc.id] })) : setExpanded(isNoteExpanded ? null : tc.id)}>
+                    <div className="il-row" style={styles.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [tc.id]: !prev[tc.id] })) : setExpanded(isNoteExpanded ? null : tc.id)}>
                       {hasSubtasks ? (
                         <div style={{ ...styles.checkbox(isChecked), cursor: 'default' }} onClick={e => e.stopPropagation()} title="Completion is driven by subtasks">
                           {isChecked && checkIcon()}
@@ -560,8 +568,8 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
                                 {p}
                               </div>
                               {phaseSubtasks.map(s => (
-                                <div key={s.id} style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
-                                  <div style={styles.subtaskCheckbox(completions[s.id])}>
+                                <div key={s.id} className="il-row" style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
+                                  <div className="il-checkbox" style={styles.subtaskCheckbox(completions[s.id])}>
                                     {completions[s.id] && checkIcon(7)}
                                   </div>
                                   <div style={styles.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
