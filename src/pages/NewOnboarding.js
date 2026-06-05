@@ -26,6 +26,7 @@ export default function NewOnboarding({ session, userProfile, roleId, roleName, 
 
 async function handleCreate() {
   if (!fullName || !hireDate) { setError('Please fill in name and start date.'); return }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Please enter a valid email address.'); return }
   setLoading(true)
   setError('')
 

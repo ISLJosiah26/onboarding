@@ -65,7 +65,7 @@ function TypeIcon({ type, size = 13 }) {
 function fmtDateRange(start, end) {
   const s = new Date(start + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
   const e = new Date(end + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
-  return s === e.replace(/,.*/, '') ? e : `${s} – ${e}`
+  return start === end ? e : `${s} – ${e}`
 }
 
 function isPhaseUpcoming(phase, hireDate) {
@@ -112,6 +112,10 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
   useEffect(() => {
     if (activeTab === 'time-off' && !timeOffFetched) fetchTimeOffData()
   }, [activeTab])
+
+  useEffect(() => {
+    return () => { clearTimeout(celebrationTimer.current) }
+  }, [])
 
   async function fetchMyOnboarding() {
     try {
@@ -247,14 +251,13 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
       created_at: new Date().toISOString(),
     }, ...prev])
 
-    // Reset form immediately
+    // Reset form fields but keep torSubmitting=true to prevent double-submit
     setTorStartDate('')
     setTorEndDate('')
     setTorType('vacation')
     setTorNotes('')
     setTorBusinessDays(null)
     setTorIsHalfDay(false)
-    setTorSubmitting(false)
 
     const { data: newReq, error } = await supabase
       .from('time_off_requests')
@@ -270,6 +273,8 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
       })
       .select()
       .single()
+
+    setTorSubmitting(false)
 
     if (error) {
       setTimeOffRequests(prev => prev.filter(r => r.id !== tempId))
@@ -313,14 +318,16 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
     const hrEmail = await getHrEmail()
     if (hrEmail) {
-      supabase.functions.invoke('send-email', { body: { to: hrEmail, subject: `Time off request: ${employeeName}`, html: emailBody } })
+      const { error: hrErr } = await supabase.functions.invoke('send-email', { body: { to: hrEmail, subject: `Time off request: ${employeeName}`, html: emailBody } })
+      if (hrErr) console.error('Failed to notify HR:', hrErr)
     }
 
     const managerId = instance?.employees?.manager_id || employee?.manager_id
     if (managerId) {
       const { data: mgr } = await supabase.from('employees').select('email').eq('id', managerId).maybeSingle()
       if (mgr?.email) {
-        supabase.functions.invoke('send-email', { body: { to: mgr.email, subject: `Time off request: ${employeeName}`, html: emailBody } })
+        const { error: mgrErr } = await supabase.functions.invoke('send-email', { body: { to: mgr.email, subject: `Time off request: ${employeeName}`, html: emailBody } })
+        if (mgrErr) console.error('Failed to notify manager:', mgrErr)
       }
     }
 
@@ -361,14 +368,16 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
     const hrEmail = await getHrEmail()
     if (hrEmail) {
-      supabase.functions.invoke('send-email', { body: { to: hrEmail, subject: `Time off cancelled: ${employeeName}`, html: cancelBody } })
+      const { error: hrErr } = await supabase.functions.invoke('send-email', { body: { to: hrEmail, subject: `Time off cancelled: ${employeeName}`, html: cancelBody } })
+      if (hrErr) console.error('Failed to notify HR of cancellation:', hrErr)
     }
 
     const managerId = instance?.employees?.manager_id || employee?.manager_id
     if (managerId) {
       const { data: mgr } = await supabase.from('employees').select('email').eq('id', managerId).maybeSingle()
       if (mgr?.email) {
-        supabase.functions.invoke('send-email', { body: { to: mgr.email, subject: `Time off cancelled: ${employeeName}`, html: cancelBody } })
+        const { error: mgrErr } = await supabase.functions.invoke('send-email', { body: { to: mgr.email, subject: `Time off cancelled: ${employeeName}`, html: cancelBody } })
+        if (mgrErr) console.error('Failed to notify manager of cancellation:', mgrErr)
       }
     }
 
@@ -497,11 +506,17 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       return
     }
 
-    const { data: urlData } = await supabase.storage
+    const { data: urlData, error: urlError } = await supabase.storage
       .from('employee-documents')
       .createSignedUrl(filePath, 60 * 60 * 24 * 365)
 
-    const fileUrl = urlData?.signedUrl
+    if (urlError || !urlData?.signedUrl) {
+      showToast('Failed to generate file URL. Please try again.', 'error')
+      setUploadingDocId(null)
+      return
+    }
+
+    const fileUrl = urlData.signedUrl
     const existing = docCompletions[docId]
 
     if (existing) {
@@ -622,7 +637,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
           {displayRole && `${displayRole} · `}
           {instance && displayHireDate
             ? `Started ${new Date(displayHireDate).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`
-            : (employee?.brand || userProfile?.brand || '')}
+            : (employee?.brand || userProfile?.brand || 'Integrated Staffing')}
         </div>
         {instance && (
           <div style={styles.progressWrap}>

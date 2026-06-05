@@ -309,7 +309,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
     logAudit('time_off_approved', 'time_off_request', req.id, { employee_id: req.employee_id, days: req.business_days, type: req.type })
 
     if (req.employee?.email) {
-      supabase.functions.invoke('send-email', {
+      const { error: emailErr } = await supabase.functions.invoke('send-email', {
         body: {
           to: req.employee.email,
           subject: 'Your time off request has been approved',
@@ -321,6 +321,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
 <p>Enjoy your time off!</p>`
         }
       })
+      if (emailErr) console.error('Failed to send approval email:', emailErr)
     }
 
     showToast('Request approved.')
@@ -337,7 +338,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
     logAudit('time_off_denied', 'time_off_request', req.id, { employee_id: req.employee_id, days: req.business_days, type: req.type })
 
     if (req.employee?.email) {
-      supabase.functions.invoke('send-email', {
+      const { error: emailErr } = await supabase.functions.invoke('send-email', {
         body: {
           to: req.employee.email,
           subject: 'Your time off request has been denied',
@@ -349,6 +350,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
 <p>Please reach out to HR if you have questions.</p>`
         }
       })
+      if (emailErr) console.error('Failed to send denial email:', emailErr)
     }
 
     showToast('Request denied.')

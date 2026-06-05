@@ -53,7 +53,7 @@ useEffect(() => {
     setSession(session)
     if (session) {
       fetchProfile(session.user.id)
-      if (_event === 'SIGNED_IN' && (hash.includes('type=invite') || hash.includes('type=recovery'))) {
+      if (_event === 'SIGNED_IN' && (window.location.hash.includes('type=invite') || window.location.hash.includes('type=recovery'))) {
         navigate('set-password', { replace: true })
       }
     } else {
