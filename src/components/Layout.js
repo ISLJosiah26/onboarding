@@ -50,7 +50,8 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const email = session?.user?.email || ''
-  const initials = email.substring(0, 2).toUpperCase()
+  const name = email.split('@')[0]
+  const initials = name.substring(0, 2).toUpperCase()
   const isMoreActive = !PRIMARY_PAGES.includes(currentPage)
 
   // ── MOBILE LAYOUT ──
@@ -65,38 +66,35 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
     })
 
     const drawerSection = {
-      fontSize: '11px', color: '#a8a8a4', fontWeight: 500,
-      padding: '12px 20px 4px', letterSpacing: '0.2px', textTransform: 'uppercase',
+      fontSize: '11px', color: '#a0a09c', fontWeight: 500,
+      padding: '12px 20px 4px', letterSpacing: '0.3px', textTransform: 'uppercase',
     }
 
     const drawerBtn = (active) => ({
       display: 'flex', alignItems: 'center', gap: '14px',
       padding: '13px 20px', width: '100%',
-      background: active ? '#f4f3f1' : 'none',
+      background: active ? '#f5f4f0' : 'none',
       border: 'none', fontSize: '15px',
       fontWeight: active ? 500 : 400, color: '#1a1a1a',
       cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
     })
 
     return (
-      <div style={{ minHeight: '100vh', background: '#fafaf9', fontFamily: 'Inter, -apple-system, sans-serif', color: '#1a1a1a' }}>
-        {/* Sticky top bar */}
+      <div style={{ minHeight: '100vh', background: '#f7f6f3', fontFamily: "'Inter', -apple-system, sans-serif", color: '#1a1a1a' }}>
         <div style={{
           position: 'sticky', top: 0, zIndex: 40,
-          background: '#fff', borderBottom: '1px solid #ebebe8',
+          background: '#fff', borderBottom: '1px solid #e8e8e4',
           height: '52px', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '10px',
         }}>
-          <div style={{ width: '22px', height: '22px', background: '#0070CA', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 600, flexShrink: 0 }}>IL</div>
-          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.2px' }}>Integrated Launch</div>
+          <div style={{ width: '22px', height: '22px', background: '#1a1a1a', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 600, flexShrink: 0, letterSpacing: '-0.2px' }}>IL</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1a1a1a' }}>Integrated Launch</div>
         </div>
 
-        {/* Page content — bottom padding clears the tab bar */}
         <div style={{ paddingBottom: '64px' }}>{children}</div>
 
-        {/* Fixed bottom tab bar */}
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
-          background: '#fff', borderTop: '1px solid #ebebe8',
+          background: '#fff', borderTop: '1px solid #e8e8e4',
           display: 'flex', zIndex: 40,
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}>
@@ -120,7 +118,6 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
           </button>
         </div>
 
-        {/* Slide-up drawer */}
         {drawerOpen && (
           <div
             style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.35)' }}
@@ -136,7 +133,6 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
               onClick={e => e.stopPropagation()}
             >
               <div style={{ width: '36px', height: '4px', background: '#d4d3cf', borderRadius: '2px', margin: '12px auto 4px' }} />
-
               <div style={{ padding: '4px 0 8px' }}>
                 <div style={drawerSection}>Settings</div>
                 {SETTINGS_ITEMS.map(item => (
@@ -145,7 +141,6 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                     {item.label}
                   </button>
                 ))}
-
                 {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin' || userProfile?.role === 'manager') && (
                   <>
                     <div style={drawerSection}>Employee Hub</div>
@@ -163,7 +158,6 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                     )}
                   </>
                 )}
-
                 {userProfile?.role === 'super_admin' && (
                   <>
                     <div style={drawerSection}>System</div>
@@ -176,16 +170,15 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                   </>
                 )}
               </div>
-
-              <div style={{ borderTop: '1px solid #ebebe8', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ borderTop: '1px solid #e8e8e4', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: '#0070CA', color: '#fff', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{initials}</div>
+                  <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#1a1a1a', color: '#fff', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{initials}</div>
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>{email.split('@')[0]}</div>
-                    <div style={{ fontSize: '11px', color: '#a8a8a4' }}>{email}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.1px' }}>{name}</div>
+                    <div style={{ fontSize: '11px', color: '#a0a09c' }}>{email}</div>
                   </div>
                 </div>
-                <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: '1px solid #ebebe8', borderRadius: '7px', padding: '7px 14px', fontSize: '13px', color: '#5f5f5c', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+                <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: '1px solid #e8e8e4', borderRadius: '7px', padding: '7px 14px', fontSize: '13px', color: '#5f5f5c', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
                   Sign out
                 </button>
               </div>
@@ -197,96 +190,102 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
   }
 
   // ── DESKTOP LAYOUT ──
-  const styles = {
-    app: {
-      minHeight: '100vh', background: '#fafaf9',
-      display: 'grid', gridTemplateColumns: '220px 1fr',
-      fontFamily: 'Inter, -apple-system, sans-serif', color: '#1a1a1a'
-    },
-    sidebar: {
-      background: '#fff', borderRight: '1px solid #ebebe8',
-      padding: '20px 12px', display: 'flex', flexDirection: 'column',
-      gap: '4px', position: 'sticky', top: 0, height: '100vh',
-    },
-    brand: { padding: '4px 12px 24px', display: 'flex', alignItems: 'center', gap: '8px' },
-    brandMark: { width: '22px', height: '22px', background: '#0070CA', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 600 },
-    brandText: { fontSize: '14px', fontWeight: 600, letterSpacing: '-0.2px' },
-    navSection: { fontSize: '11px', color: '#a8a8a4', fontWeight: 500, padding: '12px 12px 4px', letterSpacing: '0.2px' },
-    navItem: (active) => ({
-      display: 'flex', alignItems: 'center', gap: '10px',
-      padding: '7px 12px', borderRadius: '6px', fontSize: '13px',
-      color: active ? '#1a1a1a' : '#5f5f5c',
-      background: active ? '#eeeae4' : 'transparent',
-      fontWeight: active ? 500 : 400,
-      cursor: 'pointer', transition: 'all 0.1s',
-      border: 'none', fontFamily: 'inherit', width: '100%', textAlign: 'left',
-    }),
-    sidebarBottom: { marginTop: 'auto', borderTop: '1px solid #ebebe8', paddingTop: '12px' },
-    userChip: { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '6px' },
-    userAvatar: { width: '24px', height: '24px', borderRadius: '6px', background: '#0070CA', color: '#fff', fontSize: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    userName: { fontSize: '13px', fontWeight: 500, color: '#1a1a1a' },
-    main: { display: 'flex', flexDirection: 'column', minWidth: 0 },
-  }
+  const navItem = (active) => ({
+    display: 'flex', alignItems: 'center', gap: '10px',
+    padding: '7px 12px',
+    paddingLeft: active ? '10px' : '12px',
+    borderRadius: '6px', fontSize: '13px',
+    color: active ? '#1a1a1a' : '#6b6b67',
+    background: active ? '#f0efeb' : 'transparent',
+    fontWeight: active ? 500 : 400,
+    cursor: 'pointer',
+    border: 'none',
+    borderLeft: active ? '2px solid #1a1a1a' : '2px solid transparent',
+    fontFamily: 'inherit', width: '100%', textAlign: 'left',
+    letterSpacing: '-0.1px',
+  })
 
   return (
-    <div style={styles.app}>
-      <div style={styles.sidebar}>
-        <div style={styles.brand}>
-          <div style={styles.brandMark}>IL</div>
-          <div style={styles.brandText}>Integrated Launch</div>
+    <div style={{
+      minHeight: '100vh', background: '#f7f6f3',
+      display: 'grid', gridTemplateColumns: '240px 1fr',
+      fontFamily: "'Inter', -apple-system, sans-serif", color: '#1a1a1a',
+    }}>
+      <div style={{
+        background: '#fff', borderRight: '1px solid #e8e8e4',
+        padding: '0 10px', display: 'flex', flexDirection: 'column',
+        position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
+      }}>
+        {/* Brand */}
+        <div style={{ padding: '22px 12px 20px', display: 'flex', alignItems: 'center', gap: '9px' }}>
+          <div style={{ width: '24px', height: '24px', background: '#1a1a1a', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 600, letterSpacing: '-0.2px', flexShrink: 0 }}>IL</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1a1a1a' }}>Integrated Launch</div>
         </div>
 
-        {NAV_ITEMS.map(item => (
-          <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
-            <Icon type={item.icon} />
-            {item.label}
-          </button>
-        ))}
+        {/* Primary nav */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
+          {NAV_ITEMS.map(item => (
+            <button key={item.id} className={`il-nav-item${currentPage === item.id ? ' il-nav-active' : ''}`} aria-current={currentPage === item.id ? 'page' : undefined} style={navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
+              <Icon type={item.icon} />
+              {item.label}
+            </button>
+          ))}
+        </div>
 
-        <div style={styles.navSection}>Settings</div>
-        {SETTINGS_ITEMS.map(item => (
-          <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
-            <Icon type={item.icon} />
-            {item.label}
-          </button>
-        ))}
+        {/* Settings */}
+        <div style={{ fontSize: '11px', color: '#a0a09c', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Settings</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
+          {SETTINGS_ITEMS.map(item => (
+            <button key={item.id} className={`il-nav-item${currentPage === item.id ? ' il-nav-active' : ''}`} aria-current={currentPage === item.id ? 'page' : undefined} style={navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
+              <Icon type={item.icon} />
+              {item.label}
+            </button>
+          ))}
+        </div>
 
+        {/* Employee Hub */}
         {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin' || userProfile?.role === 'manager') && (
           <>
-            <div style={styles.navSection}>Employee Hub</div>
-            {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && EMPLOYEE_HUB_ITEMS.map(item => (
-              <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
-                <Icon type={item.icon} />
-                {item.label}
-              </button>
-            ))}
-            {userProfile?.employee_id && (
-              <button style={styles.navItem(false)} onClick={() => onNavigate('employee-hub')}>
-                <Icon type="person" />
-                My portal
-              </button>
-            )}
+            <div style={{ fontSize: '11px', color: '#a0a09c', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Employee Hub</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
+              {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && EMPLOYEE_HUB_ITEMS.map(item => (
+                <button key={item.id} className={`il-nav-item${currentPage === item.id ? ' il-nav-active' : ''}`} aria-current={currentPage === item.id ? 'page' : undefined} style={navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
+                  <Icon type={item.icon} />
+                  {item.label}
+                </button>
+              ))}
+              {userProfile?.employee_id && (
+                <button className="il-nav-item" style={navItem(false)} onClick={() => onNavigate('employee-hub')}>
+                  <Icon type="person" />
+                  My portal
+                </button>
+              )}
+            </div>
           </>
         )}
 
+        {/* System */}
         {userProfile?.role === 'super_admin' && (
           <>
-            <div style={styles.navSection}>System</div>
-            {SYSTEM_ITEMS.map(item => (
-              <button key={item.id} aria-current={currentPage === item.id ? 'page' : undefined} style={styles.navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
-                <Icon type={item.icon} />
-                {item.label}
-              </button>
-            ))}
+            <div style={{ fontSize: '11px', color: '#a0a09c', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>System</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
+              {SYSTEM_ITEMS.map(item => (
+                <button key={item.id} className={`il-nav-item${currentPage === item.id ? ' il-nav-active' : ''}`} aria-current={currentPage === item.id ? 'page' : undefined} style={navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
+                  <Icon type={item.icon} />
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </>
         )}
 
-        <div style={styles.sidebarBottom}>
-          <div style={styles.userChip}>
-            <div style={styles.userAvatar}>{initials}</div>
-            <div>
-              <div style={styles.userName}>{email.split('@')[0]}</div>
-              <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: '#a8a8a4', fontSize: '11px', display: 'block', textAlign: 'left' }}>
+        {/* User / sign out */}
+        <div style={{ marginTop: 'auto', borderTop: '1px solid #e8e8e4', padding: '14px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#1a1a1a', color: '#fff', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{initials}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
+              <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: '#a0a09c', fontSize: '11px', display: 'block', textAlign: 'left', letterSpacing: 0 }}>
                 Sign out
               </button>
             </div>
@@ -294,7 +293,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
         </div>
       </div>
 
-      <div style={styles.main}>{children}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>{children}</div>
     </div>
   )
 }

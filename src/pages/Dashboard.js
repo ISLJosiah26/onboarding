@@ -114,17 +114,17 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
   const p = isMobile ? '16px' : '40px'
 
   const styles = {
-    header: { padding: isMobile ? '16px 16px 14px' : '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #ebebe8' },
+    header: { padding: isMobile ? '16px 16px 14px' : '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e8e8e4', background: '#fff' },
     title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.4px' },
     sub: { fontSize: '13px', color: '#8a8a86', marginTop: '2px' },
     btn: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' },
-    statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#ebebe8', borderBottom: '1px solid #ebebe8' },
-    stat: { background: '#fafaf9', padding: isMobile ? '14px 16px' : '20px 40px' },
-    statLabel: { fontSize: '11px', color: '#8a8a86', marginBottom: '4px' },
-    statValue: { fontSize: isMobile ? '20px' : '22px', fontWeight: 600, letterSpacing: '-0.5px' },
+    statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', padding: isMobile ? '14px 16px' : '20px 40px', borderBottom: '1px solid #e8e8e4', background: '#fff' },
+    stat: { background: '#f7f6f3', border: '1px solid #e8e8e4', borderRadius: '10px', padding: isMobile ? '14px 16px' : '16px 20px' },
+    statLabel: { fontSize: '11px', color: '#a0a09c', marginBottom: '6px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.3px' },
+    statValue: { fontSize: isMobile ? '22px' : '24px', fontWeight: 600, letterSpacing: '-0.6px', color: '#1a1a1a' },
     content: { padding: isMobile ? '0' : `0 ${p}`, flex: 1 },
     tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #ebebe8', fontSize: '11px', color: '#8a8a86', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.4px', alignItems: 'center', gap: '16px' },
-    tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #f0efeb', alignItems: 'center', gap: '16px', cursor: 'pointer' },
+    tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #f0efeb', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '4px' },
     avatar: { width: '26px', height: '26px', borderRadius: '50%', background: '#e8f0fe', color: '#0070CA', fontSize: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' },
     avatarLg: { width: '36px', height: '36px', borderRadius: '9px', background: '#e8f0fe', color: '#0070CA', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
     rowName: { fontSize: '13px', fontWeight: 500, color: '#1a1a1a' },
@@ -136,7 +136,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
     progressFill: { height: '100%', background: '#0070CA' },
     progressText: { fontSize: '12px', fontWeight: 500, color: '#1a1a1a', minWidth: '32px' },
     phasePill: { fontSize: '11px', padding: '2px 7px', borderRadius: '4px', background: '#eef5ff', color: '#0070CA', fontWeight: 500 },
-    emptyState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center', color: '#8a8a86', fontSize: '14px' },
+    emptyState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center' },
     errorState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center', fontSize: '14px' }
   }
 
@@ -210,7 +210,19 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
             </button>
           </div>
         ) : onboardings.length === 0 ? (
-          <div style={styles.emptyState}>No active onboardings.</div>
+          <div style={styles.emptyState}>
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style={{ marginBottom: '14px', color: '#d4d3cf' }}>
+              <circle cx="18" cy="12" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M5 34c0-7.2 5.8-13 13-13s13 5.8 13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="27" cy="27" r="6" fill="#f7f6f3" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M24.5 27l1.5 1.5 3-3" stroke="#2d7a4a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.2px', marginBottom: '6px' }}>No active onboardings</div>
+            <div style={{ fontSize: '13px', color: '#6b6b67', lineHeight: '1.6', marginBottom: '20px' }}>Start a new onboarding to get someone up to speed.</div>
+            <button className="il-btn" onClick={() => onNavigate('active')} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+              New onboarding
+            </button>
+          </div>
         ) : isMobile ? (
           onboardings.map(o => {
             const { pct } = calcProgress(o.task_completions)
@@ -249,7 +261,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
               const phase = getPhase(o.employees.hire_date)
               const uploadedDocs = docStats[o.employees.id] || 0
               return (
-                <div key={o.id} style={styles.tableRow} onClick={() => onViewOnboarding(o.id)}>
+                <div key={o.id} className="il-row" style={styles.tableRow} onClick={() => onViewOnboarding(o.id)}>
                   <div style={styles.avatar}>{getInitials(name)}</div>
                   <div>
                     <div style={styles.rowName}>{name}</div>

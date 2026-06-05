@@ -12,6 +12,11 @@ import { logAudit } from '../utils/auditLog'
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 const CURRENT_YEAR = new Date().getFullYear()
 
+function getInitials(name) {
+  if (!name) return '?'
+  return name.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().slice(0, 2) || '?'
+}
+
 const TYPE_OPTIONS = [
   { value: 'vacation', label: 'Vacation' },
   { value: 'sick', label: 'Sick Day' },
@@ -632,12 +637,19 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       </div>
 
       <div style={styles.hero}>
-        <div style={styles.name}>Welcome, {displayName.split(' ')[0]}</div>
-        <div style={styles.sub}>
-          {displayRole && `${displayRole} · `}
-          {instance && displayHireDate
-            ? `Started ${new Date(displayHireDate).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`
-            : (employee?.brand || userProfile?.brand || 'Integrated Staffing')}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '4px' }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#1a1a1a', color: '#fff', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, letterSpacing: '-0.2px' }}>
+            {getInitials(displayName)}
+          </div>
+          <div>
+            <div style={styles.name}>Welcome, {displayName.split(' ')[0]}</div>
+            <div style={styles.sub}>
+              {displayRole && `${displayRole} · `}
+              {instance && displayHireDate
+                ? `Started ${new Date(displayHireDate).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`
+                : (employee?.brand || userProfile?.brand || 'Integrated Staffing')}
+            </div>
+          </div>
         </div>
         {instance && (
           <div style={styles.progressWrap}>
@@ -661,7 +673,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
       <div style={styles.content}>
         {activeTab === 'checklist' && (
-          <>
+          <div className="il-tab-content">
             {PHASES.map(phase => {
               const allTasks = tasksByPhase[phase] || []
               const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
@@ -682,8 +694,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                     const completedSubs = subtasks.filter(s => completions[s.id]).length
                     return (
                       <div key={tc.id}>
-                        <div style={styles.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [tc.id]: !prev[tc.id] })) : toggleTask(tc.id, completions[tc.id], { stopPropagation: () => {} })}>
-                          <div style={styles.checkbox(isChecked)} onClick={(e) => { e.stopPropagation(); if (!hasSubtasks) toggleTask(tc.id, completions[tc.id], e) }}>
+                        <div className="il-row" style={styles.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [tc.id]: !prev[tc.id] })) : toggleTask(tc.id, completions[tc.id], { stopPropagation: () => {} })}>
+                          <div className="il-checkbox" style={styles.checkbox(isChecked)} onClick={(e) => { e.stopPropagation(); if (!hasSubtasks) toggleTask(tc.id, completions[tc.id], e) }}>
                             {isChecked && checkIcon()}
                           </div>
                           <div style={styles.taskName(isChecked)}>{tc.onboarding_templates.task_name}</div>
@@ -701,8 +713,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                                     {p}
                                   </div>
                                   {phaseSubtasks.map(s => (
-                                    <div key={s.id} style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
-                                      <div style={styles.subtaskCheckbox(completions[s.id])}>
+                                    <div key={s.id} className="il-row" style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
+                                      <div className="il-checkbox" style={styles.subtaskCheckbox(completions[s.id])}>
                                         {completions[s.id] && checkIcon(7)}
                                       </div>
                                       <div style={styles.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
@@ -719,11 +731,11 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 </div>
               )
             })}
-          </>
+          </div>
         )}
 
         {activeTab === 'documents' && (
-          <>
+          <div className="il-tab-content">
             {documents.filter(doc => !docCompletions[doc.id]?.hidden).length === 0 && (
               <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No documents have been assigned yet.</div>
             )}
@@ -769,11 +781,11 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 </div>
               )
             })}
-          </>
+          </div>
         )}
 
         {activeTab === 'company-resources' && (
-          <>
+          <div className="il-tab-content">
             {companyResources.length === 0 ? (
               <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No company resources have been added yet.</div>
             ) : (
@@ -784,11 +796,11 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 </div>
               ))
             )}
-          </>
+          </div>
         )}
 
         {activeTab === 'time-off' && (
-          <>
+          <div className="il-tab-content">
             {timeOffLoading ? (
               <>
                 <SkeletonLine width="100%" height="100px" style={{ marginBottom: '20px', borderRadius: '10px' }} />
@@ -828,6 +840,14 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                         {torRemaining < 0 && <div style={{ fontSize: '10px', color: '#c74848', marginTop: '2px' }}>Over limit</div>}
                       </div>
                     </div>
+                    {torTotal > 0 && (
+                      <div style={{ marginTop: '14px', borderTop: '1px solid #f0efeb', paddingTop: '14px' }}>
+                        <div style={{ height: '5px', borderRadius: '3px', background: '#f0efeb', overflow: 'hidden', display: 'flex' }}>
+                          {torUsed > 0 && <div style={{ width: `${Math.min(100, (torUsed / torTotal) * 100)}%`, background: '#1a1a1a', transition: 'width 0.3s ease' }} />}
+                          {torPending > 0 && <div style={{ width: `${Math.min(100 - (torUsed / torTotal) * 100, (torPending / torTotal) * 100)}%`, background: '#d4901a', transition: 'width 0.3s ease' }} />}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -991,7 +1011,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 )}
               </>
             )}
-          </>
+          </div>
         )}
       </div>
 
