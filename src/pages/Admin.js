@@ -126,7 +126,7 @@ async function addRole() {
     fetchTemplates(selectedRole.id)
     if (!newTask) return
 
-    if (!taskLibrary.some(t => t.task_name === newTaskName)) {
+    if (!taskLibrary.some(t => t.task_name === newTaskName.trim())) {
   await supabase.from('task_library').insert({ task_name: newTaskName.trim() })
   fetchTaskLibrary()
 }

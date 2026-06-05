@@ -5,6 +5,6 @@ export async function getHrEmail() {
     .from('system_settings')
     .select('value')
     .eq('key', 'hr_notification_email')
-    .single()
+    .maybeSingle()
   return data?.value || 'hr@integratedstaffing.ca'
 }
