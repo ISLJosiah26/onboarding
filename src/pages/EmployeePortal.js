@@ -1231,7 +1231,6 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
             )}
           </div>
         )}
-      </div>
 
         {activeTab === 'technical-tickets' && (
           <div className="il-tab-content">
@@ -1302,6 +1301,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
             )}
           </div>
         )}
+      </div>
 
       {celebration && (
         <div style={{
