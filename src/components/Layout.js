@@ -60,7 +60,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
       flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: '3px', height: '56px',
       background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-      color: active ? '#0070CA' : '#8a8a86',
+      color: active ? '#0066cc' : '#a4a39f',
       fontSize: '10px', fontWeight: active ? 600 : 400,
       padding: '6px 4px 4px',
     })
@@ -80,14 +80,14 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
     })
 
     return (
-      <div style={{ minHeight: '100vh', background: '#f7f6f3', fontFamily: "'Inter', -apple-system, sans-serif", color: '#1a1a1a' }}>
+      <div style={{ minHeight: '100vh', background: '#f4f3ef', fontFamily: "'Inter', -apple-system, sans-serif", color: '#18181b' }}>
         <div style={{
           position: 'sticky', top: 0, zIndex: 40,
-          background: '#fff', borderBottom: '1px solid #e8e8e4',
-          height: '52px', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '10px',
+          background: '#fff', boxShadow: '0 1px 0 #e2e1dd',
+          height: '54px', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '10px',
         }}>
-          <div style={{ width: '22px', height: '22px', background: '#0070CA', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 600, flexShrink: 0, letterSpacing: '-0.2px' }}>IL</div>
-          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1a1a1a' }}>Integrated Launch</div>
+          <div style={{ width: '24px', height: '24px', background: 'linear-gradient(135deg, #004db3 0%, #0080ff 100%)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 700, flexShrink: 0, letterSpacing: '-0.2px' }}>IL</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#18181b' }}>Integrated Launch</div>
         </div>
 
         <div style={{ paddingBottom: '64px' }}>
@@ -96,7 +96,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
 
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
-          background: '#fff', borderTop: '1px solid #e8e8e4',
+          background: '#fff', boxShadow: '0 -1px 0 #e2e1dd',
           display: 'flex', zIndex: 40,
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}>
@@ -175,7 +175,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
               </div>
               <div style={{ borderTop: '1px solid #e8e8e4', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#1a1a1a', color: '#fff', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{initials}</div>
+                  <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e 0%, #374151 100%)', color: '#fff', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{initials}</div>
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.1px' }}>{name}</div>
                     <div style={{ fontSize: '11px', color: '#a0a09c' }}>{email}</div>
@@ -196,9 +196,9 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
   const navItem = (active) => ({
     display: 'flex', alignItems: 'center', gap: '10px',
     padding: '7px 12px',
-    borderRadius: '6px', fontSize: '13px',
-    color: active ? '#1a1a1a' : '#6b6b67',
-    background: active ? '#f0efeb' : 'transparent',
+    borderRadius: '7px', fontSize: '13px',
+    color: active ? '#0066cc' : '#70706b',
+    background: active ? '#eff6ff' : 'transparent',
     fontWeight: active ? 500 : 400,
     cursor: 'pointer',
     border: 'none',
@@ -208,19 +208,19 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#f7f6f3',
+      minHeight: '100vh', background: '#f4f3ef',
       display: 'grid', gridTemplateColumns: '240px 1fr',
-      fontFamily: "'Inter', -apple-system, sans-serif", color: '#1a1a1a',
+      fontFamily: "'Inter', -apple-system, sans-serif", color: '#18181b',
     }}>
       <div style={{
-        background: '#fff', borderRight: '1px solid #e8e8e4',
+        background: '#fff', borderRight: '1px solid #e2e1dd',
         padding: '0 10px', display: 'flex', flexDirection: 'column',
         position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
       }}>
         {/* Brand */}
         <div style={{ padding: '22px 12px 20px', display: 'flex', alignItems: 'center', gap: '9px' }}>
-          <div style={{ width: '24px', height: '24px', background: '#0070CA', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 600, letterSpacing: '-0.2px', flexShrink: 0 }}>IL</div>
-          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1a1a1a' }}>Integrated Launch</div>
+          <div style={{ width: '26px', height: '26px', background: 'linear-gradient(135deg, #004db3 0%, #0080ff 100%)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 700, letterSpacing: '-0.2px', flexShrink: 0 }}>IL</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#18181b' }}>Integrated Launch</div>
         </div>
 
         {/* Primary nav */}
@@ -281,12 +281,12 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
         )}
 
         {/* User / sign out */}
-        <div style={{ marginTop: 'auto', borderTop: '1px solid #e8e8e4', padding: '14px 12px' }}>
+        <div style={{ marginTop: 'auto', borderTop: '1px solid #e2e1dd', padding: '14px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#1a1a1a', color: '#fff', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{initials}</div>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e 0%, #374151 100%)', color: '#fff', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{initials}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
-              <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: '#a0a09c', fontSize: '11px', display: 'block', textAlign: 'left', letterSpacing: 0 }}>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', letterSpacing: '-0.1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
+              <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: '#a4a39f', fontSize: '11px', display: 'block', textAlign: 'left', letterSpacing: 0 }}>
                 Sign out
               </button>
             </div>

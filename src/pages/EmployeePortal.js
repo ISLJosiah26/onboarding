@@ -687,40 +687,40 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
   )
 
   const styles = {
-    app: { minHeight: '100vh', background: '#fafaf9', fontFamily: 'Inter, -apple-system, sans-serif', color: '#1a1a1a' },
-    topbar: { background: '#fff', borderBottom: '1px solid #ebebe8', padding: isMobile ? '0 16px' : '0 32px', height: isMobile ? '48px' : '54px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-    logo: { fontSize: '14px', fontWeight: 600, color: '#0070CA', letterSpacing: '-0.2px' },
-    signout: { fontSize: '12px', color: '#a8a8a4', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' },
-    hero: { padding: isMobile ? '20px 16px 0' : '40px 40px 0', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
-    name: { fontSize: isMobile ? '20px' : '24px', fontWeight: 600, letterSpacing: '-0.4px', marginBottom: '4px' },
-    sub: { fontSize: '13px', color: '#8a8a86' },
+    app: { minHeight: '100vh', background: '#f4f3ef', fontFamily: 'Inter, -apple-system, sans-serif', color: '#18181b' },
+    topbar: { background: '#fff', boxShadow: '0 1px 0 #e2e1dd', padding: isMobile ? '0 16px' : '0 32px', height: isMobile ? '52px' : '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+    logo: { fontSize: '14px', fontWeight: 600, color: '#0066cc', letterSpacing: '-0.2px' },
+    signout: { fontSize: '12px', color: '#70706b', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 },
+    hero: { padding: isMobile ? '24px 16px 0' : '44px 40px 0', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
+    name: { fontSize: isMobile ? '22px' : '26px', fontWeight: 600, letterSpacing: '-0.8px', marginBottom: '4px' },
+    sub: { fontSize: '13px', color: '#70706b' },
     progressWrap: { marginTop: '20px', marginBottom: isMobile ? '20px' : '32px' },
-    progressRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-    progressTrack: { height: '6px', background: '#ebebe8', borderRadius: '3px', overflow: 'hidden' },
-    progressFill: { height: '100%', background: '#0070CA', borderRadius: '3px', transition: 'width 0.4s ease' },
-    tabs: { display: 'flex', gap: '0', borderBottom: '1px solid #ebebe8', padding: isMobile ? '0 16px' : '0 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
-    tab: (active) => ({ fontSize: '13px', fontWeight: active ? 500 : 400, color: active ? '#1a1a1a' : '#8a8a86', padding: '10px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: active ? '2px solid #1a1a1a' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }),
+    progressRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
+    progressTrack: { height: '8px', background: '#eceae6', borderRadius: '99px', overflow: 'hidden' },
+    progressFill: { height: '100%', background: 'linear-gradient(90deg, #0066cc, #3d9eff)', borderRadius: '99px', boxShadow: '0 0 8px rgba(0,102,204,0.28)', transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)' },
+    tabs: { display: 'flex', gap: '0', borderBottom: '1px solid #e2e1dd', padding: isMobile ? '0 16px' : '0 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
+    tab: (active) => ({ fontSize: '13px', fontWeight: active ? 600 : 400, color: active ? '#0066cc' : '#70706b', padding: '12px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: active ? '2px solid #0066cc' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.12s ease, border-color 0.12s ease' }),
     content: { padding: isMobile ? '20px 16px' : '28px 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
-    phaseLabel: { fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px', marginTop: '24px' },
-    parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 0', borderBottom: '1px solid #f0efeb', cursor: 'pointer' },
-    subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#f7f6f4' },
-    checkbox: (checked) => ({ width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d4d3cf', background: checked ? '#0070CA' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
-    subtaskCheckbox: (checked) => ({ width: '15px', height: '15px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d4d3cf', background: checked ? '#0070CA' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }),
-    taskName: (checked) => ({ fontSize: '14px', color: checked ? '#a8a8a4' : '#1a1a1a', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
-    subtaskName: (checked) => ({ fontSize: '13px', color: checked ? '#a8a8a4' : '#5f5f5c', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
-    chevron: (open) => ({ fontSize: '10px', color: '#a8a8a4', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }),
-    subtaskCount: { fontSize: '11px', color: '#a8a8a4' },
-    balCard: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: isMobile ? '16px' : '20px', marginBottom: '24px' },
+    phaseLabel: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px', marginTop: '28px' },
+    parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
+    subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f4f3ef', cursor: 'pointer', background: '#f9f8f5' },
+    checkbox: (checked) => ({ width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d0cfc9', background: checked ? 'linear-gradient(135deg, #0066cc, #3d9eff)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer', boxShadow: checked ? '0 0 0 3px rgba(0,102,204,0.12)' : 'none' }),
+    subtaskCheckbox: (checked) => ({ width: '15px', height: '15px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d0cfc9', background: checked ? 'linear-gradient(135deg, #0066cc, #3d9eff)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }),
+    taskName: (checked) => ({ fontSize: '14px', color: checked ? '#a4a39f' : '#18181b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
+    subtaskName: (checked) => ({ fontSize: '13px', color: checked ? '#a4a39f' : '#70706b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
+    chevron: (open) => ({ fontSize: '10px', color: '#a4a39f', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }),
+    subtaskCount: { fontSize: '11px', color: '#a4a39f' },
+    balCard: { background: '#fff', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
     balGrid: { display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '12px' : '16px' },
     balStat: { textAlign: 'center' },
-    balNum: (warn) => ({ fontSize: '24px', fontWeight: 600, color: warn ? '#c74848' : '#1a1a1a', letterSpacing: '-0.5px' }),
-    balLabel: { fontSize: '11px', color: '#8a8a86', marginTop: '4px' },
-    formCard: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: isMobile ? '16px' : '20px', marginBottom: '24px' },
-    fieldLabel: { fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' },
-    fieldInput: { width: '100%', minWidth: 0, background: '#fff', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 12px', fontSize: '13px', color: '#1a1a1a', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none' },
-    submitBtn: (disabled) => ({ background: disabled ? '#d4d3cf' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit' }),
-    torRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 0', borderBottom: '1px solid #f0efeb', flexWrap: 'wrap' },
-    cancelBtn: { fontSize: '12px', color: '#8a8a86', background: 'none', border: '1px solid #ebebe8', borderRadius: '5px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 },
+    balNum: (warn) => ({ fontSize: '26px', fontWeight: 700, color: warn ? '#c04040' : '#18181b', letterSpacing: '-0.8px' }),
+    balLabel: { fontSize: '11px', color: '#a4a39f', marginTop: '4px', fontWeight: 500, letterSpacing: '0.1px' },
+    formCard: { background: '#fff', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
+    fieldLabel: { fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 },
+    fieldInput: { width: '100%', minWidth: 0, background: '#fff', border: '1px solid #e2e1dd', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', color: '#18181b', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none' },
+    submitBtn: (disabled) => ({ background: disabled ? '#d4d3cf' : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }),
+    torRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 0', borderBottom: '1px solid #f0efe9', flexWrap: 'wrap' },
+    cancelBtn: { fontSize: '12px', color: '#70706b', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 },
   }
 
   if (loading) return (
@@ -774,7 +774,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
       <div style={styles.hero}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '4px' }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#1a1a1a', color: '#fff', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, letterSpacing: '-0.2px' }}>
+          <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e 0%, #374151 100%)', color: '#fff', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, letterSpacing: '-0.2px', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
             {getInitials(displayName)}
           </div>
           <div>
@@ -794,7 +794,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
               <span style={{ fontSize: '12px', fontWeight: 500, color: '#0070CA' }}>{pct}%</span>
             </div>
             <div style={styles.progressTrack}>
-              <div style={{ ...styles.progressFill, width: `${pct()}%` }} />
+              <div style={{ ...styles.progressFill, width: `${pct}%` }} />
             </div>
           </div>
         )}
@@ -1035,13 +1035,13 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                         <div style={styles.balLabel}>Used</div>
                       </div>
                       <div style={styles.balStat}>
-                        <div style={{ ...styles.balNum(false), color: torPending > 0 ? '#d4901a' : '#1a1a1a' }}>{torPending}</div>
+                        <div style={{ ...styles.balNum(false), color: torPending > 0 ? '#b8740a' : '#18181b' }}>{torPending}</div>
                         <div style={styles.balLabel}>Pending</div>
                       </div>
                       <div style={styles.balStat}>
-                        <div style={styles.balNum(torRemaining < 0)}>{torRemaining}</div>
-                        <div style={styles.balLabel}>Remaining</div>
-                        {torRemaining < 0 && <div style={{ fontSize: '10px', color: '#c74848', marginTop: '2px' }}>Over limit</div>}
+                        <div style={{ ...styles.balNum(torRemaining < 0), fontSize: '28px', color: torRemaining < 0 ? '#c04040' : '#0066cc' }}>{torRemaining}</div>
+                        <div style={{ ...styles.balLabel, color: torRemaining < 0 ? '#c04040' : '#0066cc' }}>Remaining</div>
+                        {torRemaining < 0 && <div style={{ fontSize: '10px', color: '#c04040', marginTop: '2px' }}>Over limit</div>}
                       </div>
                     </div>
                     {torTotal > 0 && (
