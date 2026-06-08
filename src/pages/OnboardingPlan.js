@@ -10,8 +10,7 @@ import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
 import { getHrEmail } from '../utils/getHrEmail'
-
-const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
+import { PHASES } from '../config'
 
 export default function OnboardingPlan({ session, userProfile, instanceId, onBack, onNavigate }) {
   const [instance, setInstance] = useState(null)
@@ -366,7 +365,6 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
     content: { padding: '32px 40px', maxWidth: '780px' },
     sectionLabel: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
     uploadLink: { fontSize: '12px', color: '#0066cc', cursor: 'pointer', fontWeight: 500, textTransform: 'none', letterSpacing: 0 },
-    taskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
     parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
     subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#fafaf9' },
     checkbox: (checked) => ({ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),

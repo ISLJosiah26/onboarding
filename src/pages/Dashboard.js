@@ -7,13 +7,8 @@ import Toast from '../components/Toast'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { useWindowSize } from '../hooks/useWindowSize'
-
-const TODAY = new Date().toISOString().slice(0, 10)
-
-function getInitials(name) {
-  if (!name) return '?'
-  return name.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().slice(0, 2) || '?'
-}
+import { TODAY } from '../config'
+import { getInitials } from '../utils/formatUtils'
 
 function getPhase(hireDate) {
   const days = Math.floor((new Date() - new Date(hireDate)) / (1000 * 60 * 60 * 24))

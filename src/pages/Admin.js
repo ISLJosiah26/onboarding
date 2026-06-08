@@ -8,9 +8,22 @@ import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
+import { PHASES } from '../config'
 
-const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 const OWNERS = ['HR', 'Manager', 'IT']
+
+function tabStyle(active) {
+  return {
+    padding: '10px 14px', fontSize: '13px',
+    fontWeight: active ? 600 : 400,
+    color: active ? '#0066cc' : '#70706b',
+    background: 'none', border: 'none',
+    borderBottom: active ? '2px solid #0066cc' : '2px solid transparent',
+    cursor: 'pointer', fontFamily: 'inherit', marginBottom: '-1px',
+    whiteSpace: 'nowrap', flexShrink: 0,
+    transition: 'color 0.12s ease, border-color 0.12s ease',
+  }
+}
 
 export default function Admin({ session, userProfile, initialTab, onBack, onNavigate, onStartOnboarding, onViewOnboarding }) {
   const [roles, setRoles] = useState([])
@@ -52,10 +65,12 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
 
   useEffect(() => { fetchRoles() }, [])
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
-  useEffect(() => { if (initialTab === 'documents') fetchDocuments() }, [initialTab])
-  useEffect(() => { if (initialTab === 'company-resources') fetchCompanyResources() }, [initialTab])
-  useEffect(() => { if (initialTab === 'history') fetchHistory() }, [initialTab])
-  useEffect(() => { if (initialTab === 'templates') { fetchTaskLibrary(); fetchTemplateCounts() } }, [initialTab])
+  useEffect(() => {
+    if (initialTab === 'documents') fetchDocuments()
+    else if (initialTab === 'company-resources') fetchCompanyResources()
+    else if (initialTab === 'history') fetchHistory()
+    else if (initialTab === 'templates') { fetchTaskLibrary(); fetchTemplateCounts() }
+  }, [initialTab])
 
   async function fetchRoles() {
     const { data } = await supabase.from('roles').select('*').order('name')
@@ -248,23 +263,13 @@ async function addSubtask(parentId) {
   }
 }
 
-async function deleteDocument(id) {
+async function deleteDoc(id, isResource) {
   const { error } = await supabase.from('documents').delete().eq('id', id)
   if (error) {
-    showToast(handleSupabaseError(error, 'Failed to remove document.'), 'error')
+    showToast(handleSupabaseError(error, `Failed to remove ${isResource ? 'resource' : 'document'}.`), 'error')
   } else {
-    showToast('Document removed')
-    fetchDocuments()
-  }
-}
-
-async function deleteCompanyResource(id) {
-  const { error } = await supabase.from('documents').delete().eq('id', id)
-  if (error) {
-    showToast(handleSupabaseError(error, 'Failed to remove resource.'), 'error')
-  } else {
-    showToast('Resource removed')
-    fetchCompanyResources()
+    showToast(isResource ? 'Resource removed' : 'Document removed')
+    if (isResource) fetchCompanyResources(); else fetchDocuments()
   }
 }
 
@@ -392,16 +397,6 @@ function renderAdminHeader(title, sub) {
     { id: 'company-resources', label: 'Company Resources' },
     { id: 'roles', label: 'Roles' },
   ]
-  const tabStyle = (active) => ({
-    padding: '10px 14px', fontSize: '13px',
-    fontWeight: active ? 600 : 400,
-    color: active ? '#0066cc' : '#70706b',
-    background: 'none', border: 'none',
-    borderBottom: active ? '2px solid #0066cc' : '2px solid transparent',
-    cursor: 'pointer', fontFamily: 'inherit', marginBottom: '-1px',
-    whiteSpace: 'nowrap', flexShrink: 0,
-    transition: 'color 0.12s ease, border-color 0.12s ease',
-  })
   return (
     <div style={{ boxShadow: '0 1px 0 #e2e1dd', background: '#fff' }}>
       <div style={{ padding: isMobile ? '16px 16px 12px' : '28px 40px 20px' }}>
@@ -474,6 +469,7 @@ function renderModal() {
   }
 
   if (initialTab === 'history') {
+    const filteredHistory = history.filter(h => historyFilter === 'all' || h.status === historyFilter)
     return (
       <Layout session={session} userProfile={userProfile} currentPage="history" onNavigate={onNavigate}>
         {renderAdminHeader('History', '')}
@@ -485,9 +481,9 @@ function renderModal() {
               </button>
             ))}
           </div>
-          {history.filter(h => historyFilter === 'all' || h.status === historyFilter).length === 0 ? (
+          {filteredHistory.length === 0 ? (
             <div style={styles.emptyState}>No {historyFilter === 'all' ? 'completed or archived' : historyFilter} onboardings yet.</div>
-          ) : history.filter(h => historyFilter === 'all' || h.status === historyFilter).map(h => (
+          ) : filteredHistory.map(h => (
             <div key={h.id} style={{ ...styles.row, cursor: 'default' }}>
               <div style={{ cursor: 'pointer', flex: 1 }} onClick={() => onViewOnboarding(h.id)}>
                 <div style={styles.rowName}>{h.employees.full_name}</div>
@@ -858,7 +854,7 @@ if (initialTab === 'documents') {
                       </div>
                       <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                         <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none' }}>View</a>
-                        <button style={styles.btnGhost} onClick={() => deleteDocument(doc.id)}>Remove</button>
+                        <button style={styles.btnGhost} onClick={() => deleteDoc(doc.id, false)}>Remove</button>
                       </div>
                     </div>
                   ))}
@@ -919,7 +915,7 @@ if (initialTab === 'documents') {
                     <>
                       <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none' }}>View</a>
                       <button style={styles.btnGhost} onClick={() => { setRenamingDocId(doc.id); setRenameValue(doc.name) }}>Rename</button>
-                      <button style={styles.btnGhost} onClick={() => deleteCompanyResource(doc.id)}>Remove</button>
+                      <button style={styles.btnGhost} onClick={() => deleteDoc(doc.id, true)}>Remove</button>
                     </>
                   )}
                 </div>

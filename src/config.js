@@ -3,6 +3,10 @@ export const BRAND = {
   company: 'Integrated Staffing Limited'
 }
 
+export const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
+export const TODAY = new Date().toISOString().slice(0, 10)
+export const CURRENT_YEAR = new Date().getFullYear()
+
 export const ROUTES = {
   DASHBOARD: '/dashboard',
   ACTIVE: '/active',
