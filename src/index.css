@@ -164,6 +164,15 @@ a:focus-visible {
   vertical-align: middle;
 }
 
+/* Company resource tiles */
+.il-resource-tile {
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.il-resource-tile:hover {
+  border-color: #d4d3cf !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
