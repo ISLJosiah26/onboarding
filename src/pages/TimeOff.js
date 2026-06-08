@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
@@ -48,6 +47,23 @@ const DATE_ROW_H = 28
 const EVENT_H = 20
 const EVENT_GAP = 3
 const SLOT_H = EVENT_H + EVENT_GAP
+
+const BASE_STYLES = {
+  title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.3px', color: '#18181b', marginBottom: '4px' },
+  subNav: { display: 'flex', borderBottom: '1px solid #e2e1dd', marginBottom: '20px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
+  subTab: (a) => ({ fontSize: '13px', fontWeight: a ? 500 : 400, color: a ? '#18181b' : '#70706b', padding: '10px 0', marginRight: '20px', background: 'none', border: 'none', borderBottom: a ? '2px solid #18181b' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }),
+  card: { background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', overflow: 'hidden' },
+  tHead: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '10px 16px', background: '#fafaf9', borderBottom: '1px solid #e2e1dd', fontSize: '11px', fontWeight: 500, color: '#70706b', textTransform: 'uppercase', letterSpacing: '0.4px' }),
+  tRow: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '13px 16px', borderBottom: '1px solid #f0efe9', alignItems: 'center', fontSize: '13px', color: '#18181b' }),
+  empty: { padding: '40px', textAlign: 'center', fontSize: '13px', color: '#a4a39f' },
+  inp: { background: '#fff', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', color: '#18181b', fontFamily: 'Inter, -apple-system, sans-serif', outline: 'none', boxSizing: 'border-box' },
+  btnApprove: { background: '#f0faf4', color: '#1a7a4a', border: '1px solid #c3e8d1', borderRadius: '6px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
+  btnDeny: { background: '#fdf0f0', color: '#c04040', border: '1px solid #f5d6d6', borderRadius: '6px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
+  btnEdit: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
+  btnSave: { background: '#18181b', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 11px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+  btnCancel: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 8px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
+  navBtn: { background: 'transparent', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 10px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#70706b', lineHeight: 1 },
+}
 
 function getWeekEventLayout(weekDates, allRequests) {
   const activeDates = weekDates.filter(d => d)
@@ -129,6 +145,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
   const { toast, showToast, hideToast } = useToast()
   const { isMobile } = useWindowSize()
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchData is stable, re-fetch on view change
   useEffect(() => { fetchData() }, [subView])
 
   async function fetchData() {
@@ -382,22 +399,9 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
     })
 
   const s = {
+    ...BASE_STYLES,
     page: { padding: isMobile ? '16px' : '32px 40px', maxWidth: '1100px' },
-    title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.3px', color: '#18181b', marginBottom: '4px' },
     sub: { fontSize: '13px', color: '#70706b', marginBottom: isMobile ? '16px' : '28px' },
-    subNav: { display: 'flex', borderBottom: '1px solid #e2e1dd', marginBottom: '20px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
-    subTab: (a) => ({ fontSize: '13px', fontWeight: a ? 500 : 400, color: a ? '#18181b' : '#70706b', padding: '10px 0', marginRight: '20px', background: 'none', border: 'none', borderBottom: a ? '2px solid #18181b' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }),
-    card: { background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', overflow: 'hidden' },
-    tHead: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '10px 16px', background: '#fafaf9', borderBottom: '1px solid #e2e1dd', fontSize: '11px', fontWeight: 500, color: '#70706b', textTransform: 'uppercase', letterSpacing: '0.4px' }),
-    tRow: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '13px 16px', borderBottom: '1px solid #f0efe9', alignItems: 'center', fontSize: '13px', color: '#18181b' }),
-    empty: { padding: '40px', textAlign: 'center', fontSize: '13px', color: '#a4a39f' },
-    inp: { background: '#fff', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', color: '#18181b', fontFamily: 'Inter, -apple-system, sans-serif', outline: 'none', boxSizing: 'border-box' },
-    btnApprove: { background: '#f0faf4', color: '#1a7a4a', border: '1px solid #c3e8d1', borderRadius: '6px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
-    btnDeny: { background: '#fdf0f0', color: '#c04040', border: '1px solid #f5d6d6', borderRadius: '6px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
-    btnEdit: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
-    btnSave: { background: '#18181b', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 11px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
-    btnCancel: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 8px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
-    navBtn: { background: 'transparent', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 10px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#70706b', lineHeight: 1 },
   }
 
   const REQ_COLS = '1.4fr 1fr 90px 60px 100px 80px 170px'

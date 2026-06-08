@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
@@ -11,6 +10,21 @@ import { useWindowSize } from '../hooks/useWindowSize'
 import { PHASES } from '../config'
 
 const OWNERS = ['HR', 'Manager', 'IT']
+
+const BASE_STYLES = {
+  title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px', color: '#18181b' },
+  sub: { fontSize: '13px', color: '#70706b', marginTop: '2px' },
+  input: { border: '1px solid #e2e1dd', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#18181b' },
+  btnPrimary: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' },
+  btnGhost: { background: 'none', border: 'none', color: '#a4a39f', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: 0 },
+  label: { fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 },
+  row: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f0efe9' },
+  rowName: { fontSize: '13px', color: '#18181b' },
+  rowMuted: { fontSize: '12px', color: '#a4a39f' },
+  phaseLabel: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px', marginTop: '24px' },
+  pill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: '#f0efe9', color: '#70706b', fontWeight: 500 },
+  emptyState: { padding: '48px 0', textAlign: 'center', color: '#a4a39f', fontSize: '13px' },
+}
 
 function tabStyle(active) {
   return {
@@ -63,8 +77,11 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [templateCounts, setTemplateCounts] = useState({})
   const [showLibrary, setShowLibrary] = useState(false)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchRoles is stable, mount-only fetch
   useEffect(() => { fetchRoles() }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchTemplates is stable, re-fetch on role change
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch functions are stable, re-fetch on tab change
   useEffect(() => {
     if (initialTab === 'documents') fetchDocuments()
     else if (initialTab === 'company-resources') fetchCompanyResources()
@@ -363,21 +380,10 @@ async function handleAdminDocumentUpload(e) {
   const p = isMobile ? '16px' : '40px'
 
   const styles = {
+    ...BASE_STYLES,
     header: { padding: isMobile ? '16px 16px 12px' : '28px 40px 24px', boxShadow: '0 1px 0 #e2e1dd', background: '#fff' },
-    title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px', color: '#18181b' },
-    sub: { fontSize: '13px', color: '#70706b', marginTop: '2px' },
     content: { padding: isMobile ? '20px 16px' : '32px 40px', maxWidth: '780px' },
-    input: { border: '1px solid #e2e1dd', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#18181b' },
-    btnPrimary: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' },
-    btnGhost: { background: 'none', border: 'none', color: '#a4a39f', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: 0 },
-    label: { fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 },
-    row: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f0efe9' },
-    rowName: { fontSize: '13px', color: '#18181b' },
-    rowMuted: { fontSize: '12px', color: '#a4a39f' },
-    phaseLabel: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px', marginTop: '24px' },
-    pill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: '#f0efe9', color: '#70706b', fontWeight: 500 },
-    emptyState: { padding: '48px 0', textAlign: 'center', color: '#a4a39f', fontSize: '13px' },
-    card: { background: '#fff', border: '1px solid #e2e1dd', borderRadius: '12px', padding: isMobile ? '20px 16px' : '28px', maxWidth: '420px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' }
+    card: { background: '#fff', border: '1px solid #e2e1dd', borderRadius: '12px', padding: isMobile ? '20px 16px' : '28px', maxWidth: '420px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
   }
 
   function renderHeader(title, sub) {

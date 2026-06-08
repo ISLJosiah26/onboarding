@@ -1,389 +1,71 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 import ConfirmModal from '../components/ConfirmModal'
 import EditEmployeeModal from '../components/EditEmployeeModal'
 import Toast from '../components/Toast'
-import useToast from '../hooks/useToast'
-import { handleSupabaseError } from '../utils/handleError'
-import { logAudit } from '../utils/auditLog'
-import { getHrEmail } from '../utils/getHrEmail'
+import { useOnboardingPlan } from '../hooks/useOnboardingPlan'
 import { PHASES } from '../config'
 
+const STYLES = {
+  header: { padding: '28px 40px 24px', borderBottom: '1px solid #e2e1dd' },
+  backLink: { fontSize: '12px', color: '#70706b', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px' },
+  title: { fontSize: '22px', fontWeight: 600, letterSpacing: '-0.4px' },
+  sub: { fontSize: '13px', color: '#70706b', marginTop: '3px' },
+  progressRow: { marginTop: '20px', display: 'flex', alignItems: 'center', gap: '16px' },
+  progressTrack: { flex: 1, maxWidth: '320px', height: '6px', background: '#e2e1dd', borderRadius: '3px', overflow: 'hidden' },
+  progressFill: { height: '100%', transition: 'width 0.3s ease' },
+  progressText: { fontSize: '12px', color: '#70706b' },
+  progressPct: { fontSize: '12px', fontWeight: 500 },
+  content: { padding: '32px 40px', maxWidth: '780px' },
+  sectionLabel: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  uploadLink: { fontSize: '12px', color: '#0066cc', cursor: 'pointer', fontWeight: 500, textTransform: 'none', letterSpacing: 0 },
+  parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
+  subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#fafaf9' },
+  checkbox: (checked) => ({ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
+  subtaskCheckbox: (checked) => ({ width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
+  taskName: (checked) => ({ fontSize: '13px', color: checked ? '#a4a39f' : '#18181b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
+  subtaskName: (checked) => ({ fontSize: '12px', color: checked ? '#a4a39f' : '#70706b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
+  owner: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f4f3ef', color: '#70706b', fontWeight: 500 },
+  chevron: (open) => ({ fontSize: '10px', color: '#a4a39f', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }),
+  subtaskCount: { fontSize: '11px', color: '#a4a39f', flexShrink: 0 },
+  expandedPanel: { background: '#fafaf9', border: '1px solid #e2e1dd', borderRadius: '8px', padding: '14px', marginTop: '2px', marginBottom: '4px' },
+  noteLabel: { fontSize: '11px', color: '#70706b', marginBottom: '6px', fontWeight: 500 },
+  noteInput: { width: '100%', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#18181b', resize: 'vertical', minHeight: '60px', boxSizing: 'border-box' },
+  noteHint: { fontSize: '11px', color: '#a4a39f', marginTop: '6px' },
+  noteIndicator: { fontSize: '11px', color: '#0066cc', marginLeft: '4px' },
+  section: { marginBottom: '36px' },
+  footer: { borderTop: '1px solid #e2e1dd', padding: '24px 40px', display: 'flex', gap: '8px' },
+  btnPrimary: { background: '#18181b', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+  btnSecondary: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+}
+
 export default function OnboardingPlan({ session, userProfile, instanceId, onBack, onNavigate }) {
-  const [instance, setInstance] = useState(null)
-  const [tasksByPhase, setTasksByPhase] = useState({})
-  const [completions, setCompletions] = useState({})
-  const [notes, setNotes] = useState({})
-  const [expanded, setExpanded] = useState(null)
-  const [expandedTasks, setExpandedTasks] = useState({})
-  const [documents, setDocuments] = useState([])
-  const [docCompletions, setDocCompletions] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
-  const [modal, setModal] = useState(null)
-  const [inviteSent, setInviteSent] = useState(false)
-  const [inviting, setInviting] = useState(false)
-  const [editingEmployee, setEditingEmployee] = useState(false)
-  const [showHiddenDocs, setShowHiddenDocs] = useState(false)
-  const [fetchError, setFetchError] = useState(null)
-  const { toast, showToast, hideToast } = useToast()
-  const noteTimers = useRef({})
-  const pendingNoteSaves = useRef({})
-  const [noteSaveState, setNoteSaveState] = useState({})
-
-  useEffect(() => {
-    fetchPlan()
-    fetchDocuments()
-  }, [instanceId])
-
-  useEffect(() => {
-    return () => {
-      Object.values(noteTimers.current).forEach(clearTimeout)
-      Object.entries(pendingNoteSaves.current).forEach(([id, value]) => {
-        supabase.from('task_completions').update({ notes: value }).eq('id', id)
-      })
-    }
-  }, [])
-
-  async function fetchPlan() {
-    setFetchError(null)
-    const { data, error } = await supabase
-      .from('onboarding_instances')
-      .select(`
-        id, status,
-        employees (id, full_name, email, hire_date, role_id, roles (name)),
-        task_completions (
-          id, completed, completed_at, notes,
-          onboarding_templates (id, task_name, phase, owner, parent_id)
-        )
-      `)
-      .eq('id', instanceId)
-      .single()
-
-    if (error) {
-      setFetchError(handleSupabaseError(error, 'Failed to load onboarding plan.'))
-      setLoading(false)
-      return
-    }
-
-    setInstance(data)
-    const byPhase = {}
-    const comp = {}
-    const nts = {}
-    PHASES.forEach(p => byPhase[p] = [])
-    data.task_completions.forEach(tc => {
-      const phase = tc.onboarding_templates.phase
-      if (byPhase[phase]) byPhase[phase].push(tc)
-      comp[tc.id] = tc.completed
-      nts[tc.id] = tc.notes || ''
-    })
-    setTasksByPhase(byPhase)
-    setCompletions(comp)
-    setNotes(nts)
-    setLoading(false)
-  }
-
-  async function fetchDocuments() {
-    const { data: inst, error: instError } = await supabase
-      .from('onboarding_instances')
-      .select('employees (id, role_id)')
-      .eq('id', instanceId)
-      .single()
-
-    if (instError || !inst) return
-
-    const employeeId = inst.employees.id
-    const roleId = inst.employees.role_id
-
-    const { data: docs } = await supabase
-      .from('documents')
-      .select('*')
-      .eq('is_company_resource', false)
-      .or(`role_id.is.null,role_id.eq.${roleId}`)
-
-    if (docs) setDocuments(docs)
-
-    const { data: dc } = await supabase
-      .from('document_completions')
-      .select('*')
-      .eq('employee_id', employeeId)
-
-    const map = {}
-    if (dc) dc.forEach(d => map[d.document_id] = d)
-    setDocCompletions(map)
-  }
-
-  async function toggleTask(completionId, current, e) {
-    e.stopPropagation()
-    const newVal = !current
-    setCompletions(prev => ({ ...prev, [completionId]: newVal }))
-    const { error } = await supabase
-      .from('task_completions')
-      .update({ completed: newVal, completed_at: newVal ? new Date().toISOString() : null })
-      .eq('id', completionId)
-    if (error) {
-      setCompletions(prev => ({ ...prev, [completionId]: current }))
-      showToast(handleSupabaseError(error, 'Failed to save task. Please try again.'), 'error')
-    }
-  }
-
-  async function saveNote(completionId, value) {
-    setNoteSaveState(prev => ({ ...prev, [completionId]: 'saving' }))
-    const { error } = await supabase
-      .from('task_completions')
-      .update({ notes: value })
-      .eq('id', completionId)
-    if (error) {
-      showToast(handleSupabaseError(error, 'Failed to save note.'), 'error')
-      setNoteSaveState(prev => ({ ...prev, [completionId]: null }))
-    } else {
-      setNoteSaveState(prev => ({ ...prev, [completionId]: 'saved' }))
-      setTimeout(() => setNoteSaveState(prev => {
-        const next = { ...prev }
-        if (next[completionId] === 'saved') delete next[completionId]
-        return next
-      }), 2000)
-    }
-  }
-
-  function handleNoteChange(completionId, value) {
-    setNotes(prev => ({ ...prev, [completionId]: value }))
-    pendingNoteSaves.current[completionId] = value
-    clearTimeout(noteTimers.current[completionId])
-    noteTimers.current[completionId] = setTimeout(() => {
-      saveNote(completionId, value)
-      delete pendingNoteSaves.current[completionId]
-    }, 1000)
-  }
-
-  async function toggleDocument(docId, e) {
-    e.stopPropagation()
-    const employeeId = instance.employees.id
-    const existing = docCompletions[docId]
-    if (existing) {
-      const newVal = !existing.signed
-      setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, signed: newVal } }))
-      await supabase
-        .from('document_completions')
-        .update({ signed: newVal, completed_at: newVal ? new Date().toISOString() : null })
-        .eq('id', existing.id)
-    } else {
-      const { data } = await supabase
-        .from('document_completions')
-        .insert({ employee_id: employeeId, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString() })
-        .select().single()
-      if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
-    }
-  }
-
-  async function hideDocument(docId) {
-    const docName = documents.find(d => d.id === docId)?.name || 'this document'
-    setModal({
-      title: 'Hide document',
-      message: `"${docName}" will be hidden for this employee. You can restore it using "Show hidden."`,
-      confirmLabel: 'Hide',
-      confirmDanger: false,
-      onConfirm: async () => {
-        const employeeId = instance.employees.id
-        const existing = docCompletions[docId]
-        if (existing) {
-          await supabase.from('document_completions').update({ hidden: true }).eq('id', existing.id)
-          setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, hidden: true } }))
-        } else {
-          const { data } = await supabase
-            .from('document_completions')
-            .insert({ employee_id: employeeId, document_id: docId, hidden: true, signed: false, received: false })
-            .select().single()
-          if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
-        }
-        await logAudit('document_hidden', 'document', docId, { employee_name: instance.employees.full_name })
-        setModal(null)
-        showToast('Document hidden for this employee')
-      }
-    })
-  }
-
-  async function restoreDocument(docId) {
-    const existing = docCompletions[docId]
-    if (existing) {
-      await supabase.from('document_completions').update({ hidden: false }).eq('id', existing.id)
-      setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, hidden: false } }))
-      await logAudit('document_restored', 'document', docId, { employee_name: instance.employees.full_name })
-      showToast('Document restored')
-    }
-  }
-
-  async function handleUploadDocument(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    setUploading(true)
-    const filePath = `documents/${Date.now()}_${file.name}`
-    const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
-    if (uploadError) {
-      showToast(handleSupabaseError(uploadError, 'Upload failed. Please try again.'), 'error')
-      setUploading(false)
-      return
-    }
-    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath)
-    const { error: insertError } = await supabase.from('documents').insert({ name: file.name, file_url: urlData.publicUrl })
-    if (insertError) {
-      showToast(handleSupabaseError(insertError, 'Failed to save document.'), 'error')
-      await supabase.storage.from('documents').remove([filePath])
-    } else {
-      showToast('Document uploaded')
-      await fetchDocuments()
-    }
-    setUploading(false)
-  }
-
-  async function handleMarkComplete() {
-    setModal({
-      title: 'Mark as complete',
-      message: `This will mark ${instance.employees.full_name}'s onboarding as complete and remove it from the active list.`,
-      confirmLabel: 'Mark complete',
-      confirmDanger: false,
-      onConfirm: async () => {
-        await supabase.from('onboarding_instances').update({ status: 'completed' }).eq('id', instanceId)
-        await logAudit('onboarding_completed', 'onboarding_instance', instanceId, { employee_name: instance.employees.full_name })
-        const hrEmail = await getHrEmail()
-        if (hrEmail) await supabase.functions.invoke('send-email', {
-          body: {
-            to: hrEmail,
-            subject: `Onboarding complete: ${instance.employees.full_name}`,
-            html: `
-              <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #18181b;">
-                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Onboarding marked complete</h2>
-                <p style="font-size: 14px; color: #444; line-height: 1.6;"><strong>${instance.employees.full_name}</strong> has completed their onboarding plan.</p>
-                <table style="font-size: 14px; color: #444; margin-top: 16px;">
-                  <tr><td style="padding: 4px 16px 4px 0; color: #888;">Role</td><td>${instance.employees.roles?.name || 'N/A'}</td></tr>
-                  <tr><td style="padding: 4px 16px 4px 0; color: #888;">Started</td><td>${new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</td></tr>
-                  <tr><td style="padding: 4px 16px 4px 0; color: #888;">Completed</td><td>${new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</td></tr>
-                  <tr><td style="padding: 4px 16px 4px 0; color: #888;">Tasks completed</td><td>${completedTasksCount()} of ${totalTasks()}</td></tr>
-                </table>
-                <p style="font-size: 13px; color: #888; margin-top: 32px;">Sent by Integrated Launch</p>
-              </div>
-            `
-          }
-        })
-        setModal(null)
-        onBack()
-      }
-    })
-  }
-
-  async function handleArchive() {
-    setModal({
-      title: 'Archive onboarding',
-      message: `This will archive ${instance.employees.full_name}'s onboarding and remove it from the active list. You can still view it in History.`,
-      confirmLabel: 'Archive',
-      confirmDanger: true,
-      onConfirm: async () => {
-        await supabase.from('onboarding_instances').update({ status: 'archived' }).eq('id', instanceId)
-        await logAudit('onboarding_archived', 'onboarding_instance', instanceId, { employee_name: instance.employees.full_name })
-        setModal(null)
-        onBack()
-      }
-    })
-  }
-
-  async function handleDeleteEmployee() {
-    setModal({
-      title: 'Delete employee',
-      message: `This will permanently delete ${instance.employees.full_name} and all their onboarding data including their portal access. This cannot be undone.`,
-      confirmLabel: 'Delete permanently',
-      confirmDanger: true,
-      onConfirm: async () => {
-        await logAudit('employee_deleted', 'employee', instance.employees.id, { employee_name: instance.employees.full_name })
-        await supabase.functions.invoke('delete-user', { body: { employeeId: instance.employees.id } })
-        await supabase.from('onboarding_instances').delete().eq('id', instanceId)
-        await supabase.from('employees').delete().eq('id', instance.employees.id)
-        setModal(null)
-        onBack()
-      }
-    })
-  }
-
-  async function handleInviteEmployee() {
-    if (!instance.employees.email) {
-      showToast('This employee has no email address on file.', 'error')
-      return
-    }
-    setInviting(true)
-    const { data, error } = await supabase.functions.invoke('invite-employee', {
-      body: { email: instance.employees.email, employeeId: instance.employees.id, brand: instance.employees.roles?.brand || 'ISL' }
-    })
-    if (error || data?.error) {
-      showToast(data?.error || 'Failed to send invite. Please try again.', 'error')
-    } else {
-      if (data?.alreadyInvited) {
-        showToast('This employee already has portal access.', 'success')
-      } else {
-        setInviteSent(true)
-      }
-    }
-    setInviting(false)
-  }
-
-  function totalTasks() {
-    return Object.values(tasksByPhase).flat().filter(tc => !tc.onboarding_templates.parent_id).length
-  }
-
-  function completedTasksCount() {
-    const allTasks = Object.values(tasksByPhase).flat()
-    const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
-    return parentTasks.filter(tc => {
-      const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-      if (subtasks.length === 0) return completions[tc.id]
-      return subtasks.every(s => completions[s.id])
-    }).length
-  }
-
-  function pct() {
-    const t = totalTasks()
-    return t > 0 ? Math.round((completedTasksCount() / t) * 100) : 0
-  }
+  const {
+    instance, setInstance,
+    tasksByPhase, completions, notes,
+    expanded, setExpanded,
+    expandedTasks, setExpandedTasks,
+    documents, docCompletions,
+    loading, uploading,
+    modal, setModal,
+    inviteSent, inviting,
+    editingEmployee, setEditingEmployee,
+    showHiddenDocs, setShowHiddenDocs,
+    fetchError, noteSaveState,
+    toast, hideToast,
+    noteTimers,
+    fetchPlan,
+    toggleTask, saveNote, handleNoteChange,
+    toggleDocument, hideDocument, restoreDocument, handleUploadDocument,
+    handleMarkComplete, handleArchive, handleDeleteEmployee, handleInviteEmployee,
+    totalTasks, completedTasksCount, pct,
+  } = useOnboardingPlan({ instanceId, onBack })
 
   const checkIcon = (size = 9) => (
     <svg width={size} height={size - 2} viewBox="0 0 10 8" fill="none">
       <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
-
-  const styles = {
-    header: { padding: '28px 40px 24px', borderBottom: '1px solid #e2e1dd' },
-    backLink: { fontSize: '12px', color: '#70706b', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px' },
-    title: { fontSize: '22px', fontWeight: 600, letterSpacing: '-0.4px' },
-    sub: { fontSize: '13px', color: '#70706b', marginTop: '3px' },
-    progressRow: { marginTop: '20px', display: 'flex', alignItems: 'center', gap: '16px' },
-    progressTrack: { flex: 1, maxWidth: '320px', height: '6px', background: '#e2e1dd', borderRadius: '3px', overflow: 'hidden' },
-    progressFill: { height: '100%', transition: 'width 0.3s ease' },
-    progressText: { fontSize: '12px', color: '#70706b' },
-    progressPct: { fontSize: '12px', fontWeight: 500 },
-    content: { padding: '32px 40px', maxWidth: '780px' },
-    sectionLabel: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-    uploadLink: { fontSize: '12px', color: '#0066cc', cursor: 'pointer', fontWeight: 500, textTransform: 'none', letterSpacing: 0 },
-    parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
-    subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#fafaf9' },
-    checkbox: (checked) => ({ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
-    subtaskCheckbox: (checked) => ({ width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
-    taskName: (checked) => ({ fontSize: '13px', color: checked ? '#a4a39f' : '#18181b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
-    subtaskName: (checked) => ({ fontSize: '12px', color: checked ? '#a4a39f' : '#70706b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
-    owner: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f4f3ef', color: '#70706b', fontWeight: 500 },
-    chevron: (open) => ({ fontSize: '10px', color: '#a4a39f', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }),
-    subtaskCount: { fontSize: '11px', color: '#a4a39f', flexShrink: 0 },
-    expandedPanel: { background: '#fafaf9', border: '1px solid #e2e1dd', borderRadius: '8px', padding: '14px', marginTop: '2px', marginBottom: '4px' },
-    noteLabel: { fontSize: '11px', color: '#70706b', marginBottom: '6px', fontWeight: 500 },
-    noteInput: { width: '100%', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#18181b', resize: 'vertical', minHeight: '60px', boxSizing: 'border-box' },
-    noteHint: { fontSize: '11px', color: '#a4a39f', marginTop: '6px' },
-    noteIndicator: { fontSize: '11px', color: '#0066cc', marginLeft: '4px' },
-    section: { marginBottom: '36px' },
-    footer: { borderTop: '1px solid #e2e1dd', padding: '24px 40px', display: 'flex', gap: '8px' },
-    btnPrimary: { background: '#18181b', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
-    btnSecondary: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }
-  }
 
   if (loading) return (
     <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
@@ -424,32 +106,32 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
 
   return (
     <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
-      <div style={styles.header}>
-        <button style={styles.backLink} onClick={onBack}>
+      <div style={STYLES.header}>
+        <button style={STYLES.backLink} onClick={onBack}>
           <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 2L4 7l5 5"/></svg>
           Back to dashboard
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={styles.title}>{instance.employees.full_name}</div>
+          <div style={STYLES.title}>{instance.employees.full_name}</div>
           <button onClick={() => setEditingEmployee(true)} style={{ fontSize: '12px', color: '#70706b', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
           <button onClick={handleDeleteEmployee} style={{ fontSize: '12px', color: '#c04040', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '4px 2px' }}>Delete</button>
         </div>
-        <div style={styles.sub}>
+        <div style={STYLES.sub}>
           {instance.employees.roles?.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
         </div>
-        <div style={styles.progressRow}>
-          <span style={styles.progressText}>{completedTasksCount()} of {totalTasks()} tasks complete</span>
-          <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct()}%`, background: pct() === 100 ? '#1a7a4a' : '#0066cc' }}></div></div>
-          <span style={{ ...styles.progressPct, color: pct() === 100 ? '#1a7a4a' : '#0066cc' }}>{pct()}%</span>
+        <div style={STYLES.progressRow}>
+          <span style={STYLES.progressText}>{completedTasksCount()} of {totalTasks()} tasks complete</span>
+          <div style={STYLES.progressTrack}><div style={{ ...STYLES.progressFill, width: `${pct()}%`, background: pct() === 100 ? '#1a7a4a' : '#0066cc' }}></div></div>
+          <span style={{ ...STYLES.progressPct, color: pct() === 100 ? '#1a7a4a' : '#0066cc' }}>{pct()}%</span>
         </div>
       </div>
 
-      <div style={styles.content}>
+      <div style={STYLES.content}>
 
-        <div style={styles.section}>
-          <div style={styles.sectionLabel}>
+        <div style={STYLES.section}>
+          <div style={STYLES.sectionLabel}>
             <span>Documents</span>
-            <label style={styles.uploadLink}>
+            <label style={STYLES.uploadLink}>
               {uploading ? 'Uploading...' : '+ Upload document'}
               <input type="file" style={{ display: 'none' }} onChange={handleUploadDocument} accept=".pdf,.doc,.docx" />
             </label>
@@ -466,10 +148,10 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
             return (
               <div key={doc.id} style={{ borderBottom: '1px solid #f0efe9', paddingBottom: '12px', marginBottom: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0 4px' }} onClick={(e) => toggleDocument(doc.id, e)}>
-                  <div style={styles.checkbox(signed)}>
+                  <div style={STYLES.checkbox(signed)}>
                     {signed && checkIcon()}
                   </div>
-                  <div style={styles.taskName(signed)}>{doc.name}</div>
+                  <div style={STYLES.taskName(signed)}>{doc.name}</div>
                   <a href={doc.file_url} target="_blank" rel="noreferrer"
                     onClick={e => e.stopPropagation()}
                     style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none', flexShrink: 0 }}>
@@ -532,7 +214,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
           }).length
 
           return (
-            <div key={phase} style={styles.section}>
+            <div key={phase} style={STYLES.section}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', paddingBottom: '10px', borderBottom: `1px solid ${phaseComplete ? '#c3e8d1' : '#f0efe9'}`, transition: 'border-color 0.25s ease' }}>
                 <span style={{ fontSize: '11px', fontWeight: 600, color: phaseComplete ? '#1a7a4a' : '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.4px', transition: 'color 0.25s ease' }}>{phase}</span>
                 <span style={{ fontSize: '11px', color: phaseComplete ? '#1a7a4a' : '#a4a39f', fontWeight: 400, transition: 'color 0.25s ease' }}>
@@ -552,25 +234,25 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
 
                 return (
                   <div key={tc.id}>
-                    <div className="il-row" style={styles.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [tc.id]: !prev[tc.id] })) : setExpanded(isNoteExpanded ? null : tc.id)}>
+                    <div className="il-row" style={STYLES.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [tc.id]: !prev[tc.id] })) : setExpanded(isNoteExpanded ? null : tc.id)}>
                       {hasSubtasks ? (
-                        <div style={{ ...styles.checkbox(isChecked), cursor: 'default' }} onClick={e => e.stopPropagation()} title="Completion is driven by subtasks">
+                        <div style={{ ...STYLES.checkbox(isChecked), cursor: 'default' }} onClick={e => e.stopPropagation()} title="Completion is driven by subtasks">
                           {isChecked && checkIcon()}
                         </div>
                       ) : (
-                        <div style={styles.checkbox(isChecked)} onClick={(e) => toggleTask(tc.id, completions[tc.id], e)}>
+                        <div style={STYLES.checkbox(isChecked)} onClick={(e) => toggleTask(tc.id, completions[tc.id], e)}>
                           {isChecked && checkIcon()}
                         </div>
                       )}
-                      <div style={styles.taskName(isChecked)}>
+                      <div style={STYLES.taskName(isChecked)}>
                         {tc.onboarding_templates.task_name}
                         {!hasSubtasks && hasNote && !isNoteExpanded && (
-                          <span style={styles.noteIndicator}>· note</span>
+                          <span style={STYLES.noteIndicator}>· note</span>
                         )}
                       </div>
-                      {hasSubtasks && <span style={styles.subtaskCount}>{completedSubtasks}/{subtasks.length}</span>}
-                      <div style={styles.owner}>{tc.onboarding_templates.owner}</div>
-                      {hasSubtasks && <span style={styles.chevron(isTaskExpanded)}>▶</span>}
+                      {hasSubtasks && <span style={STYLES.subtaskCount}>{completedSubtasks}/{subtasks.length}</span>}
+                      <div style={STYLES.owner}>{tc.onboarding_templates.owner}</div>
+                      {hasSubtasks && <span style={STYLES.chevron(isTaskExpanded)}>▶</span>}
                     </div>
 
                     {hasSubtasks && isTaskExpanded && (
@@ -584,11 +266,11 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
                                 {p}
                               </div>
                               {phaseSubtasks.map(s => (
-                                <div key={s.id} className="il-row" style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
-                                  <div className="il-checkbox" style={styles.subtaskCheckbox(completions[s.id])}>
+                                <div key={s.id} className="il-row" style={STYLES.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
+                                  <div className="il-checkbox" style={STYLES.subtaskCheckbox(completions[s.id])}>
                                     {completions[s.id] && checkIcon(7)}
                                   </div>
-                                  <div style={styles.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
+                                  <div style={STYLES.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
                                 </div>
                               ))}
                             </div>
@@ -598,16 +280,16 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
                     )}
 
                     {!hasSubtasks && isNoteExpanded && (
-                      <div style={styles.expandedPanel} onClick={e => e.stopPropagation()}>
-                        <div style={styles.noteLabel}>Note</div>
+                      <div style={STYLES.expandedPanel} onClick={e => e.stopPropagation()}>
+                        <div style={STYLES.noteLabel}>Note</div>
                         <textarea
-                          style={styles.noteInput}
+                          style={STYLES.noteInput}
                           value={notes[tc.id] || ''}
                           onChange={e => handleNoteChange(tc.id, e.target.value)}
                           onBlur={e => { clearTimeout(noteTimers.current[tc.id]); saveNote(tc.id, e.target.value) }}
                           placeholder="Add a note about this task..."
                         />
-                        <div style={{ ...styles.noteHint, color: noteSaveState[tc.id] === 'saved' ? '#1a7a4a' : '#a4a39f' }}>
+                        <div style={{ ...STYLES.noteHint, color: noteSaveState[tc.id] === 'saved' ? '#1a7a4a' : '#a4a39f' }}>
                           {noteSaveState[tc.id] === 'saving' ? 'Saving…' : noteSaveState[tc.id] === 'saved' ? '✓ Saved' : 'Saves automatically.'}
                         </div>
                       </div>
@@ -620,9 +302,9 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
         })}
       </div>
 
-      <div style={styles.footer}>
-        <button style={styles.btnPrimary} onClick={handleMarkComplete}>Mark as complete</button>
-        <button style={styles.btnSecondary} onClick={handleArchive}>Archive</button>
+      <div style={STYLES.footer}>
+        <button style={STYLES.btnPrimary} onClick={handleMarkComplete}>Mark as complete</button>
+        <button style={STYLES.btnSecondary} onClick={handleArchive}>Archive</button>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
           {inviteSent ? (
             <span style={{ fontSize: '13px', color: '#1a7a4a' }}>Invite sent</span>
