@@ -47,6 +47,14 @@ const FLEXIBILITY_OPTIONS = [
   { value: 'other', label: 'Other' },
 ]
 
+const TICKET_CATEGORIES = [
+  { value: 'software', label: 'Software' },
+  { value: 'hardware', label: 'Hardware' },
+  { value: 'access_login', label: 'Access / Login' },
+  { value: 'network', label: 'Network / Connectivity' },
+  { value: 'other', label: 'Other' },
+]
+
 const STATUS_STYLES = {
   pending:   { background: '#fffbf0', color: '#d4901a' },
   approved:  { background: '#f0faf4', color: '#2d7a4a' },
@@ -137,6 +145,16 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
   const [torFlexibilityNote, setTorFlexibilityNote] = useState('')
   const [cancellingId, setCancellingId] = useState(null)
   const [confirmCancelReq, setConfirmCancelReq] = useState(null)
+
+  // Company resources search
+  const [resourceSearch, setResourceSearch] = useState('')
+
+  // Tech tickets state
+  const [ticketCategory, setTicketCategory] = useState('software')
+  const [ticketTitle, setTicketTitle] = useState('')
+  const [ticketDescription, setTicketDescription] = useState('')
+  const [ticketSubmitting, setTicketSubmitting] = useState(false)
+  const [submittedTickets, setSubmittedTickets] = useState([])
 
   useEffect(() => { fetchMyOnboarding() }, [])
 
@@ -434,6 +452,56 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     setCancellingId(null)
     setTimeOffFetched(false)
     await fetchTimeOffData()
+  }
+
+  async function submitTicket() {
+    if (!ticketTitle.trim()) { showToast('Please enter a subject.', 'error'); return }
+    if (!ticketDescription.trim()) { showToast('Please describe the issue.', 'error'); return }
+
+    setTicketSubmitting(true)
+    const employeeName = instance?.employees?.full_name || employee?.full_name || 'Employee'
+    const employeeEmail = session?.user?.email || ''
+    const categoryLabel = TICKET_CATEGORIES.find(c => c.value === ticketCategory)?.label || ticketCategory
+    const timestamp = new Date().toLocaleString('en-CA', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+
+    const emailHtml = `
+<p><strong>${employeeName}</strong> has submitted a technical support request.</p>
+<p>
+  <strong>Category:</strong> ${categoryLabel}<br/>
+  <strong>Subject:</strong> ${ticketTitle.trim()}<br/>
+  <strong>Employee email:</strong> ${employeeEmail}<br/>
+  <strong>Submitted:</strong> ${timestamp}
+</p>
+<p><strong>Description:</strong><br/>${ticketDescription.trim().replace(/\n/g, '<br/>')}</p>`
+
+    const { error } = await supabase.functions.invoke('send-email', {
+      body: {
+        to: 'josiah@integratedstaffing.ca',
+        subject: `[Tech Support] ${categoryLabel}: ${ticketTitle.trim()} — ${employeeName}`,
+        html: emailHtml,
+      },
+    })
+
+    setTicketSubmitting(false)
+
+    if (error) {
+      showToast('Failed to submit ticket. Please try again.', 'error')
+      return
+    }
+
+    setSubmittedTickets(prev => [{
+      id: Date.now(),
+      category: ticketCategory,
+      categoryLabel,
+      title: ticketTitle.trim(),
+      description: ticketDescription.trim(),
+      submittedAt: new Date().toISOString(),
+    }, ...prev])
+
+    setTicketTitle('')
+    setTicketDescription('')
+    setTicketCategory('software')
+    showToast('Ticket submitted — we\'ll be in touch soon.')
   }
 
   function pendingDays() {
@@ -736,6 +804,9 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
             </span>
           )}
         </button>
+        <button style={styles.tab(activeTab === 'technical-tickets')} onClick={() => setActiveTab('technical-tickets')}>
+          Tech Support
+        </button>
       </div>
 
       <div style={styles.content}>
@@ -856,38 +927,61 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
             {companyResources.length === 0 ? (
               <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No company resources have been added yet.</div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
-                {companyResources.map(doc => {
-                  const rawExt = (doc.file_url || '').split('?')[0].split('.').pop().toLowerCase()
-                  const ext = rawExt.length <= 5 ? rawExt : ''
-                  const typeLabel = ext === 'pdf' ? 'PDF' : ext === 'docx' || ext === 'doc' ? 'DOC' : ext === 'xlsx' || ext === 'xls' ? 'XLS' : ext === 'pptx' || ext === 'ppt' ? 'PPT' : ext ? ext.toUpperCase() : 'FILE'
-                  const iconBg = ext === 'pdf' ? '#fff1f0' : ext === 'docx' || ext === 'doc' ? '#f0f7ff' : ext === 'xlsx' || ext === 'xls' ? '#f0faf4' : ext === 'pptx' || ext === 'ppt' ? '#fff8f0' : '#f4f3f1'
-                  const iconStroke = ext === 'pdf' ? '#c74848' : ext === 'docx' || ext === 'doc' ? '#0070CA' : ext === 'xlsx' || ext === 'xls' ? '#2d7a4a' : ext === 'pptx' || ext === 'ppt' ? '#c27a30' : '#6b6b67'
-                  return (
-                    <a
-                      key={doc.id}
-                      href={doc.file_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="il-resource-tile"
-                      style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '14px', textDecoration: 'none', color: '#1a1a1a' }}
-                    >
-                      <div style={{ width: '34px', height: '34px', borderRadius: '7px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke={iconStroke} strokeWidth="1.5">
-                          <path d="M3 2h6l3 3v7H3z"/><path d="M9 2v3h3"/>
-                        </svg>
-                      </div>
-                      <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', lineHeight: '1.4', flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
-                        {doc.name}
-                      </div>
-                      <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <span style={{ fontSize: '10px', fontWeight: 600, color: '#8a8a86', background: '#f0efeb', borderRadius: '3px', padding: '1px 5px' }}>{typeLabel}</span>
-                        <span style={{ fontSize: '11px', color: '#a8a8a4' }}>Open ↗</span>
-                      </div>
-                    </a>
+              <>
+                {companyResources.length > 3 && (
+                  <div style={{ position: 'relative', marginBottom: '16px' }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a8a8a4" strokeWidth="1.5" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                      <circle cx="6" cy="6" r="4"/><path d="M10 10l2.5 2.5"/>
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Search resources…"
+                      value={resourceSearch}
+                      onChange={e => setResourceSearch(e.target.value)}
+                      style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #ebebe8', borderRadius: '7px', padding: '8px 32px 8px 32px', fontSize: '13px', fontFamily: 'inherit', color: '#1a1a1a', background: '#fff', outline: 'none' }}
+                    />
+                    {resourceSearch && (
+                      <button onClick={() => setResourceSearch('')} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#a8a8a4', fontSize: '16px', lineHeight: 1, padding: 0 }}>×</button>
+                    )}
+                  </div>
+                )}
+                {(() => {
+                  const filtered = resourceSearch
+                    ? companyResources.filter(d => d.name.toLowerCase().includes(resourceSearch.toLowerCase()))
+                    : companyResources
+                  if (filtered.length === 0) return (
+                    <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No resources match "{resourceSearch}".</div>
                   )
-                })}
-              </div>
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
+                      {filtered.map(doc => {
+                        const rawExt = (doc.file_url || '').split('?')[0].split('.').pop().toLowerCase()
+                        const ext = rawExt.length <= 5 ? rawExt : ''
+                        const typeLabel = ext === 'pdf' ? 'PDF' : ext === 'docx' || ext === 'doc' ? 'DOC' : ext === 'xlsx' || ext === 'xls' ? 'XLS' : ext === 'pptx' || ext === 'ppt' ? 'PPT' : ext ? ext.toUpperCase() : 'FILE'
+                        const iconBg = ext === 'pdf' ? '#fff1f0' : ext === 'docx' || ext === 'doc' ? '#f0f7ff' : ext === 'xlsx' || ext === 'xls' ? '#f0faf4' : ext === 'pptx' || ext === 'ppt' ? '#fff8f0' : '#f4f3f1'
+                        const iconStroke = ext === 'pdf' ? '#c74848' : ext === 'docx' || ext === 'doc' ? '#0070CA' : ext === 'xlsx' || ext === 'xls' ? '#2d7a4a' : ext === 'pptx' || ext === 'ppt' ? '#c27a30' : '#6b6b67'
+                        return (
+                          <a key={doc.id} href={doc.file_url} target="_blank" rel="noreferrer" className="il-resource-tile"
+                            style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '14px', textDecoration: 'none', color: '#1a1a1a' }}>
+                            <div style={{ width: '34px', height: '34px', borderRadius: '7px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', flexShrink: 0 }}>
+                              <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke={iconStroke} strokeWidth="1.5">
+                                <path d="M3 2h6l3 3v7H3z"/><path d="M9 2v3h3"/>
+                              </svg>
+                            </div>
+                            <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', lineHeight: '1.4', flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                              {doc.name}
+                            </div>
+                            <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 600, color: '#8a8a86', background: '#f0efeb', borderRadius: '3px', padding: '1px 5px' }}>{typeLabel}</span>
+                              <span style={{ fontSize: '11px', color: '#a8a8a4' }}>Open ↗</span>
+                            </div>
+                          </a>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
+              </>
             )}
           </div>
         )}
@@ -1138,6 +1232,76 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
           </div>
         )}
       </div>
+
+        {activeTab === 'technical-tickets' && (
+          <div className="il-tab-content">
+            <div style={styles.formCard}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '20px' }}>Submit a tech issue</div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={styles.fieldLabel}>Category</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {TICKET_CATEGORIES.map(opt => {
+                    const active = ticketCategory === opt.value
+                    return (
+                      <button key={opt.value} onClick={() => setTicketCategory(opt.value)}
+                        style={{ padding: '6px 12px', border: `1.5px solid ${active ? '#1a1a1a' : '#ebebe8'}`, borderRadius: '6px', background: active ? '#1a1a1a' : '#fff', color: active ? '#fff' : '#5f5f5c', fontSize: '12px', fontWeight: active ? 500 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={styles.fieldLabel}>Subject <span style={{ color: '#c74848' }}>*</span></label>
+                <input
+                  type="text"
+                  style={styles.fieldInput}
+                  placeholder="Brief description of the issue"
+                  value={ticketTitle}
+                  onChange={e => setTicketTitle(e.target.value)}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={styles.fieldLabel}>Details <span style={{ color: '#c74848' }}>*</span></label>
+                <textarea
+                  style={{ ...styles.fieldInput, resize: 'vertical', minHeight: '100px' }}
+                  placeholder="What happened? What were you trying to do? Any error messages?"
+                  value={ticketDescription}
+                  onChange={e => setTicketDescription(e.target.value)}
+                />
+              </div>
+
+              <button
+                style={styles.submitBtn(!ticketTitle.trim() || !ticketDescription.trim() || ticketSubmitting)}
+                disabled={!ticketTitle.trim() || !ticketDescription.trim() || ticketSubmitting}
+                onClick={submitTicket}
+              >
+                {ticketSubmitting ? 'Submitting…' : 'Submit ticket'}
+              </button>
+            </div>
+
+            {submittedTickets.length > 0 && (
+              <>
+                <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '12px' }}>Submitted this session</div>
+                {submittedTickets.map(ticket => (
+                  <div key={ticket.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0efeb' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 500, background: '#f4f3f1', color: '#5f5f5c', borderRadius: '4px', padding: '2px 7px' }}>{ticket.categoryLabel}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>{ticket.title}</span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#8a8a86' }}>
+                      {new Date(ticket.submittedAt).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      <span style={{ marginLeft: '8px', color: '#2d7a4a', fontWeight: 500 }}>✓ Sent</span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        )}
 
       {celebration && (
         <div style={{
