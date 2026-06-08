@@ -1,39 +1,55 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
-
 @keyframes tabFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 @keyframes backdropFadeIn {
   from { background: rgba(0,0,0,0); }
-  to { background: rgba(0,0,0,0.3); }
+  to { background: rgba(0,0,0,0.4); }
 }
-
 @keyframes modalSlideUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes slideUp {
   from { opacity: 0; transform: translateX(-50%) translateY(16px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes drawerSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
 
 :root {
-  --bg: #f7f6f3;
-  --surface: #fff;
-  --border: #e8e8e4;
-  --text: #1a1a1a;
-  --muted: #6b6b67;
-  --subtle: #a0a09c;
-  --brand: #0070CA;
+  --bg: #f4f3ef;
+  --surface: #ffffff;
+  --border: #e2e1dd;
+  --border-subtle: #eceae6;
+  --text: #18181b;
+  --muted: #70706b;
+  --subtle: #a4a39f;
+  --brand: #0066cc;
+  --brand-mid: #3d9eff;
+  --brand-light: #eff6ff;
+  --success: #1a7a4a;
+  --warning: #b8740a;
+  --danger: #c04040;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
   --focus: #2563eb;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 }
 
 * { box-sizing: border-box; }
@@ -67,28 +83,29 @@ a:focus-visible {
 
 /* Primary button */
 .il-btn {
-  transition: filter 0.12s ease;
+  transition: opacity 0.12s ease, box-shadow 0.12s ease;
 }
 .il-btn:not([disabled]):hover {
-  filter: brightness(0.88);
+  opacity: 0.88;
 }
 
 /* Ghost / secondary button */
 .il-btn-ghost {
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
 }
 .il-btn-ghost:not([disabled]):hover {
-  background: #eeede9 !important;
-  color: #1a1a1a !important;
+  background: #f0efe9 !important;
+  color: #18181b !important;
+  border-color: #ccc !important;
 }
 
 /* Sidebar nav items */
 .il-nav-item {
-  transition: background 0.1s ease, color 0.1s ease;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 .il-nav-item:not(.il-nav-active):hover {
-  background: #f5f4f0 !important;
-  color: #1a1a1a !important;
+  background: #f0efe9 !important;
+  color: #18181b !important;
 }
 
 /* Table / list rows */
@@ -96,7 +113,7 @@ a:focus-visible {
   transition: background 0.1s ease;
 }
 .il-row:hover {
-  background: #fafaf8 !important;
+  background: #f8f7f4 !important;
 }
 
 /* Tab content fade */
@@ -106,7 +123,7 @@ a:focus-visible {
 
 /* Checkbox */
 .il-checkbox {
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
 .il-checkbox:active {
   transform: scale(0.86) !important;
@@ -114,38 +131,28 @@ a:focus-visible {
 
 /* Modal */
 .il-backdrop {
-  animation: backdropFadeIn 0.16s ease forwards;
+  animation: backdropFadeIn 0.18s ease forwards;
 }
 .il-modal {
-  animation: modalSlideUp 0.18s ease forwards;
+  animation: modalSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Role list items in templates panel */
+/* Role list items */
 .il-role-item {
   transition: background 0.1s ease;
 }
 .il-role-item:not(.il-active):hover {
-  background: #f5f4f0 !important;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes drawerSlideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  background: #f0efe9 !important;
 }
 
 /* Mobile drawer slide-up */
 .il-drawer {
-  animation: drawerSlideUp 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  animation: drawerSlideUp 0.28s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Page / tab content entry */
 .il-page {
-  animation: fadeIn 0.12s ease;
+  animation: fadeIn 0.14s ease;
 }
 
 /* Tab badge pill */
@@ -155,22 +162,23 @@ a:focus-visible {
   justify-content: center;
   min-width: 16px;
   height: 16px;
-  padding: 0 4px;
-  border-radius: 8px;
+  padding: 0 5px;
+  border-radius: 99px;
   font-size: 10px;
   font-weight: 600;
   line-height: 1;
-  margin-left: 5px;
+  margin-left: 6px;
   vertical-align: middle;
 }
 
 /* Company resource tiles */
 .il-resource-tile {
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 .il-resource-tile:hover {
-  border-color: #d4d3cf !important;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  border-color: #c4c3bf !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.09) !important;
+  transform: translateY(-2px);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -114,28 +114,28 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
   const p = isMobile ? '16px' : '40px'
 
   const styles = {
-    header: { padding: isMobile ? '16px 16px 14px' : '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e8e8e4', background: '#fff' },
-    title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.4px' },
-    sub: { fontSize: '13px', color: '#8a8a86', marginTop: '2px' },
-    btn: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' },
-    statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#e8e8e4', borderBottom: '1px solid #e8e8e4' },
-    stat: { background: '#fff', padding: isMobile ? '14px 16px' : '20px 40px' },
-    statLabel: { fontSize: '11px', color: '#8a8a86', marginBottom: '4px' },
-    statValue: { fontSize: isMobile ? '20px' : '22px', fontWeight: 600, letterSpacing: '-0.5px' },
+    header: { padding: isMobile ? '16px 16px 14px' : '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 0 #e2e1dd', background: '#fff' },
+    title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px' },
+    sub: { fontSize: '13px', color: '#70706b', marginTop: '2px' },
+    btn: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', letterSpacing: '0.1px' },
+    statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#e2e1dd', borderBottom: '1px solid #e2e1dd' },
+    stat: { background: '#fff', padding: isMobile ? '14px 16px' : '22px 40px' },
+    statLabel: { fontSize: '11px', color: '#a4a39f', marginBottom: '5px', fontWeight: 500, letterSpacing: '0.2px', textTransform: 'uppercase' },
+    statValue: { fontSize: isMobile ? '22px' : '26px', fontWeight: 700, letterSpacing: '-0.8px', color: '#18181b' },
     content: { padding: isMobile ? '0' : `0 ${p}`, flex: 1 },
-    tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #ebebe8', fontSize: '11px', color: '#8a8a86', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.4px', alignItems: 'center', gap: '16px' },
-    tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #f0efeb', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '4px' },
-    avatar: { width: '26px', height: '26px', borderRadius: '50%', background: '#e8f0fe', color: '#0070CA', fontSize: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    avatarLg: { width: '36px', height: '36px', borderRadius: '9px', background: '#e8f0fe', color: '#0070CA', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-    rowName: { fontSize: '13px', fontWeight: 500, color: '#1a1a1a' },
-    rowMeta: { fontSize: '12px', color: '#8a8a86', marginTop: '1px' },
-    rowText: { fontSize: '13px', color: '#1a1a1a' },
-    rowTextMuted: { fontSize: '13px', color: '#8a8a86' },
+    tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #eceae6', fontSize: '11px', color: '#a4a39f', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', alignItems: 'center', gap: '16px' },
+    tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #f0efe9', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '4px' },
+    avatar: { width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    avatarLg: { width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+    rowName: { fontSize: '13px', fontWeight: 500, color: '#18181b' },
+    rowMeta: { fontSize: '12px', color: '#a4a39f', marginTop: '2px' },
+    rowText: { fontSize: '13px', color: '#18181b' },
+    rowTextMuted: { fontSize: '13px', color: '#a4a39f' },
     progressWrap: { display: 'flex', alignItems: 'center', gap: '10px' },
-    progressTrack: { flex: 1, height: '4px', background: '#ebebe8', borderRadius: '2px', overflow: 'hidden' },
-    progressFill: { height: '100%', background: '#0070CA' },
-    progressText: { fontSize: '12px', fontWeight: 500, color: '#1a1a1a', minWidth: '32px' },
-    phasePill: { fontSize: '11px', padding: '2px 7px', borderRadius: '4px', background: '#eef5ff', color: '#0070CA', fontWeight: 500 },
+    progressTrack: { flex: 1, height: '5px', background: '#eceae6', borderRadius: '99px', overflow: 'hidden' },
+    progressFill: { height: '100%', borderRadius: '99px', background: 'linear-gradient(90deg, #0066cc, #3d9eff)' },
+    progressText: { fontSize: '12px', fontWeight: 600, color: '#18181b', minWidth: '32px' },
+    phasePill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: '#eff6ff', color: '#0066cc', fontWeight: 600 },
     emptyState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center' },
     errorState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center', fontSize: '14px' }
   }
@@ -219,7 +219,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
             </svg>
             <div style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.2px', marginBottom: '6px' }}>No active onboardings</div>
             <div style={{ fontSize: '13px', color: '#6b6b67', lineHeight: '1.6', marginBottom: '20px' }}>Start a new onboarding to get someone up to speed.</div>
-            <button className="il-btn" onClick={() => onNavigate('active')} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button className="il-btn" onClick={() => onNavigate('active')} style={{ background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }}>
               New onboarding
             </button>
           </div>
@@ -239,9 +239,9 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                   <div style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '8px' }}>{o.employees.roles?.name || 'Unknown role'}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={styles.progressTrack}>
-                      <div style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? '#2d7a4a' : '#0070CA' }} />
+                      <div style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? 'linear-gradient(90deg, #1a7a4a, #2ea864)' : 'linear-gradient(90deg, #0066cc, #3d9eff)' }} />
                     </div>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: pct === 100 ? '#2d7a4a' : '#1a1a1a', flexShrink: 0 }}>{pct}%</span>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: pct === 100 ? '#1a7a4a' : '#18181b', flexShrink: 0 }}>{pct}%</span>
                   </div>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#d4d3cf" strokeWidth="1.5" style={{ flexShrink: 0 }}><path d="M5 3l4 4-4 4"/></svg>
@@ -276,8 +276,8 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                   </div>
                   <div style={styles.rowText}>{o.employees.roles?.name || 'Unknown role'}</div>
                   <div style={styles.progressWrap}>
-                    <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? '#2d7a4a' : '#0070CA' }}></div></div>
-                    <div style={{ ...styles.progressText, color: pct === 100 ? '#2d7a4a' : '#1a1a1a' }}>{pct}%</div>
+                    <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? 'linear-gradient(90deg, #1a7a4a, #2ea864)' : 'linear-gradient(90deg, #0066cc, #3d9eff)' }}></div></div>
+                    <div style={{ ...styles.progressText, color: pct === 100 ? '#1a7a4a' : '#18181b' }}>{pct}%</div>
                   </div>
                   <div><span style={styles.phasePill}>{phase}</span></div>
                   <div style={{ ...styles.rowTextMuted, textAlign: 'right' }}>
