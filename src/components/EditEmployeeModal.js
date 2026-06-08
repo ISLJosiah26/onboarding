@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { logAudit } from '../utils/auditLog'
 
@@ -13,6 +13,7 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
   const [loading, setLoading] = useState(false)
   const [optionsLoading, setOptionsLoading] = useState(true)
   const [error, setError] = useState('')
+  const modalRef = useRef(null)
 
   const styles = {
     overlay: { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, -apple-system, sans-serif' },
@@ -28,8 +29,25 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
   }
 
 
+  useLayoutEffect(() => {
+    const focusable = modalRef.current?.querySelectorAll('input, select, button:not([disabled])')
+    if (focusable?.length) focusable[0].focus()
+  }, [])
+
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    const handleKey = (e) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key !== 'Tab' || !modalRef.current) return
+      const focusable = [...modalRef.current.querySelectorAll('input:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose])
@@ -56,53 +74,26 @@ async function handleSave() {
   setLoading(true)
   setError('')
 
-const { error: updateError } = await supabase
-  .from('employees')
-  .update({
-    full_name: fullName.trim(),
-    email,
-    hire_date: hireDate,
-    role_id: roleId,
-    manager_id: managerId || null
+  const { error: rpcError } = await supabase.rpc('swap_employee_and_tasks', {
+    p_employee_id: employee.id,
+    p_full_name: fullName.trim(),
+    p_email: email,
+    p_hire_date: hireDate,
+    p_role_id: roleId,
+    p_manager_id: managerId || null,
+    p_instance_id: (roleChanged && instanceId) ? instanceId : null,
   })
-  .eq('id', employee.id)
 
-    if (updateError) { setError('Failed to save employee details. Please try again.'); setLoading(false); return }
+  if (rpcError) { setError('Failed to save employee details. Please try again.'); setLoading(false); return }
 
-    if (roleChanged && instanceId) {
-      const { data: newTasks, error: fetchTasksError } = await supabase
-        .from('onboarding_templates')
-        .select('id')
-        .eq('role_id', roleId)
-
-      if (fetchTasksError) { setError('Failed to load tasks for the new role.'); setLoading(false); return }
-
-      // Snapshot existing IDs before touching them
-      const { data: existingCompletions } = await supabase
-        .from('task_completions').select('id').eq('instance_id', instanceId)
-
-      // Insert new tasks first — if this fails, old tasks are still intact
-      if (newTasks && newTasks.length > 0) {
-        const { error: insertError } = await supabase.from('task_completions').insert(
-          newTasks.map(t => ({ instance_id: instanceId, template_task_id: t.id, completed: false }))
-        )
-        if (insertError) { setError('Failed to create new task list.'); setLoading(false); return }
-      }
-
-      // Delete old tasks by known IDs — non-fatal if this fails (employee has duplicate tasks rather than none)
-      if (existingCompletions && existingCompletions.length > 0) {
-        await supabase.from('task_completions').delete().in('id', existingCompletions.map(c => c.id))
-      }
-    }
-
-    if (roleChanged) {
-      await logAudit('role_changed', 'employee', employee.id, {
-        employee_name: fullName.trim(),
-        old_role_id: employee.role_id,
-        new_role_id: roleId
-      })
-    }
-    await logAudit('employee_edited', 'employee', employee.id, { employee_name: fullName.trim() })
+  if (roleChanged) {
+    await logAudit('role_changed', 'employee', employee.id, {
+      employee_name: fullName.trim(),
+      old_role_id: employee.role_id,
+      new_role_id: roleId
+    })
+  }
+  await logAudit('employee_edited', 'employee', employee.id, { employee_name: fullName.trim() })
 
     const newRole = roles.find(r => r.id === roleId)
     const newManager = employees.find(e => e.id === managerId) || null
@@ -121,7 +112,7 @@ const { error: updateError } = await supabase
 
   return (
     <div className="il-backdrop" style={styles.overlay}>
-      <div className="il-modal" style={{ ...styles.modal, boxShadow: '0 4px 24px rgba(0,0,0,0.10)' }}>
+      <div ref={modalRef} className="il-modal" style={{ ...styles.modal, boxShadow: '0 4px 24px rgba(0,0,0,0.10)' }}>
         <div style={styles.title}>Edit employee</div>
         {error && <div style={styles.error}>{error}</div>}
         {roleChanged && (
