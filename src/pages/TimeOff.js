@@ -7,7 +7,7 @@ import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
-import { TODAY, CURRENT_YEAR } from '../config'
+import { TODAY, CURRENT_YEAR, TIME_OFF_STATUS } from '../config'
 import { TYPE_LABELS, StatusPill, TypeIcon, fmtDate, fmtDateRange } from '../utils/timeOffShared'
 
 // No blue — reserved for today highlight and UI accents
@@ -72,7 +72,7 @@ function getWeekEventLayout(weekDates, allRequests) {
   const weekMax = activeDates[activeDates.length - 1]
 
   const relevant = allRequests.filter(r =>
-    (r.status === 'approved' || r.status === 'pending') &&
+    (r.status === TIME_OFF_STATUS.APPROVED || r.status === TIME_OFF_STATUS.PENDING) &&
     r.start_date <= weekMax &&
     r.end_date >= weekMin
   )
@@ -169,8 +169,8 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
     if (error) { showToast(handleSupabaseError(error, 'Failed to load requests.'), 'error'); return }
 
     const sorted = [
-      ...(data || []).filter(r => r.status === 'pending'),
-      ...(data || []).filter(r => r.status !== 'pending'),
+      ...(data || []).filter(r => r.status === TIME_OFF_STATUS.PENDING),
+      ...(data || []).filter(r => r.status !== TIME_OFF_STATUS.PENDING),
     ]
     setRequests(sorted)
 
@@ -197,7 +197,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
     setBalances((emps || []).map(emp => {
       const bal = balMap[emp.id] || null
       const empReqs = (reqsByEmp[emp.id] || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      const pendingDays = empReqs.filter(r => r.status === 'pending').reduce((s, r) => s + Number(r.business_days), 0)
+      const pendingDays = empReqs.filter(r => r.status === TIME_OFF_STATUS.PENDING).reduce((s, r) => s + Number(r.business_days), 0)
       return { employee: emp, balance: bal, pendingDays, requests: empReqs }
     }))
   }
@@ -242,14 +242,14 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
 
   function getOverlapNames(req) {
     return requests
-      .filter(r => r.id !== req.id && r.status === 'approved' && r.employee_id !== req.employee_id && r.start_date <= req.end_date && r.end_date >= req.start_date)
+      .filter(r => r.id !== req.id && r.status === TIME_OFF_STATUS.APPROVED && r.employee_id !== req.employee_id && r.start_date <= req.end_date && r.end_date >= req.start_date)
       .map(r => r.employee?.full_name?.split(' ')[0] || '?')
   }
 
   function getRemainingAfterApproval(req) {
     const bal = getBalForEmployee(req.employee_id)
     if (!bal) return null
-    const otherPending = requests.filter(r => r.id !== req.id && r.employee_id === req.employee_id && r.status === 'pending').reduce((s, r) => s + Number(r.business_days), 0)
+    const otherPending = requests.filter(r => r.id !== req.id && r.employee_id === req.employee_id && r.status === TIME_OFF_STATUS.PENDING).reduce((s, r) => s + Number(r.business_days), 0)
     return Number(bal.total_days) - Number(bal.used_days) - otherPending - Number(req.business_days)
   }
 
@@ -278,7 +278,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
 
     // Approve the request — roll back balance if this fails
     const { error } = await supabase.from('time_off_requests')
-      .update({ status: 'approved', review_notes: notes || null, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .update({ status: TIME_OFF_STATUS.APPROVED, review_notes: notes || null, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
       .eq('id', req.id)
 
     if (error) {
@@ -321,7 +321,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
   async function denyRequest(req) {
     setReviewingId(req.id)
     const notes = reviewNotes[req.id] || ''
-    const { error } = await supabase.from('time_off_requests').update({ status: 'denied', review_notes: notes || null, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', req.id)
+    const { error } = await supabase.from('time_off_requests').update({ status: TIME_OFF_STATUS.DENIED, review_notes: notes || null, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', req.id)
     if (error) { showToast(handleSupabaseError(error, 'Failed to deny.'), 'error'); setReviewingId(null); return }
 
     logAudit('time_off_denied', 'time_off_request', req.id, { employee_id: req.employee_id, days: req.business_days, type: req.type })
@@ -387,8 +387,8 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
     .filter(r => !filterEmployee || r.employee_id === filterEmployee)
     .sort((a, b) => {
       if (sortField !== 'status') {
-        if (a.status === 'pending' && b.status !== 'pending') return -1
-        if (b.status === 'pending' && a.status !== 'pending') return 1
+        if (a.status === TIME_OFF_STATUS.PENDING && b.status !== TIME_OFF_STATUS.PENDING) return -1
+        if (b.status === TIME_OFF_STATUS.PENDING && a.status !== 'pending') return 1
       }
       let av = a[sortField] || ''
       let bv = b[sortField] || ''
@@ -427,22 +427,22 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
           </div>
           <StatusPill status={req.status} />
         </div>
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '13px', color: '#70706b', marginBottom: req.status === 'pending' ? '12px' : '0' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '13px', color: '#70706b', marginBottom: req.status === TIME_OFF_STATUS.PENDING ? '12px' : '0' }}>
           <span>{fmtDateRange(req.start_date, req.end_date)}</span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <TypeIcon type={req.type} size={12} />{TYPE_LABELS[req.type]}
           </span>
           <span>{req.business_days}d{req.is_half_day ? ' ½' : ''}</span>
-          {req.status === 'pending' && remaining != null && (
+          {req.status === TIME_OFF_STATUS.PENDING && remaining != null && (
             <span style={{ color: remaining < 0 ? '#c04040' : '#70706b', fontWeight: remaining < 0 ? 500 : 400 }}>
               → {remaining}d remaining
             </span>
           )}
         </div>
-        {req.status !== 'pending' && req.review_notes && (
+        {req.status !== TIME_OFF_STATUS.PENDING && req.review_notes && (
           <div style={{ fontSize: '12px', color: '#70706b', fontStyle: 'italic', marginTop: '6px' }}>{req.review_notes}</div>
         )}
-        {req.status === 'pending' && (
+        {req.status === TIME_OFF_STATUS.PENDING && (
           <div>
             <input
               style={{ ...s.inp, width: '100%', padding: '8px 10px', marginBottom: '10px', boxSizing: 'border-box' }}
@@ -479,10 +479,10 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
               <select style={{ ...s.inp, padding: '7px 10px', flex: isMobile ? 1 : 'none' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
                 <option value="all">All statuses</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="denied">Denied</option>
-                <option value="cancelled">Cancelled</option>
+                <option value={TIME_OFF_STATUS.PENDING}>Pending</option>
+                <option value={TIME_OFF_STATUS.APPROVED}>Approved</option>
+                <option value={TIME_OFF_STATUS.DENIED}>Denied</option>
+                <option value={TIME_OFF_STATUS.CANCELLED}>Cancelled</option>
               </select>
               {allEmployees.length > 0 && (
                 <select style={{ ...s.inp, padding: '7px 10px', flex: isMobile ? 1 : 'none', minWidth: isMobile ? 0 : '160px' }} value={filterEmployee} onChange={e => setFilterEmployee(e.target.value)}>
@@ -543,23 +543,23 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                         <div>{req.business_days}d{req.is_half_day ? <span style={{ fontSize: '10px', color: '#70706b' }}> ½</span> : null}</div>
                         <div><StatusPill status={req.status} /></div>
                         <div>
-                          {req.status === 'pending' && remaining != null ? (
+                          {req.status === TIME_OFF_STATUS.PENDING && remaining != null ? (
                             <span style={{ color: remaining < 0 ? '#c04040' : '#70706b', fontWeight: remaining < 0 ? 500 : 400, fontSize: '13px' }}>{remaining}d</span>
                           ) : '—'}
                         </div>
                         <div>
-                          {req.status === 'pending' && (
+                          {req.status === TIME_OFF_STATUS.PENDING && (
                             <div style={{ display: 'flex', gap: '6px' }}>
                               <button style={{ ...s.btnApprove, flex: 'none', padding: '5px 11px', fontSize: '12px' }} disabled={busy} onClick={() => approveRequest(req)}>{busy ? '...' : 'Approve'}</button>
                               <button style={{ ...s.btnDeny, flex: 'none', padding: '5px 11px', fontSize: '12px' }} disabled={busy} onClick={() => denyRequest(req)}>{busy ? '...' : 'Deny'}</button>
                             </div>
                           )}
-                          {req.status !== 'pending' && req.review_notes && (
+                          {req.status !== TIME_OFF_STATUS.PENDING && req.review_notes && (
                             <div style={{ fontSize: '11px', color: '#70706b', fontStyle: 'italic', maxWidth: '160px' }}>{req.review_notes}</div>
                           )}
                         </div>
                       </div>
-                      {req.status === 'pending' && (
+                      {req.status === TIME_OFF_STATUS.PENDING && (
                         <div style={{ padding: '0 16px 12px', borderBottom: '1px solid #f0efe9' }}>
                           <input
                             style={{ ...s.inp, width: '340px' }}
@@ -806,7 +806,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
 
                           {assignments.map(({ req, track, startCol, endCol, startsThisWeek, endsThisWeek }) => {
                             const color = employeeColor(req.employee_id)
-                            const isPending = req.status === 'pending'
+                            const isPending = req.status === TIME_OFF_STATUS.PENDING
                             const firstName = req.employee?.full_name?.split(' ')[0] || '?'
                             const colPct = 100 / 7
                             const leftPct = startCol * colPct

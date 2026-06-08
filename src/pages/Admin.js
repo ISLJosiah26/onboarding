@@ -7,7 +7,7 @@ import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
-import { PHASES } from '../config'
+import { PHASES, ONBOARDING_STATUS } from '../config'
 
 const OWNERS = ['HR', 'Manager', 'IT']
 
@@ -113,7 +113,7 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
     const { data } = await supabase
       .from('onboarding_instances')
       .select('id, status, started_at, employees (full_name, email, hire_date, roles (name))')
-      .in('status', ['completed', 'archived'])
+      .in('status', [ONBOARDING_STATUS.COMPLETED, ONBOARDING_STATUS.ARCHIVED])
       .order('started_at', { ascending: false })
     if (data) setHistory(data)
   }
@@ -186,7 +186,7 @@ async function addRole() {
     const { data: activeInstances } = await supabase
       .from('onboarding_instances')
       .select('id, employees (full_name)')
-      .eq('status', 'active')
+      .eq('status', ONBOARDING_STATUS.ACTIVE)
       .in('employee_id', roleEmployees.map(e => e.id))
 
     if (activeInstances && activeInstances.length > 0) {
@@ -481,7 +481,7 @@ function renderModal() {
         {renderAdminHeader('History', '')}
         <div style={styles.content}>
           <div style={{ display: 'flex', gap: '6px', marginBottom: '20px' }}>
-            {['all', 'completed', 'archived'].map(f => (
+            {['all', ONBOARDING_STATUS.COMPLETED, ONBOARDING_STATUS.ARCHIVED].map(f => (
               <button key={f} onClick={() => setHistoryFilter(f)} style={{ fontSize: '12px', padding: '4px 12px', borderRadius: '5px', border: '1px solid ' + (historyFilter === f ? '#18181b' : '#e2e1dd'), background: historyFilter === f ? '#18181b' : '#fff', color: historyFilter === f ? '#fff' : '#70706b', cursor: 'pointer', fontFamily: 'inherit', fontWeight: historyFilter === f ? 500 : 400 }}>
                 {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
@@ -504,7 +504,7 @@ function renderModal() {
                     confirmLabel: 'Reactivate',
                     confirmDanger: false,
                     onConfirm: async () => {
-                      await supabase.from('onboarding_instances').update({ status: 'active' }).eq('id', h.id)
+                      await supabase.from('onboarding_instances').update({ status: ONBOARDING_STATUS.ACTIVE }).eq('id', h.id)
                       await logAudit('onboarding_reactivated', 'onboarding_instance', h.id, { employee_name: h.employees.full_name })
                       setModal(null)
                       fetchHistory()

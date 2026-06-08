@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { useWindowSize } from '../hooks/useWindowSize'
+import { ROLE } from '../config'
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -108,7 +109,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
             <Icon type="people" size={19} />
             <span>Onboarding</span>
           </button>
-          {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
+          {(userProfile?.role === ROLE.ADMIN || userProfile?.role === ROLE.SUPER_ADMIN) && (
             <button style={tab(currentPage === 'time-off')} onClick={() => { setDrawerOpen(false); onNavigate('time-off') }}>
               <Icon type="calendar" size={19} />
               <span>Time Off</span>
@@ -144,10 +145,10 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                     {item.label}
                   </button>
                 ))}
-                {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin' || userProfile?.role === 'manager') && (
+                {(userProfile?.role === ROLE.ADMIN || userProfile?.role === ROLE.SUPER_ADMIN || userProfile?.role === ROLE.MANAGER) && (
                   <>
                     <div style={drawerSection}>Employee Hub</div>
-                    {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && EMPLOYEE_HUB_ITEMS.map(item => (
+                    {(userProfile?.role === ROLE.ADMIN || userProfile?.role === ROLE.SUPER_ADMIN) && EMPLOYEE_HUB_ITEMS.map(item => (
                       <button key={item.id} style={drawerBtn(currentPage === item.id)} onClick={() => { onNavigate(item.id); setDrawerOpen(false) }}>
                         <Icon type={item.icon} size={17} />
                         {item.label}
@@ -161,7 +162,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                     )}
                   </>
                 )}
-                {userProfile?.role === 'super_admin' && (
+                {userProfile?.role === ROLE.SUPER_ADMIN && (
                   <>
                     <div style={drawerSection}>System</div>
                     {SYSTEM_ITEMS.map(item => (
@@ -245,11 +246,11 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
         </div>
 
         {/* Employee Hub */}
-        {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin' || userProfile?.role === 'manager') && (
+        {(userProfile?.role === ROLE.ADMIN || userProfile?.role === ROLE.SUPER_ADMIN || userProfile?.role === ROLE.MANAGER) && (
           <>
             <div style={{ fontSize: '11px', color: '#a0a09c', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Employee Hub</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
-              {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && EMPLOYEE_HUB_ITEMS.map(item => (
+              {(userProfile?.role === ROLE.ADMIN || userProfile?.role === ROLE.SUPER_ADMIN) && EMPLOYEE_HUB_ITEMS.map(item => (
                 <button key={item.id} className={`il-nav-item${currentPage === item.id ? ' il-nav-active' : ''}`} aria-current={currentPage === item.id ? 'page' : undefined} style={navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
                   <Icon type={item.icon} />
                   {item.label}
@@ -266,7 +267,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
         )}
 
         {/* System */}
-        {userProfile?.role === 'super_admin' && (
+        {userProfile?.role === ROLE.SUPER_ADMIN && (
           <>
             <div style={{ fontSize: '11px', color: '#a0a09c', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>System</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
