@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
@@ -146,6 +145,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
   const { toast, showToast, hideToast } = useToast()
   const { isMobile } = useWindowSize()
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchData is stable, re-fetch on view change
   useEffect(() => { fetchData() }, [subView])
 
   async function fetchData() {

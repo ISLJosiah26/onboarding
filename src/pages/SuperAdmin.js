@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
@@ -119,6 +118,7 @@ function UsersTab({ isMobile }) {
   const [inviting, setInviting] = useState(false)
   const { toast, showToast, hideToast } = useToast()
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch functions are stable, mount-only fetch
   useEffect(() => { fetchUsers(); fetchAllEmployees() }, [])
 
   async function fetchUsers() {
@@ -527,6 +527,7 @@ function SystemSettingsTab({ isMobile }) {
   const [saving, setSaving] = useState({})
   const { toast, showToast, hideToast } = useToast()
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchSettings is stable, mount-only fetch
   useEffect(() => { fetchSettings() }, [])
 
   async function fetchSettings() {

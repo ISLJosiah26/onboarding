@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
@@ -78,8 +77,11 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [templateCounts, setTemplateCounts] = useState({})
   const [showLibrary, setShowLibrary] = useState(false)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchRoles is stable, mount-only fetch
   useEffect(() => { fetchRoles() }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchTemplates is stable, re-fetch on role change
   useEffect(() => { if (selectedRole) fetchTemplates(selectedRole.id) }, [selectedRole])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch functions are stable, re-fetch on tab change
   useEffect(() => {
     if (initialTab === 'documents') fetchDocuments()
     else if (initialTab === 'company-resources') fetchCompanyResources()

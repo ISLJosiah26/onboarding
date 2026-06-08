@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase } from '../supabaseClient'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
@@ -114,11 +113,11 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
   const [ticketSubmitting, setTicketSubmitting] = useState(false)
   const [submittedTickets, setSubmittedTickets] = useState([])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchMyOnboarding is stable, mount-only fetch
   useEffect(() => { fetchMyOnboarding() }, [])
 
-  useEffect(() => {
-    if (activeTab === 'time-off' && !timeOffFetched) fetchTimeOffData()
-  }, [activeTab])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchTimeOffData is stable, lazy-load on tab change
+  useEffect(() => { if (activeTab === 'time-off' && !timeOffFetched) fetchTimeOffData() }, [activeTab])
 
   useEffect(() => {
     return () => { clearTimeout(celebrationTimer.current) }
