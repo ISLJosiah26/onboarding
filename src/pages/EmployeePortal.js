@@ -57,9 +57,9 @@ const TICKET_CATEGORIES = [
 
 const STATUS_STYLES = {
   pending:   { background: '#fffbf0', color: '#d4901a' },
-  approved:  { background: '#f0faf4', color: '#2d7a4a' },
-  denied:    { background: '#fdf0f0', color: '#c74848' },
-  cancelled: { background: '#f4f3f1', color: '#8a8a86' },
+  approved:  { background: '#f0faf4', color: '#1a7a4a' },
+  denied:    { background: '#fdf0f0', color: '#c04040' },
+  cancelled: { background: '#f4f3ef', color: '#70706b' },
 }
 
 function StatusPill({ status }) {
@@ -718,7 +718,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     formCard: { background: '#fff', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
     fieldLabel: { fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 },
     fieldInput: { width: '100%', minWidth: 0, background: '#fff', border: '1px solid #e2e1dd', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', color: '#18181b', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none' },
-    submitBtn: (disabled) => ({ background: disabled ? '#d4d3cf' : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }),
+    submitBtn: (disabled) => ({ background: disabled ? '#e2e1dd' : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }),
     torRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 0', borderBottom: '1px solid #f0efe9', flexWrap: 'wrap' },
     cancelBtn: { fontSize: '12px', color: '#70706b', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 },
   }
@@ -729,7 +729,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         <div style={styles.logo}>Integrated Launch</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {onSwitchToAdmin && (
-            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
               ← Admin view
             </button>
           )}
@@ -764,7 +764,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         <div style={styles.logo}>Integrated Launch</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {onSwitchToAdmin && (
-            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
               ← Admin view
             </button>
           )}
@@ -790,8 +790,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         {instance && (
           <div style={styles.progressWrap}>
             <div style={styles.progressRow}>
-              <span style={{ fontSize: '12px', color: '#8a8a86' }}>{completedTasksCount} of {totalTasks} tasks complete</span>
-              <span style={{ fontSize: '12px', fontWeight: 500, color: '#0070CA' }}>{pct}%</span>
+              <span style={{ fontSize: '12px', color: '#70706b' }}>{completedTasksCount} of {totalTasks} tasks complete</span>
+              <span style={{ fontSize: '12px', fontWeight: 500, color: '#0066cc' }}>{pct}%</span>
             </div>
             <div style={styles.progressTrack}>
               <div style={{ ...styles.progressFill, width: `${pct}%` }} />
@@ -806,7 +806,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
           <button style={styles.tab(activeTab === 'documents')} onClick={() => setActiveTab('documents')}>
             My Documents
             {unsignedDocCount > 0 && (
-              <span className="il-tab-badge" style={{ background: activeTab === 'documents' ? '#e8e8e4' : '#f0efeb', color: activeTab === 'documents' ? '#1a1a1a' : '#6b6b67' }}>
+              <span className="il-tab-badge" style={{ background: activeTab === 'documents' ? '#e2e1dd' : '#f0efe9', color: activeTab === 'documents' ? '#18181b' : '#6b6b67' }}>
                 {unsignedDocCount}
               </span>
             )}
@@ -838,7 +838,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 <div key={phase} style={{ opacity: upcoming ? 0.4 : 1, pointerEvents: upcoming ? 'none' : 'auto' }}>
                   <div style={{ ...styles.phaseLabel, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span>{phase}</span>
-                    {upcoming && <span style={{ fontSize: '10px', color: '#a8a8a4', fontWeight: 500, background: '#f4f3f1', padding: '1px 6px', borderRadius: '3px', textTransform: 'none', letterSpacing: 0 }}>Upcoming</span>}
+                    {upcoming && <span style={{ fontSize: '10px', color: '#a4a39f', fontWeight: 500, background: '#f4f3ef', padding: '1px 6px', borderRadius: '3px', textTransform: 'none', letterSpacing: 0 }}>Upcoming</span>}
                   </div>
                   {parentTasks.map(tc => {
                     const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
@@ -892,7 +892,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         {activeTab === 'documents' && (
           <div className="il-tab-content">
             {documents.filter(doc => !docCompletions[doc.id]?.hidden).length === 0 && (
-              <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No documents have been assigned yet.</div>
+              <div style={{ fontSize: '13px', color: '#a4a39f', padding: '20px 0' }}>No documents have been assigned yet.</div>
             )}
             {documents.filter(doc => !docCompletions[doc.id]?.hidden).map(doc => {
               const dc = docCompletions[doc.id]
@@ -900,17 +900,17 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
               const completedFileUrl = dc?.completed_file_url || null
               const isUploading = uploadingDocId === doc.id
               return (
-                <div key={doc.id} style={{ padding: '16px 0', borderBottom: '1px solid #f0efeb' }}>
+                <div key={doc.id} style={{ padding: '16px 0', borderBottom: '1px solid #f0efe9' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ flex: 1, fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>{doc.name}</div>
-                    <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#8a8a86', textDecoration: 'underline', flexShrink: 0 }}>View</a>
+                    <div style={{ flex: 1, fontSize: '14px', color: '#18181b', fontWeight: 500 }}>{doc.name}</div>
+                    <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#70706b', textDecoration: 'underline', flexShrink: 0 }}>View</a>
                     {signed ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                        <span style={{ fontSize: '12px', color: '#2d7a4a', fontWeight: 500 }}>✓ Received</span>
-                        <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '11px', color: '#a8a8a4', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Undo</button>
+                        <span style={{ fontSize: '12px', color: '#1a7a4a', fontWeight: 500 }}>✓ Received</span>
+                        <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '11px', color: '#a4a39f', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Undo</button>
                       </div>
                     ) : (
-                      <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '12px', color: '#5f5f5c', border: '1px solid #d4d3cf', borderRadius: '5px', padding: '4px 10px', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                      <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '12px', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '5px', padding: '4px 10px', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
                         Mark as received
                       </button>
                     )}
@@ -918,15 +918,15 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                   <div style={{ marginTop: '10px' }}>
                     {completedFileUrl ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '12px', color: '#2d7a4a' }}>✓ Uploaded</span>
-                        <a href={completedFileUrl} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>View file</a>
-                        <label style={{ fontSize: '12px', color: isUploading ? '#a8a8a4' : '#8a8a86', cursor: isUploading ? 'default' : 'pointer' }}>
+                        <span style={{ fontSize: '12px', color: '#1a7a4a' }}>✓ Uploaded</span>
+                        <a href={completedFileUrl} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none' }}>View file</a>
+                        <label style={{ fontSize: '12px', color: isUploading ? '#a4a39f' : '#70706b', cursor: isUploading ? 'default' : 'pointer' }}>
                           {isUploading ? 'Uploading...' : 'Replace'}
                           <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={e => handleEmployeeDocumentUpload(e, doc.id)} disabled={!!uploadingDocId} />
                         </label>
                       </div>
                     ) : (
-                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: isUploading ? '#a8a8a4' : '#0070CA', cursor: isUploading ? 'default' : 'pointer', border: '1px solid ' + (isUploading ? '#ebebe8' : '#cce0f5'), borderRadius: '6px', padding: '6px 12px', background: isUploading ? '#f7f6f4' : '#f0f7ff' }}>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: isUploading ? '#a4a39f' : '#0066cc', cursor: isUploading ? 'default' : 'pointer', border: '1px solid ' + (isUploading ? '#e2e1dd' : '#cce0f5'), borderRadius: '6px', padding: '6px 12px', background: isUploading ? '#f7f6f4' : '#f0f7ff' }}>
                         {!isUploading && <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 10V4M4 7l3-3 3 3"/><path d="M2 12h10"/></svg>}
                         {isUploading ? 'Uploading...' : 'Upload completed document'}
                         <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={e => handleEmployeeDocumentUpload(e, doc.id)} disabled={!!uploadingDocId} />
@@ -942,12 +942,12 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         {activeTab === 'company-resources' && (
           <div className="il-tab-content">
             {companyResources.length === 0 ? (
-              <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No company resources have been added yet.</div>
+              <div style={{ fontSize: '13px', color: '#a4a39f', padding: '20px 0' }}>No company resources have been added yet.</div>
             ) : (
               <>
                 {companyResources.length > 3 && (
                   <div style={{ position: 'relative', marginBottom: '16px' }}>
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a8a8a4" strokeWidth="1.5" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#a4a39f" strokeWidth="1.5" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
                       <circle cx="6" cy="6" r="4"/><path d="M10 10l2.5 2.5"/>
                     </svg>
                     <input
@@ -955,10 +955,10 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                       placeholder="Search resources…"
                       value={resourceSearch}
                       onChange={e => setResourceSearch(e.target.value)}
-                      style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #ebebe8', borderRadius: '7px', padding: '8px 32px 8px 32px', fontSize: '13px', fontFamily: 'inherit', color: '#1a1a1a', background: '#fff', outline: 'none' }}
+                      style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '8px 32px 8px 32px', fontSize: '13px', fontFamily: 'inherit', color: '#18181b', background: '#fff', outline: 'none' }}
                     />
                     {resourceSearch && (
-                      <button onClick={() => setResourceSearch('')} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#a8a8a4', fontSize: '16px', lineHeight: 1, padding: 0 }}>×</button>
+                      <button onClick={() => setResourceSearch('')} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#a4a39f', fontSize: '16px', lineHeight: 1, padding: 0 }}>×</button>
                     )}
                   </div>
                 )}
@@ -967,7 +967,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                     ? companyResources.filter(d => d.name.toLowerCase().includes(resourceSearch.toLowerCase()))
                     : companyResources
                   if (filtered.length === 0) return (
-                    <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No resources match "{resourceSearch}".</div>
+                    <div style={{ fontSize: '13px', color: '#a4a39f', padding: '20px 0' }}>No resources match "{resourceSearch}".</div>
                   )
                   return (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
@@ -975,22 +975,22 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                         const rawExt = (doc.file_url || '').split('?')[0].split('.').pop().toLowerCase()
                         const ext = rawExt.length <= 5 ? rawExt : ''
                         const typeLabel = ext === 'pdf' ? 'PDF' : ext === 'docx' || ext === 'doc' ? 'DOC' : ext === 'xlsx' || ext === 'xls' ? 'XLS' : ext === 'pptx' || ext === 'ppt' ? 'PPT' : ext ? ext.toUpperCase() : 'FILE'
-                        const iconBg = ext === 'pdf' ? '#fff1f0' : ext === 'docx' || ext === 'doc' ? '#f0f7ff' : ext === 'xlsx' || ext === 'xls' ? '#f0faf4' : ext === 'pptx' || ext === 'ppt' ? '#fff8f0' : '#f4f3f1'
-                        const iconStroke = ext === 'pdf' ? '#c74848' : ext === 'docx' || ext === 'doc' ? '#0070CA' : ext === 'xlsx' || ext === 'xls' ? '#2d7a4a' : ext === 'pptx' || ext === 'ppt' ? '#c27a30' : '#6b6b67'
+                        const iconBg = ext === 'pdf' ? '#fff1f0' : ext === 'docx' || ext === 'doc' ? '#f0f7ff' : ext === 'xlsx' || ext === 'xls' ? '#f0faf4' : ext === 'pptx' || ext === 'ppt' ? '#fff8f0' : '#f4f3ef'
+                        const iconStroke = ext === 'pdf' ? '#c04040' : ext === 'docx' || ext === 'doc' ? '#0066cc' : ext === 'xlsx' || ext === 'xls' ? '#1a7a4a' : ext === 'pptx' || ext === 'ppt' ? '#c27a30' : '#6b6b67'
                         return (
                           <a key={doc.id} href={doc.file_url} target="_blank" rel="noreferrer" className="il-resource-tile"
-                            style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '14px', textDecoration: 'none', color: '#1a1a1a' }}>
+                            style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', padding: '14px', textDecoration: 'none', color: '#18181b' }}>
                             <div style={{ width: '34px', height: '34px', borderRadius: '7px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', flexShrink: 0 }}>
                               <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke={iconStroke} strokeWidth="1.5">
                                 <path d="M3 2h6l3 3v7H3z"/><path d="M9 2v3h3"/>
                               </svg>
                             </div>
-                            <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', lineHeight: '1.4', flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                            <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', lineHeight: '1.4', flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
                               {doc.name}
                             </div>
                             <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                              <span style={{ fontSize: '10px', fontWeight: 600, color: '#8a8a86', background: '#f0efeb', borderRadius: '3px', padding: '1px 5px' }}>{typeLabel}</span>
-                              <span style={{ fontSize: '11px', color: '#a8a8a4' }}>Open ↗</span>
+                              <span style={{ fontSize: '10px', fontWeight: 600, color: '#70706b', background: '#f0efe9', borderRadius: '3px', padding: '1px 5px' }}>{typeLabel}</span>
+                              <span style={{ fontSize: '11px', color: '#a4a39f' }}>Open ↗</span>
                             </div>
                           </a>
                         )
@@ -1016,13 +1016,13 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 {/* Balance card or empty state */}
                 {!timeOffBalance && timeOffRequests.length === 0 ? (
                   <div style={{ ...styles.balCard, textAlign: 'center', padding: '28px 20px' }}>
-                    <div style={{ fontSize: '13px', color: '#8a8a86', lineHeight: 1.6 }}>
+                    <div style={{ fontSize: '13px', color: '#70706b', lineHeight: 1.6 }}>
                       Your entitlement hasn't been set yet — contact HR.
                     </div>
                   </div>
                 ) : (
                   <div style={styles.balCard}>
-                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px' }}>
                       {CURRENT_YEAR} Balance
                     </div>
                     <div style={styles.balGrid}>
@@ -1045,9 +1045,9 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                       </div>
                     </div>
                     {torTotal > 0 && (
-                      <div style={{ marginTop: '14px', borderTop: '1px solid #f0efeb', paddingTop: '14px' }}>
-                        <div style={{ height: '5px', borderRadius: '3px', background: '#f0efeb', overflow: 'hidden', display: 'flex' }}>
-                          {torUsed > 0 && <div style={{ width: `${Math.min(100, (torUsed / torTotal) * 100)}%`, background: '#1a1a1a', transition: 'width 0.3s ease' }} />}
+                      <div style={{ marginTop: '14px', borderTop: '1px solid #f0efe9', paddingTop: '14px' }}>
+                        <div style={{ height: '5px', borderRadius: '3px', background: '#f0efe9', overflow: 'hidden', display: 'flex' }}>
+                          {torUsed > 0 && <div style={{ width: `${Math.min(100, (torUsed / torTotal) * 100)}%`, background: '#18181b', transition: 'width 0.3s ease' }} />}
                           {torPending > 0 && <div style={{ width: `${Math.min(100 - (torUsed / torTotal) * 100, (torPending / torTotal) * 100)}%`, background: '#d4901a', transition: 'width 0.3s ease' }} />}
                         </div>
                       </div>
@@ -1057,7 +1057,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
                 {/* Request form */}
                 <div style={styles.formCard}>
-                  <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '20px' }}>Request time off</div>
+                  <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '20px' }}>Request time off</div>
 
                   {/* Leave dates */}
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
@@ -1081,7 +1081,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                       <label style={styles.fieldLabel}>End date</label>
                       <input
                         type="date"
-                        style={{ ...styles.fieldInput, background: torDayPortion !== 'full' ? '#f4f3f1' : '#fff', color: torDayPortion !== 'full' ? '#a8a8a4' : '#1a1a1a' }}
+                        style={{ ...styles.fieldInput, background: torDayPortion !== 'full' ? '#f4f3ef' : '#fff', color: torDayPortion !== 'full' ? '#a4a39f' : '#18181b' }}
                         value={torEndDate}
                         min={torStartDate || undefined}
                         disabled={torDayPortion !== 'full'}
@@ -1101,7 +1101,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                         const active = torDayPortion === opt.value
                         return (
                           <button key={opt.value} onClick={() => handleDayPortionChange(opt.value)}
-                            style={{ padding: '6px 14px', border: `1.5px solid ${active ? '#1a1a1a' : '#ebebe8'}`, borderRadius: '6px', background: active ? '#1a1a1a' : '#fff', color: active ? '#fff' : '#5f5f5c', fontSize: '13px', fontWeight: active ? 500 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+                            style={{ padding: '6px 14px', border: `1.5px solid ${active ? '#18181b' : '#e2e1dd'}`, borderRadius: '6px', background: active ? '#18181b' : '#fff', color: active ? '#fff' : '#70706b', fontSize: '13px', fontWeight: active ? 500 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
                             {opt.label}
                           </button>
                         )
@@ -1112,16 +1112,16 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                   {/* Type of leave */}
                   <div style={{ marginBottom: '20px' }}>
                     <label style={styles.fieldLabel}>Type of leave</label>
-                    <div style={{ border: '1px solid #ebebe8', borderRadius: '8px', overflow: 'hidden' }}>
+                    <div style={{ border: '1px solid #e2e1dd', borderRadius: '8px', overflow: 'hidden' }}>
                       {TYPE_OPTIONS.map((o, i) => {
                         const active = torType === o.value
                         return (
                           <label key={o.value} onClick={() => setTorType(o.value)}
-                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', cursor: 'pointer', background: active ? '#fafaf9' : '#fff', borderTop: i > 0 ? '1px solid #f0efeb' : 'none' }}>
-                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `1.5px solid ${active ? '#1a1a1a' : '#d4d3cf'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.12s' }}>
-                              {active && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1a1a1a' }} />}
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', cursor: 'pointer', background: active ? '#fafaf9' : '#fff', borderTop: i > 0 ? '1px solid #f0efe9' : 'none' }}>
+                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `1.5px solid ${active ? '#18181b' : '#e2e1dd'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.12s' }}>
+                              {active && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#18181b' }} />}
                             </div>
-                            <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: active ? 500 : 400 }}>{o.label}</span>
+                            <span style={{ fontSize: '13px', color: '#18181b', fontWeight: active ? 500 : 400 }}>{o.label}</span>
                           </label>
                         )
                       })}
@@ -1156,18 +1156,18 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
                   {/* Flexibility */}
                   <div style={{ marginBottom: '20px' }}>
-                    <label style={styles.fieldLabel}>Flexibility <span style={{ color: '#c74848' }}>*</span></label>
+                    <label style={styles.fieldLabel}>Flexibility <span style={{ color: '#c04040' }}>*</span></label>
                     <div style={{ fontSize: '11px', color: '#a0a09c', marginBottom: '8px' }}>In case of conflicting business issues or overlapping leave requests</div>
-                    <div style={{ border: '1px solid #ebebe8', borderRadius: '8px', overflow: 'hidden' }}>
+                    <div style={{ border: '1px solid #e2e1dd', borderRadius: '8px', overflow: 'hidden' }}>
                       {FLEXIBILITY_OPTIONS.map((o, i) => {
                         const active = torFlexibility === o.value
                         return (
                           <label key={o.value} onClick={() => setTorFlexibility(o.value)}
-                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', cursor: 'pointer', background: active ? '#fafaf9' : '#fff', borderTop: i > 0 ? '1px solid #f0efeb' : 'none' }}>
-                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `1.5px solid ${active ? '#1a1a1a' : '#d4d3cf'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.12s' }}>
-                              {active && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1a1a1a' }} />}
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', cursor: 'pointer', background: active ? '#fafaf9' : '#fff', borderTop: i > 0 ? '1px solid #f0efe9' : 'none' }}>
+                            <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `1.5px solid ${active ? '#18181b' : '#e2e1dd'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.12s' }}>
+                              {active && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#18181b' }} />}
                             </div>
-                            <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: active ? 500 : 400 }}>{o.label}</span>
+                            <span style={{ fontSize: '13px', color: '#18181b', fontWeight: active ? 500 : 400 }}>{o.label}</span>
                           </label>
                         )
                       })}
@@ -1186,11 +1186,11 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
                   {/* Business days display */}
                   {torStartDate && torEndDate && (
-                    <div style={{ marginBottom: '16px', fontSize: '13px', color: '#5f5f5c' }}>
+                    <div style={{ marginBottom: '16px', fontSize: '13px', color: '#70706b' }}>
                       {torDayPortion !== 'full' ? (
                         <span style={{ fontWeight: 500 }}>½ day ({torDayPortion.toUpperCase()})</span>
                       ) : torCalculating ? (
-                        <span style={{ color: '#a8a8a4' }}>Calculating...</span>
+                        <span style={{ color: '#a4a39f' }}>Calculating...</span>
                       ) : torBusinessDays !== null ? (
                         <span><strong>{torBusinessDays}</strong> business day{torBusinessDays !== 1 ? 's' : ''}</span>
                       ) : null}
@@ -1209,26 +1209,26 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 </div>
 
                 {/* Request history */}
-                <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '12px' }}>History</div>
+                <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '12px' }}>History</div>
                 {timeOffRequests.length === 0 ? (
-                  <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '12px 0' }}>No requests yet.</div>
+                  <div style={{ fontSize: '13px', color: '#a4a39f', padding: '12px 0' }}>No requests yet.</div>
                 ) : (
                   timeOffRequests.map(req => (
                     <div key={req.id} style={{ ...styles.torRow, opacity: req.id?.toString().startsWith('temp-') ? 0.6 : 1 }}>
                       <div style={{ flex: 1, minWidth: '140px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <TypeIcon type={req.type} size={12} />
-                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#18181b' }}>
                             {fmtDateRange(req.start_date, req.end_date)}
                           </span>
                         </div>
-                        <div style={{ fontSize: '11px', color: '#8a8a86', marginTop: '2px' }}>
+                        <div style={{ fontSize: '11px', color: '#70706b', marginTop: '2px' }}>
                           {TYPE_LABELS[req.type] || req.type} · {req.business_days}d{req.day_portion && req.day_portion !== 'full' ? ` (${req.day_portion.toUpperCase()})` : req.is_half_day ? ' (half day)' : ''}
                         </div>
                       </div>
                       <StatusPill status={req.status} />
                       {req.review_notes && (
-                        <div style={{ fontSize: '11px', color: '#8a8a86', fontStyle: 'italic', flex: 1 }}>
+                        <div style={{ fontSize: '11px', color: '#70706b', fontStyle: 'italic', flex: 1 }}>
                           {req.review_notes}
                         </div>
                       )}
@@ -1252,7 +1252,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         {activeTab === 'technical-tickets' && (
           <div className="il-tab-content">
             <div style={styles.formCard}>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '20px' }}>Submit a tech issue</div>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '20px' }}>Submit a tech issue</div>
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={styles.fieldLabel}>Category</label>
@@ -1261,7 +1261,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                     const active = ticketCategory === opt.value
                     return (
                       <button key={opt.value} onClick={() => setTicketCategory(opt.value)}
-                        style={{ padding: '6px 12px', border: `1.5px solid ${active ? '#1a1a1a' : '#ebebe8'}`, borderRadius: '6px', background: active ? '#1a1a1a' : '#fff', color: active ? '#fff' : '#5f5f5c', fontSize: '12px', fontWeight: active ? 500 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        style={{ padding: '6px 12px', border: `1.5px solid ${active ? '#18181b' : '#e2e1dd'}`, borderRadius: '6px', background: active ? '#18181b' : '#fff', color: active ? '#fff' : '#70706b', fontSize: '12px', fontWeight: active ? 500 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
                         {opt.label}
                       </button>
                     )
@@ -1270,7 +1270,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
               </div>
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={styles.fieldLabel}>Subject <span style={{ color: '#c74848' }}>*</span></label>
+                <label style={styles.fieldLabel}>Subject <span style={{ color: '#c04040' }}>*</span></label>
                 <input
                   type="text"
                   style={styles.fieldInput}
@@ -1281,7 +1281,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
               </div>
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={styles.fieldLabel}>Details <span style={{ color: '#c74848' }}>*</span></label>
+                <label style={styles.fieldLabel}>Details <span style={{ color: '#c04040' }}>*</span></label>
                 <textarea
                   style={{ ...styles.fieldInput, resize: 'vertical', minHeight: '100px' }}
                   placeholder="What happened? What were you trying to do? Any error messages?"
@@ -1301,16 +1301,16 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
             {submittedTickets.length > 0 && (
               <>
-                <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '12px' }}>Submitted this session</div>
+                <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '12px' }}>Submitted this session</div>
                 {submittedTickets.map(ticket => (
-                  <div key={ticket.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0efeb' }}>
+                  <div key={ticket.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0efe9' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 500, background: '#f4f3f1', color: '#5f5f5c', borderRadius: '4px', padding: '2px 7px' }}>{ticket.categoryLabel}</span>
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>{ticket.title}</span>
+                      <span style={{ fontSize: '11px', fontWeight: 500, background: '#f4f3ef', color: '#70706b', borderRadius: '4px', padding: '2px 7px' }}>{ticket.categoryLabel}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#18181b' }}>{ticket.title}</span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#8a8a86' }}>
+                    <div style={{ fontSize: '12px', color: '#70706b' }}>
                       {new Date(ticket.submittedAt).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      <span style={{ marginLeft: '8px', color: '#2d7a4a', fontWeight: 500 }}>✓ Sent</span>
+                      <span style={{ marginLeft: '8px', color: '#1a7a4a', fontWeight: 500 }}>✓ Sent</span>
                     </div>
                   </div>
                 ))}
@@ -1323,7 +1323,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       {celebration && (
         <div style={{
           position: 'fixed', bottom: isMobile ? '80px' : '32px', left: '50%', transform: 'translateX(-50%)',
-          background: '#1a1a1a', color: '#fff', borderRadius: '12px',
+          background: '#18181b', color: '#fff', borderRadius: '12px',
           padding: '16px 24px', fontSize: '14px', fontWeight: 500,
           display: 'flex', alignItems: 'center', gap: '10px',
           boxShadow: '0 8px 32px rgba(0,0,0,0.15)', zIndex: 1000,

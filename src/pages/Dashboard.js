@@ -170,11 +170,11 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
 
       {offToday.length > 0 && (
         <div style={{ background: '#f0faf4', borderBottom: '1px solid #c3e8d1', padding: `10px ${p}`, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#2d7a4a" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#1a7a4a" strokeWidth="1.5" style={{ flexShrink: 0 }}>
             <rect x="1" y="3" width="12" height="10" rx="1"/><path d="M1 6h12M4 1v4M10 1v4"/>
           </svg>
-          <span style={{ fontSize: '12px', color: '#2d7a4a', fontWeight: 500 }}>Off today:</span>
-          <span style={{ fontSize: '12px', color: '#2d7a4a' }}>
+          <span style={{ fontSize: '12px', color: '#1a7a4a', fontWeight: 500 }}>Off today:</span>
+          <span style={{ fontSize: '12px', color: '#1a7a4a' }}>
             {offToday.map(r => r.employees?.full_name).filter(Boolean).join(', ')}
           </span>
         </div>
@@ -184,11 +184,11 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
         {loading ? (
           isMobile ? (
             [1,2,3,4].map(i => (
-              <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid #f0efeb', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ ...styles.avatarLg, background: '#f0efeb' }} />
+              <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid #f0efe9', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ ...styles.avatarLg, background: '#f0efe9' }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ height: '13px', background: '#f0efeb', borderRadius: '4px', width: '55%', marginBottom: '8px' }} />
-                  <div style={{ height: '4px', background: '#f0efeb', borderRadius: '2px', width: '80%' }} />
+                  <div style={{ height: '13px', background: '#f0efe9', borderRadius: '4px', width: '55%', marginBottom: '8px' }} />
+                  <div style={{ height: '4px', background: '#f0efe9', borderRadius: '2px', width: '80%' }} />
                 </div>
               </div>
             ))
@@ -204,8 +204,8 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
           )
         ) : fetchError ? (
           <div style={styles.errorState}>
-            <div style={{ color: '#c74848', marginBottom: '12px' }}>{fetchError}</div>
-            <button onClick={fetchOnboardings} style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+            <div style={{ color: '#c04040', marginBottom: '12px' }}>{fetchError}</div>
+            <button onClick={fetchOnboardings} style={{ fontSize: '13px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
               Try again
             </button>
           </div>
@@ -215,9 +215,9 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
               <circle cx="18" cy="12" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M5 34c0-7.2 5.8-13 13-13s13 5.8 13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <circle cx="27" cy="27" r="6" fill="#f7f6f3" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M24.5 27l1.5 1.5 3-3" stroke="#2d7a4a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M24.5 27l1.5 1.5 3-3" stroke="#1a7a4a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.2px', marginBottom: '6px' }}>No active onboardings</div>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.2px', marginBottom: '6px' }}>No active onboardings</div>
             <div style={{ fontSize: '13px', color: '#6b6b67', lineHeight: '1.6', marginBottom: '20px' }}>Start a new onboarding to get someone up to speed.</div>
             <button className="il-btn" onClick={() => onNavigate('active')} style={{ background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }}>
               New onboarding
@@ -229,14 +229,14 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
             const name = o.employees.full_name
             const phase = getPhase(o.employees.hire_date)
             return (
-              <div key={o.id} style={{ padding: '14px 16px', borderBottom: '1px solid #f0efeb', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }} onClick={() => onViewOnboarding(o.id)}>
+              <div key={o.id} style={{ padding: '14px 16px', borderBottom: '1px solid #f0efe9', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }} onClick={() => onViewOnboarding(o.id)}>
                 <div style={styles.avatarLg}>{getInitials(name)}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>{name}</span>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#18181b' }}>{name}</span>
                     <span style={styles.phasePill}>{phase}</span>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '8px' }}>{o.employees.roles?.name || 'Unknown role'}</div>
+                  <div style={{ fontSize: '12px', color: '#70706b', marginBottom: '8px' }}>{o.employees.roles?.name || 'Unknown role'}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={styles.progressTrack}>
                       <div style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? 'linear-gradient(90deg, #1a7a4a, #2ea864)' : 'linear-gradient(90deg, #0066cc, #3d9eff)' }} />
@@ -268,7 +268,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                     <div style={styles.rowMeta}>
                       {o.employees.email || ''}
                       {uploadedDocs > 0 && (
-                        <span style={{ marginLeft: '8px', color: '#2d7a4a', fontSize: '11px' }}>
+                        <span style={{ marginLeft: '8px', color: '#1a7a4a', fontSize: '11px' }}>
                           · {uploadedDocs} doc{uploadedDocs > 1 ? 's' : ''} uploaded
                         </span>
                       )}

@@ -55,14 +55,14 @@ export default function ConfirmModal({ title, message, confirmLabel, confirmDang
         className="il-modal"
         style={{
           background: '#fff', borderRadius: '14px',
-          border: '1px solid #e8e8e4',
+          border: '1px solid #e2e1dd',
           boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
           padding: '28px', width: '100%', maxWidth: '400px',
           margin: '0 24px',
         }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.3px', marginBottom: '8px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.3px', marginBottom: '8px' }}>
           {title}
         </div>
         <div style={{ fontSize: '13px', color: '#6b6b67', lineHeight: '1.6', marginBottom: '24px' }}>
@@ -73,7 +73,7 @@ export default function ConfirmModal({ title, message, confirmLabel, confirmDang
             className="il-btn-ghost"
             onClick={onCancel}
             disabled={confirming}
-            style={{ background: 'transparent', color: '#5f5f5c', border: '1px solid #e8e8e4', borderRadius: '7px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: confirming ? 'default' : 'pointer', fontFamily: 'inherit', opacity: confirming ? 0.5 : 1 }}
+            style={{ background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: confirming ? 'default' : 'pointer', fontFamily: 'inherit', opacity: confirming ? 0.5 : 1 }}
           >
             Cancel
           </button>
@@ -81,7 +81,7 @@ export default function ConfirmModal({ title, message, confirmLabel, confirmDang
             className="il-btn"
             onClick={handleConfirm}
             disabled={confirming}
-            style={{ background: confirmDanger ? '#c74848' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: confirming ? 'default' : 'pointer', fontFamily: 'inherit', opacity: confirming ? 0.7 : 1, minWidth: '80px' }}
+            style={{ background: confirmDanger ? '#c04040' : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '7px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: confirming ? 'default' : 'pointer', fontFamily: 'inherit', opacity: confirming ? 0.7 : 1, minWidth: '80px' }}
           >
             {confirming ? 'Working…' : (confirmLabel || 'Confirm')}
           </button>

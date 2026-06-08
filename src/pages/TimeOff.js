@@ -27,9 +27,9 @@ const TYPE_LABELS = {
 
 const STATUS_STYLES = {
   pending:   { background: '#fffbf0', color: '#d4901a' },
-  approved:  { background: '#f0faf4', color: '#2d7a4a' },
-  denied:    { background: '#fdf0f0', color: '#c74848' },
-  cancelled: { background: '#f4f3f1', color: '#8a8a86' },
+  approved:  { background: '#f0faf4', color: '#1a7a4a' },
+  denied:    { background: '#fdf0f0', color: '#c04040' },
+  cancelled: { background: '#f4f3ef', color: '#70706b' },
 }
 
 // No blue — reserved for today highlight and UI accents
@@ -448,29 +448,29 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
 
   const s = {
     page: { padding: isMobile ? '16px' : '32px 40px', maxWidth: '1100px' },
-    title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1a1a1a', marginBottom: '4px' },
-    sub: { fontSize: '13px', color: '#8a8a86', marginBottom: isMobile ? '16px' : '28px' },
-    subNav: { display: 'flex', borderBottom: '1px solid #ebebe8', marginBottom: '20px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
-    subTab: (a) => ({ fontSize: '13px', fontWeight: a ? 500 : 400, color: a ? '#1a1a1a' : '#8a8a86', padding: '10px 0', marginRight: '20px', background: 'none', border: 'none', borderBottom: a ? '2px solid #1a1a1a' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }),
-    card: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', overflow: 'hidden' },
-    tHead: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '10px 16px', background: '#fafaf9', borderBottom: '1px solid #ebebe8', fontSize: '11px', fontWeight: 500, color: '#8a8a86', textTransform: 'uppercase', letterSpacing: '0.4px' }),
-    tRow: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '13px 16px', borderBottom: '1px solid #f0efeb', alignItems: 'center', fontSize: '13px', color: '#1a1a1a' }),
-    empty: { padding: '40px', textAlign: 'center', fontSize: '13px', color: '#a8a8a4' },
-    inp: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', color: '#1a1a1a', fontFamily: 'Inter, -apple-system, sans-serif', outline: 'none', boxSizing: 'border-box' },
-    btnApprove: { background: '#f0faf4', color: '#2d7a4a', border: '1px solid #c3e8d1', borderRadius: '6px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
-    btnDeny: { background: '#fdf0f0', color: '#c74848', border: '1px solid #f5d6d6', borderRadius: '6px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
-    btnEdit: { background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
-    btnSave: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 11px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
-    btnCancel: { background: 'transparent', color: '#8a8a86', border: '1px solid #ebebe8', borderRadius: '6px', padding: '5px 8px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
-    navBtn: { background: 'transparent', border: '1px solid #ebebe8', borderRadius: '6px', padding: '5px 10px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#5f5f5c', lineHeight: 1 },
+    title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.3px', color: '#18181b', marginBottom: '4px' },
+    sub: { fontSize: '13px', color: '#70706b', marginBottom: isMobile ? '16px' : '28px' },
+    subNav: { display: 'flex', borderBottom: '1px solid #e2e1dd', marginBottom: '20px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
+    subTab: (a) => ({ fontSize: '13px', fontWeight: a ? 500 : 400, color: a ? '#18181b' : '#70706b', padding: '10px 0', marginRight: '20px', background: 'none', border: 'none', borderBottom: a ? '2px solid #18181b' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }),
+    card: { background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', overflow: 'hidden' },
+    tHead: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '10px 16px', background: '#fafaf9', borderBottom: '1px solid #e2e1dd', fontSize: '11px', fontWeight: 500, color: '#70706b', textTransform: 'uppercase', letterSpacing: '0.4px' }),
+    tRow: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '13px 16px', borderBottom: '1px solid #f0efe9', alignItems: 'center', fontSize: '13px', color: '#18181b' }),
+    empty: { padding: '40px', textAlign: 'center', fontSize: '13px', color: '#a4a39f' },
+    inp: { background: '#fff', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', color: '#18181b', fontFamily: 'Inter, -apple-system, sans-serif', outline: 'none', boxSizing: 'border-box' },
+    btnApprove: { background: '#f0faf4', color: '#1a7a4a', border: '1px solid #c3e8d1', borderRadius: '6px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
+    btnDeny: { background: '#fdf0f0', color: '#c04040', border: '1px solid #f5d6d6', borderRadius: '6px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
+    btnEdit: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
+    btnSave: { background: '#18181b', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 11px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+    btnCancel: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 8px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
+    navBtn: { background: 'transparent', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 10px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#70706b', lineHeight: 1 },
   }
 
   const REQ_COLS = '1.4fr 1fr 90px 60px 100px 80px 170px'
   const BAL_COLS = '1.6fr 90px 90px 90px 90px 100px'
 
   function SortIndicator({ field }) {
-    if (sortField !== field) return <span style={{ color: '#d4d3cf', fontSize: '9px', marginLeft: '3px' }}>⬍</span>
-    return <span style={{ color: '#5f5f5c', fontSize: '9px', marginLeft: '3px' }}>{sortDir === 'asc' ? '▲' : '▼'}</span>
+    if (sortField !== field) return <span style={{ color: '#e2e1dd', fontSize: '9px', marginLeft: '3px' }}>⬍</span>
+    return <span style={{ color: '#70706b', fontSize: '9px', marginLeft: '3px' }}>{sortDir === 'asc' ? '▲' : '▼'}</span>
   }
 
   function RequestCard({ req }) {
@@ -478,30 +478,30 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
     const overlapNames = getOverlapNames(req)
     const busy = reviewingId === req.id
     return (
-      <div style={{ background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '14px 16px', marginBottom: '10px' }}>
+      <div style={{ background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', padding: '14px 16px', marginBottom: '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>{req.employee?.full_name || '—'}</div>
+            <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b' }}>{req.employee?.full_name || '—'}</div>
             {overlapNames.length > 0 && (
               <div style={{ fontSize: '11px', color: '#d4901a', marginTop: '2px' }}>{overlapNames.join(', ')} also off</div>
             )}
           </div>
           <StatusPill status={req.status} />
         </div>
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '13px', color: '#5f5f5c', marginBottom: req.status === 'pending' ? '12px' : '0' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '13px', color: '#70706b', marginBottom: req.status === 'pending' ? '12px' : '0' }}>
           <span>{fmtDateRange(req.start_date, req.end_date)}</span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <TypeIcon type={req.type} size={12} />{TYPE_LABELS[req.type]}
           </span>
           <span>{req.business_days}d{req.is_half_day ? ' ½' : ''}</span>
           {req.status === 'pending' && remaining != null && (
-            <span style={{ color: remaining < 0 ? '#c74848' : '#5f5f5c', fontWeight: remaining < 0 ? 500 : 400 }}>
+            <span style={{ color: remaining < 0 ? '#c04040' : '#70706b', fontWeight: remaining < 0 ? 500 : 400 }}>
               → {remaining}d remaining
             </span>
           )}
         </div>
         {req.status !== 'pending' && req.review_notes && (
-          <div style={{ fontSize: '12px', color: '#8a8a86', fontStyle: 'italic', marginTop: '6px' }}>{req.review_notes}</div>
+          <div style={{ fontSize: '12px', color: '#70706b', fontStyle: 'italic', marginTop: '6px' }}>{req.review_notes}</div>
         )}
         {req.status === 'pending' && (
           <div>
@@ -556,19 +556,19 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                   Clear
                 </button>
               )}
-              <span style={{ fontSize: '12px', color: '#a8a8a4', marginLeft: 'auto' }}>
+              <span style={{ fontSize: '12px', color: '#a4a39f', marginLeft: 'auto' }}>
                 {displayRequests.length} result{displayRequests.length !== 1 ? 's' : ''}
               </span>
             </div>
 
             {loading ? (
               [1,2,3].map(i => (
-                <div key={i} style={{ background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '16px', marginBottom: '10px' }}>
+                <div key={i} style={{ background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', padding: '16px', marginBottom: '10px' }}>
                   <SkeletonLine width="55%" height="13px" />
                 </div>
               ))
             ) : displayRequests.length === 0 ? (
-              <div style={{ ...s.empty, border: '1px solid #ebebe8', borderRadius: '10px', background: '#fff' }}>
+              <div style={{ ...s.empty, border: '1px solid #e2e1dd', borderRadius: '10px', background: '#fff' }}>
                 {requests.length === 0 ? 'No time off requests yet.' : 'No requests match your filters.'}
               </div>
             ) : isMobile ? (
@@ -597,15 +597,15 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                             <div style={{ fontSize: '11px', color: '#d4901a', marginTop: '2px' }}>{overlapNames.join(', ')} also off</div>
                           )}
                         </div>
-                        <div style={{ color: '#5f5f5c', fontSize: '12px' }}>{fmtDateRange(req.start_date, req.end_date)}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#5f5f5c', fontSize: '12px' }}>
+                        <div style={{ color: '#70706b', fontSize: '12px' }}>{fmtDateRange(req.start_date, req.end_date)}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#70706b', fontSize: '12px' }}>
                           <TypeIcon type={req.type} size={12} />{TYPE_LABELS[req.type]}
                         </div>
-                        <div>{req.business_days}d{req.is_half_day ? <span style={{ fontSize: '10px', color: '#8a8a86' }}> ½</span> : null}</div>
+                        <div>{req.business_days}d{req.is_half_day ? <span style={{ fontSize: '10px', color: '#70706b' }}> ½</span> : null}</div>
                         <div><StatusPill status={req.status} /></div>
                         <div>
                           {req.status === 'pending' && remaining != null ? (
-                            <span style={{ color: remaining < 0 ? '#c74848' : '#5f5f5c', fontWeight: remaining < 0 ? 500 : 400, fontSize: '13px' }}>{remaining}d</span>
+                            <span style={{ color: remaining < 0 ? '#c04040' : '#70706b', fontWeight: remaining < 0 ? 500 : 400, fontSize: '13px' }}>{remaining}d</span>
                           ) : '—'}
                         </div>
                         <div>
@@ -616,12 +616,12 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                             </div>
                           )}
                           {req.status !== 'pending' && req.review_notes && (
-                            <div style={{ fontSize: '11px', color: '#8a8a86', fontStyle: 'italic', maxWidth: '160px' }}>{req.review_notes}</div>
+                            <div style={{ fontSize: '11px', color: '#70706b', fontStyle: 'italic', maxWidth: '160px' }}>{req.review_notes}</div>
                           )}
                         </div>
                       </div>
                       {req.status === 'pending' && (
-                        <div style={{ padding: '0 16px 12px', borderBottom: '1px solid #f0efeb' }}>
+                        <div style={{ padding: '0 16px 12px', borderBottom: '1px solid #f0efe9' }}>
                           <input
                             style={{ ...s.inp, width: '340px' }}
                             placeholder="Review notes (optional)"
@@ -641,9 +641,9 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
         {/* ── BALANCES ── */}
         {subView === 'balances' && (
           loading ? (
-            [1,2,3].map(i => <div key={i} style={{ background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '16px', marginBottom: '10px' }}><SkeletonLine width="50%" height="13px" /></div>)
+            [1,2,3].map(i => <div key={i} style={{ background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', padding: '16px', marginBottom: '10px' }}><SkeletonLine width="50%" height="13px" /></div>)
           ) : balances.length === 0 ? (
-            <div style={{ ...s.empty, border: '1px solid #ebebe8', borderRadius: '10px', background: '#fff' }}>No employees found.</div>
+            <div style={{ ...s.empty, border: '1px solid #e2e1dd', borderRadius: '10px', background: '#fff' }}>No employees found.</div>
           ) : isMobile ? (
             <div>
               {balances.map(row => {
@@ -654,18 +654,18 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                 const isEditing = editingBalanceId === row.employee.id
                 const isExpanded = expandedEmployeeId === row.employee.id
                 return (
-                  <div key={row.employee.id} style={{ background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', marginBottom: '10px', overflow: 'hidden' }}>
+                  <div key={row.employee.id} style={{ background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', marginBottom: '10px', overflow: 'hidden' }}>
                     <div style={{ padding: '14px 16px', cursor: 'pointer' }} onClick={() => setExpandedEmployeeId(isExpanded ? null : row.employee.id)}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                         <div>
-                          <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>{row.employee.full_name}</div>
-                          <div style={{ fontSize: '11px', color: '#a8a8a4' }}>{row.employee.email}</div>
+                          <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b' }}>{row.employee.full_name}</div>
+                          <div style={{ fontSize: '11px', color: '#a4a39f' }}>{row.employee.email}</div>
                         </div>
-                        <div style={{ fontSize: '18px', fontWeight: 600, color: remaining < 0 ? '#c74848' : '#1a1a1a' }}>{remaining}d</div>
+                        <div style={{ fontSize: '18px', fontWeight: 600, color: remaining < 0 ? '#c04040' : '#18181b' }}>{remaining}d</div>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '12px' }}>
                         <div style={{ background: '#fafaf9', borderRadius: '6px', padding: '8px 10px' }}>
-                          <div style={{ color: '#8a8a86', marginBottom: '2px' }}>Total</div>
+                          <div style={{ color: '#70706b', marginBottom: '2px' }}>Total</div>
                           <div style={{ fontWeight: 500 }} onClick={e => { e.stopPropagation(); setEditingBalanceId(row.employee.id); setEditTotalDays(String(total)) }}>
                             {isEditing ? (
                               <input style={{ ...s.inp, width: '56px', padding: '2px 6px', fontSize: '13px' }} type="number" min="0" step="0.5"
@@ -675,12 +675,12 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                           </div>
                         </div>
                         <div style={{ background: '#fafaf9', borderRadius: '6px', padding: '8px 10px' }}>
-                          <div style={{ color: '#8a8a86', marginBottom: '2px' }}>Used</div>
+                          <div style={{ color: '#70706b', marginBottom: '2px' }}>Used</div>
                           <div style={{ fontWeight: 500 }}>{used}d</div>
                         </div>
                         <div style={{ background: '#fafaf9', borderRadius: '6px', padding: '8px 10px' }}>
-                          <div style={{ color: '#8a8a86', marginBottom: '2px' }}>Pending</div>
-                          <div style={{ fontWeight: 500, color: pending > 0 ? '#d4901a' : '#a8a8a4' }}>{pending > 0 ? `${pending}d` : '—'}</div>
+                          <div style={{ color: '#70706b', marginBottom: '2px' }}>Pending</div>
+                          <div style={{ fontWeight: 500, color: pending > 0 ? '#d4901a' : '#a4a39f' }}>{pending > 0 ? `${pending}d` : '—'}</div>
                         </div>
                       </div>
                       {isEditing && (
@@ -693,11 +693,11 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                       )}
                     </div>
                     {isExpanded && (
-                      <div style={{ borderTop: '1px solid #ebebe8', background: '#fafaf9' }}>
+                      <div style={{ borderTop: '1px solid #e2e1dd', background: '#fafaf9' }}>
                         {row.requests.length === 0 ? (
-                          <div style={{ padding: '12px 16px', fontSize: '12px', color: '#a8a8a4' }}>No requests.</div>
+                          <div style={{ padding: '12px 16px', fontSize: '12px', color: '#a4a39f' }}>No requests.</div>
                         ) : row.requests.map(req => (
-                          <div key={req.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid #f0efeb', fontSize: '12px', color: '#5f5f5c' }}>
+                          <div key={req.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid #f0efe9', fontSize: '12px', color: '#70706b' }}>
                             <div>
                               <div>{fmtDateRange(req.start_date, req.end_date)}</div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}><TypeIcon type={req.type} size={11} />{TYPE_LABELS[req.type]} · {req.business_days}d</div>
@@ -732,7 +732,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                     >
                       <div>
                         <div style={{ fontWeight: 500 }}>{row.employee.full_name}</div>
-                        <div style={{ fontSize: '11px', color: '#a8a8a4' }}>{row.employee.email}</div>
+                        <div style={{ fontSize: '11px', color: '#a4a39f' }}>{row.employee.email}</div>
                       </div>
                       <div onClick={e => e.stopPropagation()}>
                         {isEditing ? (
@@ -740,8 +740,8 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                         ) : `${total}d`}
                       </div>
                       <div>{used}d</div>
-                      <div style={{ color: pending > 0 ? '#d4901a' : '#a8a8a4' }}>{pending > 0 ? `${pending}d` : '—'}</div>
-                      <div style={{ fontWeight: 500, color: remaining < 0 ? '#c74848' : '#1a1a1a' }}>{remaining}d</div>
+                      <div style={{ color: pending > 0 ? '#d4901a' : '#a4a39f' }}>{pending > 0 ? `${pending}d` : '—'}</div>
+                      <div style={{ fontWeight: 500, color: remaining < 0 ? '#c04040' : '#18181b' }}>{remaining}d</div>
                       <div onClick={e => e.stopPropagation()}>
                         {isEditing ? (
                           <div style={{ display: 'flex', gap: '4px' }}>
@@ -756,11 +756,11 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                       </div>
                     </div>
                     {isExpanded && (
-                      <div style={{ background: '#fafaf9', borderBottom: '1px solid #ebebe8' }}>
+                      <div style={{ background: '#fafaf9', borderBottom: '1px solid #e2e1dd' }}>
                         {row.requests.length === 0 ? (
-                          <div style={{ padding: '14px 24px', fontSize: '12px', color: '#a8a8a4' }}>No requests.</div>
+                          <div style={{ padding: '14px 24px', fontSize: '12px', color: '#a4a39f' }}>No requests.</div>
                         ) : row.requests.map(req => (
-                          <div key={req.id} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 60px 100px', padding: '10px 24px', borderBottom: '1px solid #f0efeb', fontSize: '12px', color: '#5f5f5c', alignItems: 'center' }}>
+                          <div key={req.id} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 60px 100px', padding: '10px 24px', borderBottom: '1px solid #f0efe9', fontSize: '12px', color: '#70706b', alignItems: 'center' }}>
                             <div>{fmtDateRange(req.start_date, req.end_date)}</div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><TypeIcon type={req.type} size={11} />{TYPE_LABELS[req.type]}</div>
                             <div>{req.business_days}d</div>
@@ -781,22 +781,22 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
               <button style={s.navBtn} onClick={prevMonth}>‹</button>
-              <div style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a1a', minWidth: isMobile ? '120px' : '160px', textAlign: 'center' }}>
+              <div style={{ fontSize: '15px', fontWeight: 600, color: '#18181b', minWidth: isMobile ? '120px' : '160px', textAlign: 'center' }}>
                 {MONTH_NAMES[calMonth]} {calYear}
               </div>
               <button style={s.navBtn} onClick={nextMonth}>›</button>
-              <button style={{ ...s.navBtn, marginLeft: '8px', fontSize: '12px', color: '#8a8a86' }} onClick={() => { setCalYear(new Date().getFullYear()); setCalMonth(new Date().getMonth()) }}>
+              <button style={{ ...s.navBtn, marginLeft: '8px', fontSize: '12px', color: '#70706b' }} onClick={() => { setCalYear(new Date().getFullYear()); setCalMonth(new Date().getMonth()) }}>
                 Today
               </button>
             </div>
 
             {!isMobile && (
               <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', color: '#8a8a86' }}>Each employee has a unique colour.</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#5f5f5c' }}>
+                <span style={{ fontSize: '12px', color: '#70706b' }}>Each employee has a unique colour.</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#70706b' }}>
                   <div style={{ width: '28px', height: '14px', borderRadius: '3px', background: '#dcfce7' }} />Approved
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#5f5f5c' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#70706b' }}>
                   <div style={{ width: '28px', height: '14px', borderRadius: '3px', background: '#fef3c780', border: '1.5px dashed #b45309' }} />Pending
                 </div>
               </div>
@@ -804,9 +804,9 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
 
             <div style={{ overflowX: isMobile ? 'auto' : 'visible', WebkitOverflowScrolling: 'touch' }}>
               <div style={{ ...s.card, overflow: 'visible', minWidth: isMobile ? '560px' : 'auto' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid #ebebe8' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid #e2e1dd' }}>
                   {DOW_LABELS.map(d => (
-                    <div key={d} style={{ padding: isMobile ? '6px 4px' : '8px 10px', fontSize: '11px', fontWeight: 500, color: '#8a8a86', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center', borderRight: '1px solid #ebebe8' }}>
+                    <div key={d} style={{ padding: isMobile ? '6px 4px' : '8px 10px', fontSize: '11px', fontWeight: 500, color: '#70706b', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center', borderRight: '1px solid #e2e1dd' }}>
                       {isMobile ? d.slice(0, 1) : d}
                     </div>
                   ))}
@@ -827,7 +827,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                     const eventsH = trackCount * SLOT_H + (trackCount > 0 ? 8 : 6)
 
                     return (
-                      <div key={wi} style={{ borderBottom: wi < weeks.length - 1 ? '1px solid #ebebe8' : 'none' }}>
+                      <div key={wi} style={{ borderBottom: wi < weeks.length - 1 ? '1px solid #e2e1dd' : 'none' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
                           {week.map((day, di) => {
                             const dateStr = weekDates[di]
@@ -841,14 +841,14 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                                 justifyContent: 'flex-end',
                                 alignItems: 'flex-start',
                                 background: !day ? '#fafaf9' : isWeekend ? '#fafaf9' : '#fff',
-                                borderRight: di < 6 ? '1px solid #ebebe8' : 'none',
+                                borderRight: di < 6 ? '1px solid #e2e1dd' : 'none',
                               }}>
                                 {day && (isToday ? (
-                                  <span style={{ background: '#0070CA', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
+                                  <span style={{ background: '#0066cc', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
                                     {day}
                                   </span>
                                 ) : (
-                                  <span style={{ fontSize: '12px', color: isWeekend ? '#a8a8a4' : '#5f5f5c' }}>{day}</span>
+                                  <span style={{ fontSize: '12px', color: isWeekend ? '#a4a39f' : '#70706b' }}>{day}</span>
                                 ))}
                               </div>
                             )
@@ -860,7 +860,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                             {week.map((day, di) => (
                               <div key={di} style={{
                                 background: !day ? '#fafaf9' : (di === 0 || di === 6) ? '#fafaf9' : '#fff',
-                                borderRight: di < 6 ? '1px solid #ebebe8' : 'none',
+                                borderRight: di < 6 ? '1px solid #e2e1dd' : 'none',
                               }} />
                             ))}
                           </div>
@@ -918,7 +918,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
           <div>
             <div style={s.card}>
               {holidaysLoading ? (
-                [1,2,3].map(i => <div key={i} style={{ padding: '16px', borderBottom: '1px solid #f0efeb' }}><SkeletonLine width="50%" height="13px" /></div>)
+                [1,2,3].map(i => <div key={i} style={{ padding: '16px', borderBottom: '1px solid #f0efe9' }}><SkeletonLine width="50%" height="13px" /></div>)
               ) : holidays.length === 0 ? (
                 <div style={s.empty}>No holidays configured yet.</div>
               ) : (
@@ -929,10 +929,10 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                     </div>
                   )}
                   {holidays.map(h => isMobile ? (
-                    <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid #f0efeb' }}>
+                    <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid #f0efe9' }}>
                       <div>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>{h.name}</div>
-                        <div style={{ fontSize: '12px', color: '#8a8a86', marginTop: '2px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b' }}>{h.name}</div>
+                        <div style={{ fontSize: '12px', color: '#70706b', marginTop: '2px' }}>
                           {fmtDate(h.date)}{h.repeats_yearly ? ' · Repeats yearly' : ''}
                         </div>
                       </div>
@@ -943,8 +943,8 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                   ) : (
                     <div key={h.id} style={s.tRow('1fr 100px 100px 48px')}>
                       <div style={{ fontWeight: 500 }}>{h.name}</div>
-                      <div style={{ color: '#5f5f5c', fontSize: '12px' }}>{fmtDate(h.date)}</div>
-                      <div style={{ fontSize: '12px', color: h.repeats_yearly ? '#2d7a4a' : '#a8a8a4' }}>{h.repeats_yearly ? 'Yes' : 'No'}</div>
+                      <div style={{ color: '#70706b', fontSize: '12px' }}>{fmtDate(h.date)}</div>
+                      <div style={{ fontSize: '12px', color: h.repeats_yearly ? '#1a7a4a' : '#a4a39f' }}>{h.repeats_yearly ? 'Yes' : 'No'}</div>
                       <div>
                         <button style={{ ...s.btnDeny, flex: 'none', padding: '3px 8px', fontSize: '11px' }} disabled={deletingHolidayId === h.id} onClick={() => deleteHoliday(h.id)}>
                           {deletingHolidayId === h.id ? '...' : 'Remove'}
@@ -956,22 +956,22 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
               )}
             </div>
 
-            <div style={{ background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '20px', marginTop: '16px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', marginBottom: '14px' }}>Add holiday</div>
+            <div style={{ background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', padding: '20px', marginTop: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginBottom: '14px' }}>Add holiday</div>
               <div style={{ display: isMobile ? 'flex' : 'grid', flexDirection: isMobile ? 'column' : undefined, gridTemplateColumns: isMobile ? undefined : '1fr 140px auto', gap: '10px', alignItems: isMobile ? 'stretch' : 'flex-end' }}>
                 <div>
-                  <label style={{ fontSize: '12px', color: '#8a8a86', display: 'block', marginBottom: '5px' }}>Name</label>
+                  <label style={{ fontSize: '12px', color: '#70706b', display: 'block', marginBottom: '5px' }}>Name</label>
                   <input style={{ ...s.inp, width: '100%', padding: '8px 10px', boxSizing: 'border-box' }} placeholder="e.g. Canada Day" value={newHolidayName} onChange={e => setNewHolidayName(e.target.value)} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', color: '#8a8a86', display: 'block', marginBottom: '5px' }}>Date</label>
+                  <label style={{ fontSize: '12px', color: '#70706b', display: 'block', marginBottom: '5px' }}>Date</label>
                   <input type="date" style={{ ...s.inp, width: '100%', padding: '8px 10px', boxSizing: 'border-box' }} value={newHolidayDate} onChange={e => setNewHolidayDate(e.target.value)} />
                 </div>
                 <button style={{ ...s.btnSave, padding: '9px 16px', alignSelf: isMobile ? 'flex-start' : 'flex-end' }} disabled={savingHoliday} onClick={addHoliday}>
                   {savingHoliday ? '...' : 'Add'}
                 </button>
               </div>
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '12px', fontSize: '13px', color: '#5f5f5c', cursor: 'pointer' }}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '12px', fontSize: '13px', color: '#70706b', cursor: 'pointer' }}>
                 <input type="checkbox" checked={newHolidayRepeats} onChange={e => setNewHolidayRepeats(e.target.checked)} style={{ width: '14px', height: '14px', cursor: 'pointer' }} />
                 Repeats yearly
               </label>
