@@ -1,70 +1,187 @@
-# Getting Started with Create React App
+# Integrated Launch — Employee Onboarding Portal
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-featured employee onboarding management system built for **Integrated Staffing Limited**. It guides new hires from their first day through their 90-day review, while giving HR teams, managers, and employees a single place to track every task, document, and request along the way.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## What It Does
 
-### `npm start`
+**For HR & Admins**
+- Start a new onboarding in seconds — enter the employee's name, email, role, and start date, and the system builds their entire task plan automatically
+- Work through structured checklists organized by phase: Week 1, Week 2, 30-day, 60-day, and 90-day milestones
+- Upload and manage required documents per employee and role
+- Edit employee details mid-onboarding (including role changes, which swap the task plan automatically)
+- Maintain a library of reusable task templates, company resources, and role definitions
+- Approve or deny time-off requests with a full calendar view
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+**For Employees**
+- A self-service portal to track their own onboarding progress
+- View and download company resources and role-specific documents
+- Upload required documents directly from the portal
+- See manager notes and feedback
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+**For Super Admins**
+- Manage all users and their access levels
+- Review a full audit log of every action taken in the system
+- Configure system-wide settings (HR notification email, tech support email, etc.)
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Tech Stack
 
-### `npm run build`
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, Create React App |
+| Backend & Database | Supabase (PostgreSQL + Auth + Edge Functions) |
+| Authentication | Supabase Auth with invite-based signup |
+| Styling | Custom CSS with Inter font, CSS variables |
+| Testing | Jest & React Testing Library |
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## How It Works
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Architecture
 
-### `npm run eject`
+The app is a React single-page application backed entirely by Supabase. There is no separate server — all data operations go through the Supabase JS client, which handles authentication, database queries, and server-side RPC calls.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```
+Browser (React SPA)
+    └── App.js              — auth state, session management, page routing
+        └── Layout.js       — sidebar nav, role-based menu items, responsive layout
+            └── Pages       — each page manages its own Supabase queries and state
+                └── Components  — Toast, modals, skeletons, and other shared UI
+                    └── Supabase Client
+                            — Auth (sign in, invite, password reset)
+                            — Database (select, insert, update, delete)
+                            — RPC (create_onboarding, swap_employee_and_tasks, insert_audit_log)
+                            — Edge Functions (send-email)
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Authentication & Access Control
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Users are created via invite links. When a new user clicks their invite, they land on `SetPassword` to set their password for the first time. After that, standard email/password login applies.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Every authenticated user has a profile with one of four roles, each with different access:
 
-## Learn More
+| Role | Access |
+|---|---|
+| `employee` | Employee self-service portal only |
+| `manager` | Time-off management, employee portal view |
+| `admin` | Dashboard, onboarding management, admin panel, time-off |
+| `super_admin` | Everything above plus user management, audit log, system settings |
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+`App.js` reads the user's role on login and enforces routing — if a user tries to access a page outside their permissions, they are redirected automatically.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Onboarding Workflow
 
-### Code Splitting
+1. An admin opens **New Onboarding** and fills in the employee's details
+2. The app calls the `create_onboarding` Supabase RPC, which creates the employee record, an onboarding instance, and all task completion records for every task in that role's template
+3. A welcome email is sent to the new employee via a Supabase Edge Function
+4. The action is recorded in the audit log
+5. The admin is taken to **Onboarding Plan**, where tasks are grouped by phase and owner (HR, Manager, IT)
+6. As tasks are completed, notes can be added and documents uploaded against each task
+7. When all phases are done, the onboarding is marked complete
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+If a role change is needed mid-onboarding, `swap_employee_and_tasks` handles the transition atomically — updating the employee record and replacing the task plan in one operation.
 
-### Analyzing the Bundle Size
+### Time-Off Management
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Employees submit requests with a type (vacation, sick, personal, professional development, etc.) and date range. Managers and admins see all requests on a shared calendar — colour-coded per employee — and can approve, deny, or cancel with a single click.
 
-### Making a Progressive Web App
+### Audit Logging
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Every significant action (onboarding created, employee edited, role changed, document uploaded, time-off approved, etc.) is written to an audit log via the `insert_audit_log` RPC. Super admins can filter and review the full log from the system administration panel.
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Project Structure
 
-### Deployment
+```
+src/
+├── pages/
+│   ├── Dashboard.js        # Active onboardings, completion stats, staff off today
+│   ├── Admin.js            # Roles, task templates, documents, task library
+│   ├── NewOnboarding.js    # Start a new onboarding
+│   ├── OnboardingPlan.js   # Per-employee task checklist and document tracking
+│   ├── EmployeePortal.js   # Employee self-service view
+│   ├── TimeOff.js          # Time-off requests and calendar
+│   ├── SuperAdmin.js       # User management, audit log, system settings
+│   └── SetPassword.js      # Invite-based initial password setup
+├── components/
+│   ├── Layout.js           # Sidebar and navigation (desktop + mobile)
+│   ├── Toast.js            # Success/error/warning notifications
+│   ├── ConfirmModal.js     # Accessible confirmation dialogs
+│   ├── EditEmployeeModal.js # Edit employee details and role mid-onboarding
+│   └── Skeleton.js         # Loading placeholder screens
+├── hooks/
+│   ├── useToast.js         # Toast state management
+│   └── useWindowSize.js    # Responsive breakpoint detection (mobile < 768px)
+├── utils/
+│   ├── auditLog.js         # Audit log writer
+│   ├── getHrEmail.js       # Cached system settings fetcher
+│   └── handleError.js      # Sanitizes Supabase errors for user display
+├── App.js                  # Root component — auth, routing, role enforcement
+├── config.js               # Route definitions
+├── supabaseClient.js       # Supabase client initialization
+└── index.css               # Global styles and CSS design tokens
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+---
 
-### `npm run build` fails to minify
+## Getting Started
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Prerequisites
+
+- Node.js 18+
+- A Supabase project with the required tables, RPC functions, and Edge Functions deployed
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and fill in your Supabase project credentials:
+
+```env
+REACT_APP_SUPABASE_URL=https://your-project.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+### Running Locally
+
+```bash
+npm install
+npm start
+```
+
+The app will be available at `http://localhost:3000`.
+
+### Building for Production
+
+```bash
+npm run build
+```
+
+Serve the `build/` folder with any static host, or use the included `serve` package:
+
+```bash
+npx serve -s build
+```
+
+---
+
+## Design System
+
+The UI is built on a set of CSS custom properties defined in `index.css`. Key tokens:
+
+| Token | Value | Use |
+|---|---|---|
+| `--brand` | `#0066cc` | Primary actions, links |
+| `--bg` | `#f4f3ef` | Page background |
+| `--surface` | `#ffffff` | Cards and panels |
+| `--border` | `#e2e1dd` | Dividers and outlines |
+| `--success` | `#1a7a4a` | Confirmations |
+| `--warning` | `#d4901a` | Cautions |
+| `--danger` | `#c04040` | Destructive actions |
+
+Typography uses Inter at weights 400–700 with tight letter-spacing for a clean, professional feel.
+
+The layout is fully responsive. On desktop, a 240px fixed sidebar handles navigation. On mobile (below 768px), the sidebar becomes a bottom tab bar with a slide-up drawer. All transitions respect `prefers-reduced-motion`.
