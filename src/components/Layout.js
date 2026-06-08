@@ -75,7 +75,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
       padding: '13px 20px', width: '100%',
       background: active ? '#f5f4f0' : 'none',
       border: 'none', fontSize: '15px',
-      fontWeight: active ? 500 : 400, color: '#1a1a1a',
+      fontWeight: active ? 500 : 400, color: '#18181b',
       cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
     })
 
@@ -135,7 +135,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
               }}
               onClick={e => e.stopPropagation()}
             >
-              <div style={{ width: '36px', height: '4px', background: '#d4d3cf', borderRadius: '2px', margin: '12px auto 4px' }} />
+              <div style={{ width: '36px', height: '4px', background: '#e2e1dd', borderRadius: '2px', margin: '12px auto 4px' }} />
               <div style={{ padding: '4px 0 8px' }}>
                 <div style={drawerSection}>Settings</div>
                 {SETTINGS_ITEMS.map(item => (
@@ -173,15 +173,15 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                   </>
                 )}
               </div>
-              <div style={{ borderTop: '1px solid #e8e8e4', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ borderTop: '1px solid #e2e1dd', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e 0%, #374151 100%)', color: '#fff', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{initials}</div>
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.1px' }}>{name}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', letterSpacing: '-0.1px' }}>{name}</div>
                     <div style={{ fontSize: '11px', color: '#a0a09c' }}>{email}</div>
                   </div>
                 </div>
-                <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: '1px solid #e8e8e4', borderRadius: '7px', padding: '7px 14px', fontSize: '13px', color: '#5f5f5c', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+                <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '7px 14px', fontSize: '13px', color: '#70706b', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
                   Sign out
                 </button>
               </div>

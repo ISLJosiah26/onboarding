@@ -8,8 +8,8 @@ export default function Toast({ message, type = 'success', onClose }) {
   }, [onClose, type])
 
   const colors = {
-    success: { bg: '#1a1a1a', color: '#fff' },
-    error: { bg: '#c74848', color: '#fff' },
+    success: { bg: '#18181b', color: '#fff' },
+    error: { bg: '#c04040', color: '#fff' },
     warning: { bg: '#d4901a', color: '#fff' }
   }
 

@@ -255,7 +255,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
             to: hrEmail,
             subject: `Onboarding complete: ${instance.employees.full_name}`,
             html: `
-              <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
+              <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #18181b;">
                 <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Onboarding marked complete</h2>
                 <p style="font-size: 14px; color: #444; line-height: 1.6;"><strong>${instance.employees.full_name}</strong> has completed their onboarding plan.</p>
                 <table style="font-size: 14px; color: #444; margin-top: 16px;">
@@ -354,42 +354,42 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
   )
 
   const styles = {
-    header: { padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' },
-    backLink: { fontSize: '12px', color: '#8a8a86', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px' },
+    header: { padding: '28px 40px 24px', borderBottom: '1px solid #e2e1dd' },
+    backLink: { fontSize: '12px', color: '#70706b', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px' },
     title: { fontSize: '22px', fontWeight: 600, letterSpacing: '-0.4px' },
-    sub: { fontSize: '13px', color: '#8a8a86', marginTop: '3px' },
+    sub: { fontSize: '13px', color: '#70706b', marginTop: '3px' },
     progressRow: { marginTop: '20px', display: 'flex', alignItems: 'center', gap: '16px' },
-    progressTrack: { flex: 1, maxWidth: '320px', height: '6px', background: '#ebebe8', borderRadius: '3px', overflow: 'hidden' },
+    progressTrack: { flex: 1, maxWidth: '320px', height: '6px', background: '#e2e1dd', borderRadius: '3px', overflow: 'hidden' },
     progressFill: { height: '100%', transition: 'width 0.3s ease' },
-    progressText: { fontSize: '12px', color: '#8a8a86' },
+    progressText: { fontSize: '12px', color: '#70706b' },
     progressPct: { fontSize: '12px', fontWeight: 500 },
     content: { padding: '32px 40px', maxWidth: '780px' },
-    sectionLabel: { fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-    uploadLink: { fontSize: '12px', color: '#0070CA', cursor: 'pointer', fontWeight: 500, textTransform: 'none', letterSpacing: 0 },
-    taskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efeb', cursor: 'pointer' },
-    parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efeb', cursor: 'pointer' },
+    sectionLabel: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+    uploadLink: { fontSize: '12px', color: '#0066cc', cursor: 'pointer', fontWeight: 500, textTransform: 'none', letterSpacing: 0 },
+    taskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
+    parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
     subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#fafaf9' },
-    checkbox: (checked) => ({ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d4d3cf', background: checked ? '#0070CA' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
-    subtaskCheckbox: (checked) => ({ width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d4d3cf', background: checked ? '#0070CA' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
-    taskName: (checked) => ({ fontSize: '13px', color: checked ? '#a8a8a4' : '#1a1a1a', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
-    subtaskName: (checked) => ({ fontSize: '12px', color: checked ? '#a8a8a4' : '#5f5f5c', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
-    owner: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f4f3f1', color: '#8a8a86', fontWeight: 500 },
-    chevron: (open) => ({ fontSize: '10px', color: '#a8a8a4', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }),
-    subtaskCount: { fontSize: '11px', color: '#a8a8a4', flexShrink: 0 },
-    expandedPanel: { background: '#fafaf9', border: '1px solid #ebebe8', borderRadius: '8px', padding: '14px', marginTop: '2px', marginBottom: '4px' },
-    noteLabel: { fontSize: '11px', color: '#8a8a86', marginBottom: '6px', fontWeight: 500 },
-    noteInput: { width: '100%', border: '1px solid #ebebe8', borderRadius: '6px', padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#1a1a1a', resize: 'vertical', minHeight: '60px', boxSizing: 'border-box' },
-    noteHint: { fontSize: '11px', color: '#a8a8a4', marginTop: '6px' },
-    noteIndicator: { fontSize: '11px', color: '#0070CA', marginLeft: '4px' },
+    checkbox: (checked) => ({ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
+    subtaskCheckbox: (checked) => ({ width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
+    taskName: (checked) => ({ fontSize: '13px', color: checked ? '#a4a39f' : '#18181b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
+    subtaskName: (checked) => ({ fontSize: '12px', color: checked ? '#a4a39f' : '#70706b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
+    owner: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f4f3ef', color: '#70706b', fontWeight: 500 },
+    chevron: (open) => ({ fontSize: '10px', color: '#a4a39f', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }),
+    subtaskCount: { fontSize: '11px', color: '#a4a39f', flexShrink: 0 },
+    expandedPanel: { background: '#fafaf9', border: '1px solid #e2e1dd', borderRadius: '8px', padding: '14px', marginTop: '2px', marginBottom: '4px' },
+    noteLabel: { fontSize: '11px', color: '#70706b', marginBottom: '6px', fontWeight: 500 },
+    noteInput: { width: '100%', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#18181b', resize: 'vertical', minHeight: '60px', boxSizing: 'border-box' },
+    noteHint: { fontSize: '11px', color: '#a4a39f', marginTop: '6px' },
+    noteIndicator: { fontSize: '11px', color: '#0066cc', marginLeft: '4px' },
     section: { marginBottom: '36px' },
-    footer: { borderTop: '1px solid #ebebe8', padding: '24px 40px', display: 'flex', gap: '8px' },
-    btnPrimary: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
-    btnSecondary: { background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }
+    footer: { borderTop: '1px solid #e2e1dd', padding: '24px 40px', display: 'flex', gap: '8px' },
+    btnPrimary: { background: '#18181b', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+    btnSecondary: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }
   }
 
   if (loading) return (
     <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
-      <div style={{ padding: '28px 40px 24px', borderBottom: '1px solid #ebebe8' }}>
+      <div style={{ padding: '28px 40px 24px', borderBottom: '1px solid #e2e1dd' }}>
         <SkeletonLine width="120px" height="12px" style={{ marginBottom: '16px' }} />
         <SkeletonLine width="220px" height="22px" style={{ marginBottom: '8px' }} />
         <SkeletonLine width="280px" height="13px" style={{ marginBottom: '20px' }} />
@@ -413,8 +413,8 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
   if (fetchError) return (
     <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
       <div style={{ padding: '80px 40px', textAlign: 'center', fontFamily: 'Inter, -apple-system, sans-serif' }}>
-        <div style={{ color: '#c74848', fontSize: '14px', marginBottom: '12px' }}>{fetchError}</div>
-        <button onClick={fetchPlan} style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+        <div style={{ color: '#c04040', fontSize: '14px', marginBottom: '12px' }}>{fetchError}</div>
+        <button onClick={fetchPlan} style={{ fontSize: '13px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
           Try again
         </button>
       </div>
@@ -433,16 +433,16 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={styles.title}>{instance.employees.full_name}</div>
-          <button onClick={() => setEditingEmployee(true)} style={{ fontSize: '12px', color: '#5f5f5c', background: 'none', border: '1px solid #d4d3cf', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
-          <button onClick={handleDeleteEmployee} style={{ fontSize: '12px', color: '#c74848', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '4px 2px' }}>Delete</button>
+          <button onClick={() => setEditingEmployee(true)} style={{ fontSize: '12px', color: '#70706b', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+          <button onClick={handleDeleteEmployee} style={{ fontSize: '12px', color: '#c04040', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '4px 2px' }}>Delete</button>
         </div>
         <div style={styles.sub}>
           {instance.employees.roles?.name} · Started {new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
         </div>
         <div style={styles.progressRow}>
           <span style={styles.progressText}>{completedTasksCount()} of {totalTasks()} tasks complete</span>
-          <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct()}%`, background: pct() === 100 ? '#2d7a4a' : '#0070CA' }}></div></div>
-          <span style={{ ...styles.progressPct, color: pct() === 100 ? '#2d7a4a' : '#0070CA' }}>{pct()}%</span>
+          <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct()}%`, background: pct() === 100 ? '#1a7a4a' : '#0066cc' }}></div></div>
+          <span style={{ ...styles.progressPct, color: pct() === 100 ? '#1a7a4a' : '#0066cc' }}>{pct()}%</span>
         </div>
       </div>
 
@@ -458,7 +458,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
           </div>
 
           {visibleDocs.length === 0 && hiddenDocs.length === 0 && (
-            <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '12px 0' }}>No documents in the library yet.</div>
+            <div style={{ fontSize: '13px', color: '#a4a39f', padding: '12px 0' }}>No documents in the library yet.</div>
           )}
 
           {visibleDocs.map(doc => {
@@ -466,7 +466,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
             const signed = dc?.signed || false
             const completedFileUrl = dc?.completed_file_url || null
             return (
-              <div key={doc.id} style={{ borderBottom: '1px solid #f0efeb', paddingBottom: '12px', marginBottom: '4px' }}>
+              <div key={doc.id} style={{ borderBottom: '1px solid #f0efe9', paddingBottom: '12px', marginBottom: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0 4px' }} onClick={(e) => toggleDocument(doc.id, e)}>
                   <div style={styles.checkbox(signed)}>
                     {signed && checkIcon()}
@@ -474,20 +474,20 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
                   <div style={styles.taskName(signed)}>{doc.name}</div>
                   <a href={doc.file_url} target="_blank" rel="noreferrer"
                     onClick={e => e.stopPropagation()}
-                    style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none', flexShrink: 0 }}>
+                    style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none', flexShrink: 0 }}>
                     View
                   </a>
                   <button
                     onClick={(e) => { e.stopPropagation(); hideDocument(doc.id) }}
-                    style={{ fontSize: '11px', color: '#a8a8a4', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                    style={{ fontSize: '11px', color: '#a4a39f', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
                     Hide
                   </button>
                 </div>
                 {completedFileUrl && (
                   <div style={{ paddingLeft: '32px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: '#2d7a4a' }}>✓ Employee uploaded</span>
+                    <span style={{ fontSize: '12px', color: '#1a7a4a' }}>✓ Employee uploaded</span>
                     <a href={completedFileUrl} target="_blank" rel="noreferrer"
-                      style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none' }}>
+                      style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none' }}>
                       Download
                     </a>
                   </div>
@@ -500,15 +500,15 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
             <div style={{ marginTop: '8px' }}>
               <button
                 onClick={() => setShowHiddenDocs(prev => !prev)}
-                style={{ fontSize: '12px', color: '#8a8a86', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ fontSize: '12px', color: '#70706b', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {showHiddenDocs ? `Collapse (${hiddenDocs.length} shown)` : `Show hidden (${hiddenDocs.length})`}
               </button>
               {showHiddenDocs && hiddenDocs.map(doc => (
-                <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: '1px solid #f0efeb', opacity: 0.5 }}>
-                  <div style={{ flex: 1, fontSize: '13px', color: '#8a8a86', textDecoration: 'line-through' }}>{doc.name}</div>
+                <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: '1px solid #f0efe9', opacity: 0.5 }}>
+                  <div style={{ flex: 1, fontSize: '13px', color: '#70706b', textDecoration: 'line-through' }}>{doc.name}</div>
                   <button
                     onClick={() => restoreDocument(doc.id)}
-                    style={{ fontSize: '12px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ fontSize: '12px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                     Restore
                   </button>
                 </div>
@@ -535,9 +535,9 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
 
           return (
             <div key={phase} style={styles.section}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', paddingBottom: '10px', borderBottom: `1px solid ${phaseComplete ? '#c3e8d1' : '#f0efeb'}`, transition: 'border-color 0.25s ease' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: phaseComplete ? '#2d7a4a' : '#a0a09c', textTransform: 'uppercase', letterSpacing: '0.4px', transition: 'color 0.25s ease' }}>{phase}</span>
-                <span style={{ fontSize: '11px', color: phaseComplete ? '#2d7a4a' : '#a0a09c', fontWeight: 400, transition: 'color 0.25s ease' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', paddingBottom: '10px', borderBottom: `1px solid ${phaseComplete ? '#c3e8d1' : '#f0efe9'}`, transition: 'border-color 0.25s ease' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: phaseComplete ? '#1a7a4a' : '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.4px', transition: 'color 0.25s ease' }}>{phase}</span>
+                <span style={{ fontSize: '11px', color: phaseComplete ? '#1a7a4a' : '#a4a39f', fontWeight: 400, transition: 'color 0.25s ease' }}>
                   {completedInPhase}/{parentTasks.length}{phaseComplete ? ' · Complete' : ''}
                 </span>
               </div>
@@ -609,7 +609,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
                           onBlur={e => { clearTimeout(noteTimers.current[tc.id]); saveNote(tc.id, e.target.value) }}
                           placeholder="Add a note about this task..."
                         />
-                        <div style={{ ...styles.noteHint, color: noteSaveState[tc.id] === 'saved' ? '#2d7a4a' : '#a8a8a4' }}>
+                        <div style={{ ...styles.noteHint, color: noteSaveState[tc.id] === 'saved' ? '#1a7a4a' : '#a4a39f' }}>
                           {noteSaveState[tc.id] === 'saving' ? 'Saving…' : noteSaveState[tc.id] === 'saved' ? '✓ Saved' : 'Saves automatically.'}
                         </div>
                       </div>
@@ -627,10 +627,10 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
         <button style={styles.btnSecondary} onClick={handleArchive}>Archive</button>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
           {inviteSent ? (
-            <span style={{ fontSize: '13px', color: '#2d7a4a' }}>Invite sent</span>
+            <span style={{ fontSize: '13px', color: '#1a7a4a' }}>Invite sent</span>
           ) : (
             <button onClick={handleInviteEmployee} disabled={inviting}
-              style={{ background: 'transparent', color: '#0070CA', border: '1px solid #0070CA', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ background: 'transparent', color: '#0066cc', border: '1px solid #0066cc', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
               {inviting ? 'Sending...' : 'Invite to portal'}
             </button>
           )}
