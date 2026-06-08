@@ -856,12 +856,38 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
             {companyResources.length === 0 ? (
               <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '20px 0' }}>No company resources have been added yet.</div>
             ) : (
-              companyResources.map(doc => (
-                <div key={doc.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0efeb', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ flex: 1, fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>{doc.name}</div>
-                  <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0070CA', textDecoration: 'none', flexShrink: 0 }}>View</a>
-                </div>
-              ))
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
+                {companyResources.map(doc => {
+                  const rawExt = (doc.file_url || '').split('?')[0].split('.').pop().toLowerCase()
+                  const ext = rawExt.length <= 5 ? rawExt : ''
+                  const typeLabel = ext === 'pdf' ? 'PDF' : ext === 'docx' || ext === 'doc' ? 'DOC' : ext === 'xlsx' || ext === 'xls' ? 'XLS' : ext === 'pptx' || ext === 'ppt' ? 'PPT' : ext ? ext.toUpperCase() : 'FILE'
+                  const iconBg = ext === 'pdf' ? '#fff1f0' : ext === 'docx' || ext === 'doc' ? '#f0f7ff' : ext === 'xlsx' || ext === 'xls' ? '#f0faf4' : ext === 'pptx' || ext === 'ppt' ? '#fff8f0' : '#f4f3f1'
+                  const iconStroke = ext === 'pdf' ? '#c74848' : ext === 'docx' || ext === 'doc' ? '#0070CA' : ext === 'xlsx' || ext === 'xls' ? '#2d7a4a' : ext === 'pptx' || ext === 'ppt' ? '#c27a30' : '#6b6b67'
+                  return (
+                    <a
+                      key={doc.id}
+                      href={doc.file_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="il-resource-tile"
+                      style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '14px', textDecoration: 'none', color: '#1a1a1a' }}
+                    >
+                      <div style={{ width: '34px', height: '34px', borderRadius: '7px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', flexShrink: 0 }}>
+                        <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke={iconStroke} strokeWidth="1.5">
+                          <path d="M3 2h6l3 3v7H3z"/><path d="M9 2v3h3"/>
+                        </svg>
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', lineHeight: '1.4', flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                        {doc.name}
+                      </div>
+                      <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 600, color: '#8a8a86', background: '#f0efeb', borderRadius: '3px', padding: '1px 5px' }}>{typeLabel}</span>
+                        <span style={{ fontSize: '11px', color: '#a8a8a4' }}>Open ↗</span>
+                      </div>
+                    </a>
+                  )
+                })}
+              </div>
             )}
           </div>
         )}

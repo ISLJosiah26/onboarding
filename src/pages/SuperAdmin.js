@@ -6,6 +6,7 @@ import Toast from '../components/Toast'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const ACTION_LABELS = {
   onboarding_created: 'Onboarding created',
@@ -25,28 +26,12 @@ const ACTION_LABELS = {
 const CHANGEABLE_ROLES = ['admin', 'manager', 'employee']
 
 const s = {
-  header: { padding: '28px 40px 0', borderBottom: '1px solid #ebebe8' },
-  title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.4px', marginBottom: '20px' },
-  tabBar: { display: 'flex', gap: '0', marginTop: '0' },
-  tab: (active) => ({
-    padding: '10px 18px',
-    fontSize: '13px',
-    fontWeight: active ? 500 : 400,
-    color: active ? '#1a1a1a' : '#8a8a86',
-    background: 'none',
-    border: 'none',
-    borderBottom: active ? '2px solid #1a1a1a' : '2px solid transparent',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    marginBottom: '-1px',
-  }),
-  content: { padding: '32px 40px', maxWidth: '900px' },
   table: { width: '100%', borderCollapse: 'collapse' },
   th: { fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.3px', padding: '0 12px 10px 0', textAlign: 'left', borderBottom: '1px solid #ebebe8' },
   td: { fontSize: '13px', color: '#1a1a1a', padding: '12px 12px 12px 0', borderBottom: '1px solid #f0efeb', verticalAlign: 'middle' },
   statusDot: (active) => ({
     display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
-    background: active ? '#2d7a4a' : '#c74848', marginRight: 6, flexShrink: 0
+    background: active ? '#2d7a4a' : '#c74848', marginRight: 6, flexShrink: 0,
   }),
   select: { border: '1px solid #ebebe8', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', fontFamily: 'inherit', background: '#fff', color: '#1a1a1a', outline: 'none', cursor: 'pointer' },
   btnSmall: (danger) => ({
@@ -55,18 +40,9 @@ const s = {
     background: 'transparent',
     color: danger ? '#c74848' : '#5f5f5c',
   }),
-  filterRow: { display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' },
   filterSelect: { border: '1px solid #ebebe8', borderRadius: '6px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: '#fff', color: '#1a1a1a', outline: 'none' },
   filterInput: { border: '1px solid #ebebe8', borderRadius: '6px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: '#fff', color: '#1a1a1a', outline: 'none' },
-  logRow: { display: 'flex', gap: '16px', padding: '12px 0', borderBottom: '1px solid #f0efeb', alignItems: 'flex-start' },
-  logTime: { fontSize: '12px', color: '#a8a8a4', whiteSpace: 'nowrap', minWidth: '140px' },
-  logUser: { fontSize: '12px', color: '#5f5f5c', minWidth: '160px' },
-  logAction: { fontSize: '13px', color: '#1a1a1a', fontWeight: 500, flex: 1 },
-  logEntity: { fontSize: '12px', color: '#8a8a86', marginTop: '2px' },
-  settingRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 0', borderBottom: '1px solid #f0efeb' },
-  settingKey: { fontSize: '13px', fontWeight: 500, color: '#1a1a1a', minWidth: '200px' },
-  settingInput: { flex: 1, border: '1px solid #ebebe8', borderRadius: '7px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit', background: '#fff', color: '#1a1a1a', outline: 'none', maxWidth: '360px' },
-  btnSave: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 14px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+  btnSave: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 14px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 },
   empty: { padding: '40px 0', textAlign: 'center', color: '#a8a8a4', fontSize: '13px' },
   badge: (role) => {
     const colors = {
@@ -93,33 +69,46 @@ const PAGE_MAP = {
 }
 
 export default function SuperAdmin({ session, userProfile, currentPage, onNavigate }) {
+  const { isMobile } = useWindowSize()
   const tab = TAB_MAP[currentPage] || 'Users'
 
-  function setTab(t) {
-    onNavigate(PAGE_MAP[t])
-  }
+  function setTab(t) { onNavigate(PAGE_MAP[t]) }
+
+  const p = isMobile ? '16px' : '40px'
 
   return (
     <Layout session={session} userProfile={userProfile} currentPage={currentPage} onNavigate={onNavigate}>
-      <div style={s.header}>
-        <div style={s.title}>System</div>
-        <div style={s.tabBar}>
+      <div style={{ padding: isMobile ? '16px 16px 0' : '28px 40px 0', borderBottom: '1px solid #ebebe8' }}>
+        <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 600, letterSpacing: '-0.4px', marginBottom: '16px' }}>System</div>
+        <div style={{ display: 'flex', gap: '0', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', marginBottom: '-1px' }}>
           {['Users', 'Audit Log', 'System Settings'].map(t => (
-            <button key={t} style={s.tab(tab === t)} onClick={() => setTab(t)}>{t}</button>
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                padding: isMobile ? '10px 14px' : '10px 18px',
+                fontSize: '13px', fontWeight: tab === t ? 500 : 400,
+                color: tab === t ? '#1a1a1a' : '#8a8a86',
+                background: 'none', border: 'none',
+                borderBottom: tab === t ? '2px solid #1a1a1a' : '2px solid transparent',
+                cursor: 'pointer', fontFamily: 'inherit',
+                whiteSpace: 'nowrap', flexShrink: 0,
+              }}
+            >{t}</button>
           ))}
         </div>
       </div>
 
-      <div style={s.content}>
-        {tab === 'Users' && <UsersTab />}
-        {tab === 'Audit Log' && <AuditLogTab />}
-        {tab === 'System Settings' && <SystemSettingsTab />}
+      <div style={{ padding: isMobile ? '20px 16px' : '32px 40px', maxWidth: isMobile ? 'none' : '900px' }}>
+        {tab === 'Users' && <UsersTab isMobile={isMobile} p={p} />}
+        {tab === 'Audit Log' && <AuditLogTab isMobile={isMobile} />}
+        {tab === 'System Settings' && <SystemSettingsTab isMobile={isMobile} />}
       </div>
     </Layout>
   )
 }
 
-function UsersTab() {
+function UsersTab({ isMobile }) {
   const [users, setUsers] = useState([])
   const [allEmployees, setAllEmployees] = useState([])
   const [loading, setLoading] = useState(true)
@@ -186,10 +175,7 @@ function UsersTab() {
   }
 
   async function handleRoleChange(userId, newRole, userEmail) {
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({ role: newRole })
-      .eq('id', userId)
+    const { error } = await supabase.from('user_profiles').update({ role: newRole }).eq('id', userId)
     if (error) {
       showToast(handleSupabaseError(error, 'Failed to update role.'), 'error')
     } else {
@@ -201,17 +187,11 @@ function UsersTab() {
 
   async function handleToggleDeactivated(userId, currentDeactivated, userEmail) {
     const newDeactivated = !currentDeactivated
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({ deactivated: newDeactivated })
-      .eq('id', userId)
+    const { error } = await supabase.from('user_profiles').update({ deactivated: newDeactivated }).eq('id', userId)
     if (error) {
       showToast(handleSupabaseError(error, 'Failed to update user status.'), 'error')
     } else {
-      await logAudit(
-        newDeactivated ? 'user_deactivated' : 'user_reactivated',
-        'user', userId, { user_email: userEmail }
-      )
+      await logAudit(newDeactivated ? 'user_deactivated' : 'user_reactivated', 'user', userId, { user_email: userEmail })
       showToast(newDeactivated ? 'User deactivated' : 'User reactivated')
       fetchUsers()
     }
@@ -234,7 +214,7 @@ function UsersTab() {
           onClick={() => setShowInvitePanel(o => !o)}
           style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', background: showInvitePanel ? '#fafaf9' : '#fff', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>Invite a user</span>
             {unlinkedEmployees.length > 0 && (
               <span style={{ fontSize: '11px', fontWeight: 500, background: '#e8f4ff', color: '#0070CA', padding: '1px 7px', borderRadius: '10px' }}>
@@ -242,12 +222,12 @@ function UsersTab() {
               </span>
             )}
           </div>
-          <span style={{ fontSize: '11px', color: '#a8a8a4' }}>{showInvitePanel ? '▲' : '▼'}</span>
+          <span style={{ fontSize: '11px', color: '#a8a8a4', flexShrink: 0 }}>{showInvitePanel ? '▲' : '▼'}</span>
         </button>
 
         {showInvitePanel && (
           <div style={{ borderTop: '1px solid #ebebe8' }}>
-            <div style={{ display: 'flex', padding: '0 20px', borderBottom: '1px solid #ebebe8' }}>
+            <div style={{ display: 'flex', padding: '0 20px', borderBottom: '1px solid #ebebe8', overflowX: 'auto' }}>
               <button style={inviteTabStyle(inviteMode === 'employees')} onClick={() => setInviteMode('employees')}>
                 Employees without login ({unlinkedEmployees.length})
               </button>
@@ -262,13 +242,13 @@ function UsersTab() {
                   <div style={{ fontSize: '13px', color: '#a8a8a4', padding: '8px 0' }}>All employees already have a login.</div>
                 ) : (
                   unlinkedEmployees.map(emp => (
-                    <div key={emp.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f0efeb' }}>
+                    <div key={emp.id} style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '10px' : '12px', padding: '10px 0', borderBottom: '1px solid #f0efeb' }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a' }}>{emp.full_name}</div>
                         <div style={{ fontSize: '12px', color: '#8a8a86' }}>{emp.email}{emp.brand ? ` · ${emp.brand}` : ''}</div>
                       </div>
                       {pendingInvite === emp.id ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                           <select value={pendingRole} onChange={e => setPendingRole(e.target.value)} style={s.select}>
                             {CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                           </select>
@@ -289,23 +269,23 @@ function UsersTab() {
               )}
 
               {inviteMode === 'manual' && (
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                  <div>
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '8px', flexWrap: 'wrap', alignItems: isMobile ? 'stretch' : 'flex-end' }}>
+                  <div style={{ flex: isMobile ? 'none' : undefined }}>
                     <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Email</div>
                     <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && sendManualInvite()}
                       placeholder="name@example.com"
-                      style={{ border: '1px solid #ebebe8', borderRadius: '6px', padding: '7px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', minWidth: '220px', color: '#1a1a1a' }} />
+                      style={{ border: '1px solid #ebebe8', borderRadius: '6px', padding: '7px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'none' : '220px', color: '#1a1a1a', boxSizing: 'border-box' }} />
                   </div>
                   <div>
                     <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Role</div>
-                    <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} style={s.filterSelect}>
+                    <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} style={{ ...s.filterSelect, width: isMobile ? '100%' : 'auto' }}>
                       {CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
                   <div>
                     <div style={{ fontSize: '11px', color: '#8a8a86', marginBottom: '4px' }}>Brand</div>
-                    <select value={inviteBrand} onChange={e => setInviteBrand(e.target.value)} style={s.filterSelect}>
+                    <select value={inviteBrand} onChange={e => setInviteBrand(e.target.value)} style={{ ...s.filterSelect, width: isMobile ? '100%' : 'auto' }}>
                       <option value="">—</option>
                       <option value="ISL">ISL</option>
                       <option value="AS">AS</option>
@@ -323,29 +303,22 @@ function UsersTab() {
         )}
       </div>
 
-      {/* ── Users table ── */}
-      <table style={s.table}>
-        <thead>
-          <tr>
-            <th style={s.th}>User</th>
-            <th style={s.th}>Role</th>
-            <th style={s.th}>Brand</th>
-            <th style={s.th}>Created</th>
-            <th style={s.th}>Last sign in</th>
-            <th style={s.th}>Status</th>
-            <th style={s.th}></th>
-          </tr>
-        </thead>
-        <tbody>
+      {/* ── Users list ── */}
+      {isMobile ? (
+        <div>
           {users.map(u => (
-            <tr key={u.id}>
-              <td style={s.td}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div key={u.id} style={{ border: '1px solid #f0efeb', borderRadius: '8px', padding: '14px', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
                   <span style={s.statusDot(!u.deactivated)} />
-                  <div style={{ fontSize: 13, color: '#1a1a1a' }}>{u.email}</div>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a', wordBreak: 'break-all', lineHeight: '1.4' }}>{u.email}</div>
                 </div>
-              </td>
-              <td style={s.td}>
+                <span style={{ fontSize: '11px', color: u.deactivated ? '#c74848' : '#2d7a4a', fontWeight: 500, flexShrink: 0 }}>
+                  {u.deactivated ? 'Deactivated' : 'Active'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                 {u.role === 'super_admin' ? (
                   <span style={s.badge('super_admin')}>super_admin</span>
                 ) : (
@@ -361,29 +334,83 @@ function UsersTab() {
                     }
                   </select>
                 )}
-              </td>
-              <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.brand || '—'}</span></td>
-              <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'}</span></td>
-              <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}</span></td>
-              <td style={s.td}><span style={{ fontSize: 12, color: u.deactivated ? '#c74848' : '#2d7a4a', fontWeight: 500 }}>{u.deactivated ? 'Deactivated' : 'Active'}</span></td>
-              <td style={s.td}>
-                {u.role !== 'super_admin' && u.role && u.role !== 'none' && (
-                  <button style={s.btnSmall(u.deactivated ? false : true)} onClick={() => handleToggleDeactivated(u.id, u.deactivated, u.email)}>
-                    {u.deactivated ? 'Reactivate' : 'Deactivate'}
-                  </button>
-                )}
-              </td>
-            </tr>
+                {u.brand && <span style={{ fontSize: '11px', color: '#8a8a86', background: '#f4f3f1', borderRadius: '4px', padding: '2px 6px' }}>{u.brand}</span>}
+              </div>
+
+              <div style={{ fontSize: '11px', color: '#a8a8a4', marginBottom: '10px' }}>
+                Joined {u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'} · Last login {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}
+              </div>
+
+              {u.role !== 'super_admin' && u.role && u.role !== 'none' && (
+                <button style={s.btnSmall(u.deactivated ? false : true)} onClick={() => handleToggleDeactivated(u.id, u.deactivated, u.email)}>
+                  {u.deactivated ? 'Reactivate' : 'Deactivate'}
+                </button>
+              )}
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      ) : (
+        <table style={s.table}>
+          <thead>
+            <tr>
+              <th style={s.th}>User</th>
+              <th style={s.th}>Role</th>
+              <th style={s.th}>Brand</th>
+              <th style={s.th}>Created</th>
+              <th style={s.th}>Last sign in</th>
+              <th style={s.th}>Status</th>
+              <th style={s.th}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(u => (
+              <tr key={u.id}>
+                <td style={s.td}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={s.statusDot(!u.deactivated)} />
+                    <div style={{ fontSize: 13, color: '#1a1a1a' }}>{u.email}</div>
+                  </div>
+                </td>
+                <td style={s.td}>
+                  {u.role === 'super_admin' ? (
+                    <span style={s.badge('super_admin')}>super_admin</span>
+                  ) : (
+                    <select
+                      style={s.select}
+                      value={u.role || 'none'}
+                      onChange={e => handleRoleChange(u.id, e.target.value, u.email)}
+                      disabled={!u.role || u.role === 'none'}
+                    >
+                      {!u.role || u.role === 'none'
+                        ? <option value="none">No profile</option>
+                        : CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)
+                      }
+                    </select>
+                  )}
+                </td>
+                <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.brand || '—'}</span></td>
+                <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'}</span></td>
+                <td style={s.td}><span style={{ fontSize: 12, color: '#8a8a86' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}</span></td>
+                <td style={s.td}><span style={{ fontSize: 12, color: u.deactivated ? '#c74848' : '#2d7a4a', fontWeight: 500 }}>{u.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                <td style={s.td}>
+                  {u.role !== 'super_admin' && u.role && u.role !== 'none' && (
+                    <button style={s.btnSmall(u.deactivated ? false : true)} onClick={() => handleToggleDeactivated(u.id, u.deactivated, u.email)}>
+                      {u.deactivated ? 'Reactivate' : 'Deactivate'}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       {users.length === 0 && <div style={s.empty}>No users found.</div>}
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </>
   )
 }
 
-function AuditLogTab() {
+function AuditLogTab({ isMobile }) {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterAction, setFilterAction] = useState('')
@@ -412,9 +439,12 @@ function AuditLogTab() {
 
   function formatTime(ts) {
     if (!ts) return '—'
+    if (isMobile) {
+      return new Date(ts).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+    }
     return new Date(ts).toLocaleString('en-CA', {
       month: 'short', day: 'numeric', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
+      hour: '2-digit', minute: '2-digit',
     })
   }
 
@@ -431,35 +461,23 @@ function AuditLogTab() {
 
   return (
     <>
-      <div style={s.filterRow}>
-        <select style={s.filterSelect} value={filterAction} onChange={e => { setFilterAction(e.target.value); setLogLimit(100) }}>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <select style={{ ...s.filterSelect, flex: isMobile ? '1 1 100%' : undefined }} value={filterAction} onChange={e => { setFilterAction(e.target.value); setLogLimit(100) }}>
           <option value="">All actions</option>
           {Object.entries(ACTION_LABELS).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
-        <input
-          style={s.filterInput}
-          type="date"
-          value={filterFrom}
-          onChange={e => { setFilterFrom(e.target.value); setLogLimit(100) }}
-          placeholder="From"
-        />
-        <span style={{ fontSize: 12, color: '#a8a8a4' }}>to</span>
-        <input
-          style={s.filterInput}
-          type="date"
-          value={filterTo}
-          onChange={e => { setFilterTo(e.target.value); setLogLimit(100) }}
-          placeholder="To"
-        />
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', flex: isMobile ? '1 1 100%' : undefined }}>
+          <input style={{ ...s.filterInput, flex: 1, minWidth: '120px' }} type="date" value={filterFrom} onChange={e => { setFilterFrom(e.target.value); setLogLimit(100) }} />
+          <span style={{ fontSize: 12, color: '#a8a8a4', flexShrink: 0 }}>to</span>
+          <input style={{ ...s.filterInput, flex: 1, minWidth: '120px' }} type="date" value={filterTo} onChange={e => { setFilterTo(e.target.value); setLogLimit(100) }} />
+        </div>
         {(filterAction || filterFrom || filterTo) && (
           <button
             style={{ fontSize: 12, color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
             onClick={() => { setFilterAction(''); setFilterFrom(''); setFilterTo(''); setLogLimit(100) }}
-          >
-            Clear
-          </button>
+          >Clear</button>
         )}
       </div>
 
@@ -470,16 +488,30 @@ function AuditLogTab() {
       ) : (
         <>
           {logs.map(log => (
-            <div key={log.id} style={s.logRow}>
-              <div style={s.logTime}>{formatTime(log.created_at)}</div>
-              <div style={s.logUser}>{log.user_email || 'Unknown'}</div>
-              <div style={{ flex: 1 }}>
-                <div style={s.logAction}>{ACTION_LABELS[log.action] || log.action}</div>
+            isMobile ? (
+              <div key={log.id} style={{ padding: '12px 0', borderBottom: '1px solid #f0efeb' }}>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', marginBottom: '3px' }}>
+                  {ACTION_LABELS[log.action] || log.action}
+                </div>
                 {describeEntity(log) && (
-                  <div style={s.logEntity}>{describeEntity(log)}</div>
+                  <div style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '4px' }}>{describeEntity(log)}</div>
                 )}
+                <div style={{ fontSize: '11px', color: '#a8a8a4' }}>
+                  {formatTime(log.created_at)} · {log.user_email || 'Unknown'}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div key={log.id} style={{ display: 'flex', gap: '16px', padding: '12px 0', borderBottom: '1px solid #f0efeb', alignItems: 'flex-start' }}>
+                <div style={{ fontSize: '12px', color: '#a8a8a4', whiteSpace: 'nowrap', minWidth: '140px' }}>{formatTime(log.created_at)}</div>
+                <div style={{ fontSize: '12px', color: '#5f5f5c', minWidth: '160px' }}>{log.user_email || 'Unknown'}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500 }}>{ACTION_LABELS[log.action] || log.action}</div>
+                  {describeEntity(log) && (
+                    <div style={{ fontSize: '12px', color: '#8a8a86', marginTop: '2px' }}>{describeEntity(log)}</div>
+                  )}
+                </div>
+              </div>
+            )
           ))}
           {logs.length >= logLimit && (
             <button
@@ -494,7 +526,7 @@ function AuditLogTab() {
   )
 }
 
-function SystemSettingsTab() {
+function SystemSettingsTab({ isMobile }) {
   const [settings, setSettings] = useState([])
   const [values, setValues] = useState({})
   const [saving, setSaving] = useState({})
@@ -537,22 +569,22 @@ function SystemSettingsTab() {
   return (
     <>
       {settings.map(setting => (
-        <div key={setting.key} style={s.settingRow}>
-          <div style={s.settingKey}>{labelFor(setting.key)}</div>
-          <input
-            style={s.settingInput}
-            type="text"
-            value={values[setting.key] ?? ''}
-            onChange={e => setValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
-            onKeyDown={e => e.key === 'Enter' && handleSave(setting.key)}
-          />
-          <button
-            style={s.btnSave}
-            onClick={() => handleSave(setting.key)}
-            disabled={saving[setting.key]}
-          >
-            {saving[setting.key] ? 'Saving…' : 'Save'}
-          </button>
+        <div key={setting.key} style={{ padding: '16px 0', borderBottom: '1px solid #f0efeb' }}>
+          <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', marginBottom: isMobile ? '10px' : '0' }}>
+            {labelFor(setting.key)}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: isMobile ? '0' : '10px', flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
+            <input
+              style={{ flex: 1, border: '1px solid #ebebe8', borderRadius: '7px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit', background: '#fff', color: '#1a1a1a', outline: 'none', minWidth: 0 }}
+              type="text"
+              value={values[setting.key] ?? ''}
+              onChange={e => setValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
+              onKeyDown={e => e.key === 'Enter' && handleSave(setting.key)}
+            />
+            <button style={s.btnSave} onClick={() => handleSave(setting.key)} disabled={saving[setting.key]}>
+              {saving[setting.key] ? 'Saving…' : 'Save'}
+            </button>
+          </div>
         </div>
       ))}
       {settings.length === 0 && <div style={s.empty}>No settings configured.</div>}
