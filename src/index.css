@@ -133,6 +133,37 @@ a:focus-visible {
   to { opacity: 1; }
 }
 
+@keyframes drawerSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Mobile drawer slide-up */
+.il-drawer {
+  animation: drawerSlideUp 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Page / tab content entry */
+.il-page {
+  animation: fadeIn 0.12s ease;
+}
+
+/* Tab badge pill */
+.il-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

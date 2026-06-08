@@ -8,6 +8,7 @@ import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { getHrEmail } from '../utils/getHrEmail'
 import { logAudit } from '../utils/auditLog'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
 const CURRENT_YEAR = new Date().getFullYear()
@@ -114,6 +115,7 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
   const [employee, setEmployee] = useState(null)
   const [celebration, setCelebration] = useState(null)
   const { toast, showToast, hideToast } = useToast()
+  const { isMobile } = useWindowSize()
   const [uploadingDocId, setUploadingDocId] = useState(null)
   const celebrationTimer = useRef(null)
 
@@ -594,19 +596,19 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
   const styles = {
     app: { minHeight: '100vh', background: '#fafaf9', fontFamily: 'Inter, -apple-system, sans-serif', color: '#1a1a1a' },
-    topbar: { background: '#fff', borderBottom: '1px solid #ebebe8', padding: '0 32px', height: '54px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+    topbar: { background: '#fff', borderBottom: '1px solid #ebebe8', padding: isMobile ? '0 16px' : '0 32px', height: isMobile ? '48px' : '54px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
     logo: { fontSize: '14px', fontWeight: 600, color: '#0070CA', letterSpacing: '-0.2px' },
     signout: { fontSize: '12px', color: '#a8a8a4', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' },
-    hero: { padding: '40px 40px 0', maxWidth: '720px', margin: '0 auto' },
-    name: { fontSize: '24px', fontWeight: 600, letterSpacing: '-0.4px', marginBottom: '4px' },
+    hero: { padding: isMobile ? '20px 16px 0' : '40px 40px 0', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
+    name: { fontSize: isMobile ? '20px' : '24px', fontWeight: 600, letterSpacing: '-0.4px', marginBottom: '4px' },
     sub: { fontSize: '13px', color: '#8a8a86' },
-    progressWrap: { marginTop: '20px', marginBottom: '32px' },
+    progressWrap: { marginTop: '20px', marginBottom: isMobile ? '20px' : '32px' },
     progressRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
     progressTrack: { height: '6px', background: '#ebebe8', borderRadius: '3px', overflow: 'hidden' },
-    progressFill: { height: '100%', background: '#0070CA', borderRadius: '3px', transition: 'width 0.3s ease' },
-    tabs: { display: 'flex', gap: '0', borderBottom: '1px solid #ebebe8', padding: '0 40px', maxWidth: '720px', margin: '0 auto' },
-    tab: (active) => ({ fontSize: '13px', fontWeight: active ? 500 : 400, color: active ? '#1a1a1a' : '#8a8a86', padding: '10px 0', marginRight: '24px', background: 'none', border: 'none', borderBottom: active ? '2px solid #1a1a1a' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit' }),
-    content: { padding: '28px 40px', maxWidth: '720px', margin: '0 auto' },
+    progressFill: { height: '100%', background: '#0070CA', borderRadius: '3px', transition: 'width 0.4s ease' },
+    tabs: { display: 'flex', gap: '0', borderBottom: '1px solid #ebebe8', padding: isMobile ? '0 16px' : '0 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
+    tab: (active) => ({ fontSize: '13px', fontWeight: active ? 500 : 400, color: active ? '#1a1a1a' : '#8a8a86', padding: '10px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: active ? '2px solid #1a1a1a' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }),
+    content: { padding: isMobile ? '20px 16px' : '28px 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
     phaseLabel: { fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px', marginTop: '24px' },
     parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 0', borderBottom: '1px solid #f0efeb', cursor: 'pointer' },
     subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#f7f6f4' },
@@ -616,12 +618,12 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     subtaskName: (checked) => ({ fontSize: '13px', color: checked ? '#a8a8a4' : '#5f5f5c', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
     chevron: (open) => ({ fontSize: '10px', color: '#a8a8a4', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }),
     subtaskCount: { fontSize: '11px', color: '#a8a8a4' },
-    balCard: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '20px', marginBottom: '24px' },
-    balGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' },
+    balCard: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: isMobile ? '16px' : '20px', marginBottom: '24px' },
+    balGrid: { display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '12px' : '16px' },
     balStat: { textAlign: 'center' },
     balNum: (warn) => ({ fontSize: '24px', fontWeight: 600, color: warn ? '#c74848' : '#1a1a1a', letterSpacing: '-0.5px' }),
     balLabel: { fontSize: '11px', color: '#8a8a86', marginTop: '4px' },
-    formCard: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: '20px', marginBottom: '24px' },
+    formCard: { background: '#fff', border: '1px solid #ebebe8', borderRadius: '10px', padding: isMobile ? '16px' : '20px', marginBottom: '24px' },
     fieldLabel: { fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' },
     fieldInput: { width: '100%', minWidth: 0, background: '#fff', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 12px', fontSize: '13px', color: '#1a1a1a', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none' },
     submitBtn: (disabled) => ({ background: disabled ? '#d4d3cf' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit' }),
@@ -655,6 +657,13 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
   const displayName = instance?.employees?.full_name || employee?.full_name || ''
   const displayRole = instance?.employees?.roles?.name || employee?.roles?.name || ''
   const displayHireDate = instance?.employees?.hire_date || employee?.hire_date
+
+  const unsignedDocCount = instance
+    ? documents.filter(doc => !docCompletions[doc.id]?.hidden && !docCompletions[doc.id]?.signed).length
+    : 0
+  const pendingTimeOffCount = timeOffFetched
+    ? timeOffRequests.filter(r => r.status === 'pending').length
+    : 0
 
   const torTotal = timeOffBalance ? Number(timeOffBalance.total_days) : 0
   const torUsed = timeOffBalance ? Number(timeOffBalance.used_days) : 0
@@ -708,9 +717,25 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
       <div style={styles.tabs}>
         {instance && <button style={styles.tab(activeTab === 'checklist')} onClick={() => setActiveTab('checklist')}>My checklist</button>}
-        {instance && <button style={styles.tab(activeTab === 'documents')} onClick={() => setActiveTab('documents')}>My Documents</button>}
+        {instance && (
+          <button style={styles.tab(activeTab === 'documents')} onClick={() => setActiveTab('documents')}>
+            My Documents
+            {unsignedDocCount > 0 && (
+              <span className="il-tab-badge" style={{ background: activeTab === 'documents' ? '#e8e8e4' : '#f0efeb', color: activeTab === 'documents' ? '#1a1a1a' : '#6b6b67' }}>
+                {unsignedDocCount}
+              </span>
+            )}
+          </button>
+        )}
         <button style={styles.tab(activeTab === 'company-resources')} onClick={() => setActiveTab('company-resources')}>Company Resources</button>
-        <button style={styles.tab(activeTab === 'time-off')} onClick={() => setActiveTab('time-off')}>Time Off</button>
+        <button style={styles.tab(activeTab === 'time-off')} onClick={() => setActiveTab('time-off')}>
+          Time Off
+          {pendingTimeOffCount > 0 && (
+            <span className="il-tab-badge" style={{ background: activeTab === 'time-off' ? '#fffbf0' : '#fffbf0', color: '#d4901a' }}>
+              {pendingTimeOffCount}
+            </span>
+          )}
+        </button>
       </div>
 
       <div style={styles.content}>
@@ -898,7 +923,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                   <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '20px' }}>Request time off</div>
 
                   {/* Leave dates */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
                     <div style={{ minWidth: 0 }}>
                       <label style={styles.fieldLabel}>Start date</label>
                       <input
@@ -1090,12 +1115,14 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
       {celebration && (
         <div style={{
-          position: 'fixed', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
+          position: 'fixed', bottom: isMobile ? '80px' : '32px', left: '50%', transform: 'translateX(-50%)',
           background: '#1a1a1a', color: '#fff', borderRadius: '12px',
           padding: '16px 24px', fontSize: '14px', fontWeight: 500,
           display: 'flex', alignItems: 'center', gap: '10px',
           boxShadow: '0 8px 32px rgba(0,0,0,0.15)', zIndex: 1000,
-          fontFamily: 'Inter, -apple-system, sans-serif'
+          fontFamily: 'Inter, -apple-system, sans-serif',
+          animation: 'slideUp 0.2s ease forwards',
+          whiteSpace: 'nowrap',
         }}>
           <span style={{ fontSize: '20px' }}>{celebration === 'all' ? '🎉' : '✓'}</span>
           <span>{celebration === 'all' ? 'Onboarding complete! Great work.' : `${celebration} complete!`}</span>
