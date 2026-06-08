@@ -90,7 +90,9 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
           <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1a1a1a' }}>Integrated Launch</div>
         </div>
 
-        <div style={{ paddingBottom: '64px' }}>{children}</div>
+        <div style={{ paddingBottom: '64px' }}>
+          <div key={currentPage} className="il-page">{children}</div>
+        </div>
 
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
@@ -124,6 +126,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
             onClick={() => setDrawerOpen(false)}
           >
             <div
+              className="il-drawer"
               style={{
                 position: 'absolute', bottom: 0, left: 0, right: 0,
                 background: '#fff', borderRadius: '16px 16px 0 0',
@@ -291,7 +294,9 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>{children}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <div key={currentPage} className="il-page" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>{children}</div>
+      </div>
     </div>
   )
 }
