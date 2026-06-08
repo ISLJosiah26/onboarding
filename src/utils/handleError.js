@@ -3,7 +3,7 @@ const TECHNICAL_PATTERN = /^PGRST|^JWT|^AuthApi|tuple|constraint|violates|duplic
 export function handleSupabaseError(error, fallbackMessage) {
   if (!error) return null
   console.error('Supabase error:', error)
-  if (fallbackMessage) return fallbackMessage
   const msg = error.message || ''
-  return TECHNICAL_PATTERN.test(msg) ? 'Something went wrong. Please try again.' : (msg || 'Something went wrong. Please try again.')
+  if (TECHNICAL_PATTERN.test(msg)) return fallbackMessage || 'Something went wrong. Please try again.'
+  return msg || fallbackMessage || 'Something went wrong. Please try again.'
 }

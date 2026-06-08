@@ -6,7 +6,7 @@ import Toast from '../components/Toast'
 import ConfirmModal from '../components/ConfirmModal'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
-import { getHrEmail } from '../utils/getHrEmail'
+import { getHrEmail, getTechSupportEmail } from '../utils/getHrEmail'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
 
@@ -464,6 +464,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     const categoryLabel = TICKET_CATEGORIES.find(c => c.value === ticketCategory)?.label || ticketCategory
     const timestamp = new Date().toLocaleString('en-CA', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
+    const techEmail = await getTechSupportEmail()
+
     const emailHtml = `
 <p><strong>${employeeName}</strong> has submitted a technical support request.</p>
 <p>
@@ -474,28 +476,38 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 </p>
 <p><strong>Description:</strong><br/>${ticketDescription.trim().replace(/\n/g, '<br/>')}</p>`
 
-    const { error } = await supabase.functions.invoke('send-email', {
-      body: {
-        to: 'josiah@integratedstaffing.ca',
-        subject: `[Tech Support] ${categoryLabel}: ${ticketTitle.trim()} — ${employeeName}`,
-        html: emailHtml,
-      },
-    })
+    const [emailResult, dbResult] = await Promise.all([
+      techEmail
+        ? supabase.functions.invoke('send-email', {
+            body: {
+              to: techEmail,
+              subject: `[Tech Support] ${categoryLabel}: ${ticketTitle.trim()} — ${employeeName}`,
+              html: emailHtml,
+            },
+          })
+        : Promise.resolve({ error: null }),
+      supabase.from('tech_support_tickets').insert({
+        employee_id: userProfile.employee_id,
+        category: ticketCategory,
+        title: ticketTitle.trim(),
+        description: ticketDescription.trim(),
+      }).select('id, created_at').single(),
+    ])
 
     setTicketSubmitting(false)
 
-    if (error) {
+    if (emailResult.error && dbResult.error) {
       showToast('Failed to submit ticket. Please try again.', 'error')
       return
     }
 
     setSubmittedTickets(prev => [{
-      id: Date.now(),
+      id: dbResult.data?.id || Date.now(),
       category: ticketCategory,
       categoryLabel,
       title: ticketTitle.trim(),
       description: ticketDescription.trim(),
-      submittedAt: new Date().toISOString(),
+      submittedAt: dbResult.data?.created_at || new Date().toISOString(),
     }, ...prev])
 
     setTicketTitle('')

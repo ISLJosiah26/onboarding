@@ -5,9 +5,16 @@ export function useWindowSize() {
     typeof window !== 'undefined' ? window.innerWidth : 1200
   )
   useEffect(() => {
-    const handler = () => setWidth(window.innerWidth)
+    let timer
+    const handler = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => setWidth(window.innerWidth), 100)
+    }
     window.addEventListener('resize', handler, { passive: true })
-    return () => window.removeEventListener('resize', handler)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('resize', handler)
+    }
   }, [])
   return { isMobile: width < 768, width }
 }

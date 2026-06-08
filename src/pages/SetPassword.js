@@ -1,6 +1,20 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 
+const AUTH_ERROR_MAP = {
+  'Auth session missing':       'Your invite link has expired. Please request a new one.',
+  'New password should be different from the old password': 'Please choose a different password from your previous one.',
+  'Password should be at least 6 characters': 'Password must be at least 8 characters.',
+  'Token has expired or is invalid': 'Your invite link has expired. Please request a new one.',
+}
+
+function friendlyAuthError(msg) {
+  for (const [key, friendly] of Object.entries(AUTH_ERROR_MAP)) {
+    if (msg.includes(key)) return friendly
+  }
+  return msg || 'Something went wrong. Please try again.'
+}
+
 export default function SetPassword({ onComplete }) {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -20,7 +34,7 @@ export default function SetPassword({ onComplete }) {
     setError('')
     const { error } = await supabase.auth.updateUser({ password })
     if (error) {
-      setError(error.message)
+      setError(friendlyAuthError(error.message))
       setLoading(false)
     } else {
       onComplete()
@@ -42,6 +56,7 @@ export default function SetPassword({ onComplete }) {
             type="password"
             placeholder="At least 8 characters"
             value={password}
+            autoFocus
             onChange={e => setPassword(e.target.value)}
             style={{ display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: '1px solid #ebebe8', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#1a1a1a', background: '#fff', boxSizing: 'border-box' }}
           />
@@ -51,7 +66,7 @@ export default function SetPassword({ onComplete }) {
             placeholder="Repeat your password"
             value={confirm}
             onChange={e => setConfirm(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSetPassword()}
+            onKeyDown={e => e.key === 'Enter' && !loading && handleSetPassword()}
             style={{ display: 'block', width: '100%', marginBottom: '20px', padding: '10px 14px', border: '1px solid #ebebe8', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#1a1a1a', background: '#fff', boxSizing: 'border-box' }}
           />
           {error && (
@@ -62,9 +77,9 @@ export default function SetPassword({ onComplete }) {
           <button
             onClick={handleSetPassword}
             disabled={loading}
-            style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '11px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ width: '100%', background: loading ? '#6b6b67' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '11px', fontSize: '13px', fontWeight: 500, cursor: loading ? 'default' : 'pointer', fontFamily: 'inherit', transition: 'background 0.12s ease' }}
           >
-            {loading ? 'Saving...' : 'Set password'}
+            {loading ? 'Saving…' : 'Set password'}
           </button>
         </div>
       </div>

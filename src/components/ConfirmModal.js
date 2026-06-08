@@ -1,13 +1,31 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 export default function ConfirmModal({ title, message, confirmLabel, confirmDanger, onConfirm, onCancel }) {
   const [confirming, setConfirming] = useState(false)
   const mountedRef = useRef(true)
+  const modalRef = useRef(null)
 
   useEffect(() => () => { mountedRef.current = false }, [])
 
+  useLayoutEffect(() => {
+    const focusable = modalRef.current?.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])')
+    if (focusable?.length) focusable[focusable.length - 1].focus()
+  }, [])
+
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape' && !confirming) onCancel() }
+    const handleKey = (e) => {
+      if (e.key === 'Escape' && !confirming) { onCancel(); return }
+      if (e.key !== 'Tab' || !modalRef.current) return
+      const focusable = [...modalRef.current.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [onCancel, confirming])
@@ -33,6 +51,7 @@ export default function ConfirmModal({ title, message, confirmLabel, confirmDang
       onClick={confirming ? undefined : onCancel}
     >
       <div
+        ref={modalRef}
         className="il-modal"
         style={{
           background: '#fff', borderRadius: '14px',

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase, getUserProfile } from './supabaseClient'
+import { clearSettingsCache } from './utils/getHrEmail'
 import Dashboard from './pages/Dashboard'
 import NewOnboarding from './pages/NewOnboarding'
 import OnboardingPlan from './pages/OnboardingPlan'
@@ -58,6 +59,9 @@ useEffect(() => {
       }
     } else {
       setUserProfile(null)
+      setEmployeeView(false)
+      localStorage.removeItem('il-view-mode')
+      clearSettingsCache()
       setProfileLoading(false)
     }
   })
@@ -227,7 +231,7 @@ if (!session) {
   }
 
   if (page === 'super-admin-users' || page === 'super-admin-audit' || page === 'super-admin-settings') {
-    if (userProfile?.role !== 'super_admin') return null
+    if (userProfile?.role !== 'super_admin') { navigate('dashboard'); return null }
     return (
       <SuperAdmin
         session={session}
@@ -268,7 +272,7 @@ if (!session) {
   }
 
   if (page === 'time-off') {
-    if (userProfile?.role !== 'admin' && userProfile?.role !== 'super_admin') {
+    if (!['admin', 'super_admin', 'manager'].includes(userProfile?.role)) {
       navigate('dashboard')
       return null
     }
