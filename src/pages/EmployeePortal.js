@@ -13,6 +13,33 @@ import { PHASES, CURRENT_YEAR } from '../config'
 import { getInitials } from '../utils/formatUtils'
 import { TYPE_LABELS, StatusPill, TypeIcon, fmtDateRange } from '../utils/timeOffShared'
 
+const BASE_STYLES = {
+  app: { minHeight: '100vh', background: '#f4f3ef', fontFamily: 'Inter, -apple-system, sans-serif', color: '#18181b' },
+  logo: { fontSize: '14px', fontWeight: 600, color: '#0066cc', letterSpacing: '-0.2px' },
+  signout: { fontSize: '12px', color: '#70706b', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 },
+  sub: { fontSize: '13px', color: '#70706b' },
+  progressRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
+  progressTrack: { height: '8px', background: '#eceae6', borderRadius: '99px', overflow: 'hidden' },
+  progressFill: { height: '100%', background: 'linear-gradient(90deg, #0066cc, #3d9eff)', borderRadius: '99px', boxShadow: '0 0 8px rgba(0,102,204,0.28)', transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)' },
+  phaseLabel: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px', marginTop: '28px' },
+  parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
+  subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f4f3ef', cursor: 'pointer', background: '#f9f8f5' },
+  checkbox: (checked) => ({ width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d0cfc9', background: checked ? 'linear-gradient(135deg, #0066cc, #3d9eff)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer', boxShadow: checked ? '0 0 0 3px rgba(0,102,204,0.12)' : 'none' }),
+  subtaskCheckbox: (checked) => ({ width: '15px', height: '15px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d0cfc9', background: checked ? 'linear-gradient(135deg, #0066cc, #3d9eff)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }),
+  taskName: (checked) => ({ fontSize: '14px', color: checked ? '#a4a39f' : '#18181b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
+  subtaskName: (checked) => ({ fontSize: '13px', color: checked ? '#a4a39f' : '#70706b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
+  chevron: (open) => ({ fontSize: '10px', color: '#a4a39f', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }),
+  subtaskCount: { fontSize: '11px', color: '#a4a39f' },
+  balStat: { textAlign: 'center' },
+  balNum: (warn) => ({ fontSize: '26px', fontWeight: 700, color: warn ? '#c04040' : '#18181b', letterSpacing: '-0.8px' }),
+  balLabel: { fontSize: '11px', color: '#a4a39f', marginTop: '4px', fontWeight: 500, letterSpacing: '0.1px' },
+  fieldLabel: { fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 },
+  fieldInput: { width: '100%', minWidth: 0, background: '#fff', border: '1px solid #e2e1dd', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', color: '#18181b', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none' },
+  submitBtn: (disabled) => ({ background: disabled ? '#e2e1dd' : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }),
+  torRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 0', borderBottom: '1px solid #f0efe9', flexWrap: 'wrap' },
+  cancelBtn: { fontSize: '12px', color: '#70706b', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 },
+}
+
 const LEGACY_TYPES = new Set(['vacation', 'sick', 'personal'])
 const TYPE_OPTIONS = Object.entries(TYPE_LABELS)
   .filter(([k]) => !LEGACY_TYPES.has(k))
@@ -618,40 +645,17 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
   )
 
   const styles = {
-    app: { minHeight: '100vh', background: '#f4f3ef', fontFamily: 'Inter, -apple-system, sans-serif', color: '#18181b' },
+    ...BASE_STYLES,
     topbar: { background: '#fff', boxShadow: '0 1px 0 #e2e1dd', padding: isMobile ? '0 16px' : '0 32px', height: isMobile ? '52px' : '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-    logo: { fontSize: '14px', fontWeight: 600, color: '#0066cc', letterSpacing: '-0.2px' },
-    signout: { fontSize: '12px', color: '#70706b', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 },
     hero: { padding: isMobile ? '24px 16px 0' : '44px 40px 0', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
     name: { fontSize: isMobile ? '22px' : '26px', fontWeight: 600, letterSpacing: '-0.8px', marginBottom: '4px' },
-    sub: { fontSize: '13px', color: '#70706b' },
     progressWrap: { marginTop: '20px', marginBottom: isMobile ? '20px' : '32px' },
-    progressRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
-    progressTrack: { height: '8px', background: '#eceae6', borderRadius: '99px', overflow: 'hidden' },
-    progressFill: { height: '100%', background: 'linear-gradient(90deg, #0066cc, #3d9eff)', borderRadius: '99px', boxShadow: '0 0 8px rgba(0,102,204,0.28)', transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)' },
     tabs: { display: 'flex', gap: '0', borderBottom: '1px solid #e2e1dd', padding: isMobile ? '0 16px' : '0 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
     tab: (active) => ({ fontSize: '13px', fontWeight: active ? 600 : 400, color: active ? '#0066cc' : '#70706b', padding: '12px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: active ? '2px solid #0066cc' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.12s ease, border-color 0.12s ease' }),
     content: { padding: isMobile ? '20px 16px' : '28px 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
-    phaseLabel: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px', marginTop: '28px' },
-    parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
-    subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f4f3ef', cursor: 'pointer', background: '#f9f8f5' },
-    checkbox: (checked) => ({ width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d0cfc9', background: checked ? 'linear-gradient(135deg, #0066cc, #3d9eff)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer', boxShadow: checked ? '0 0 0 3px rgba(0,102,204,0.12)' : 'none' }),
-    subtaskCheckbox: (checked) => ({ width: '15px', height: '15px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d0cfc9', background: checked ? 'linear-gradient(135deg, #0066cc, #3d9eff)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }),
-    taskName: (checked) => ({ fontSize: '14px', color: checked ? '#a4a39f' : '#18181b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
-    subtaskName: (checked) => ({ fontSize: '13px', color: checked ? '#a4a39f' : '#70706b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
-    chevron: (open) => ({ fontSize: '10px', color: '#a4a39f', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }),
-    subtaskCount: { fontSize: '11px', color: '#a4a39f' },
     balCard: { background: '#fff', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
     balGrid: { display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '12px' : '16px' },
-    balStat: { textAlign: 'center' },
-    balNum: (warn) => ({ fontSize: '26px', fontWeight: 700, color: warn ? '#c04040' : '#18181b', letterSpacing: '-0.8px' }),
-    balLabel: { fontSize: '11px', color: '#a4a39f', marginTop: '4px', fontWeight: 500, letterSpacing: '0.1px' },
     formCard: { background: '#fff', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
-    fieldLabel: { fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 },
-    fieldInput: { width: '100%', minWidth: 0, background: '#fff', border: '1px solid #e2e1dd', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', color: '#18181b', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none' },
-    submitBtn: (disabled) => ({ background: disabled ? '#e2e1dd' : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }),
-    torRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 0', borderBottom: '1px solid #f0efe9', flexWrap: 'wrap' },
-    cancelBtn: { fontSize: '12px', color: '#70706b', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 },
   }
 
   if (loading) return (

@@ -10,6 +10,27 @@ import { useWindowSize } from '../hooks/useWindowSize'
 import { TODAY } from '../config'
 import { getInitials } from '../utils/formatUtils'
 
+const BASE_STYLES = {
+  title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px' },
+  sub: { fontSize: '13px', color: '#70706b', marginTop: '2px' },
+  btn: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', letterSpacing: '0.1px' },
+  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#e2e1dd', borderBottom: '1px solid #e2e1dd' },
+  statLabel: { fontSize: '11px', color: '#a4a39f', marginBottom: '5px', fontWeight: 500, letterSpacing: '0.2px', textTransform: 'uppercase' },
+  tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #eceae6', fontSize: '11px', color: '#a4a39f', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', alignItems: 'center', gap: '16px' },
+  tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #f0efe9', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '4px' },
+  avatar: { width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  avatarLg: { width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  rowName: { fontSize: '13px', fontWeight: 500, color: '#18181b' },
+  rowMeta: { fontSize: '12px', color: '#a4a39f', marginTop: '2px' },
+  rowText: { fontSize: '13px', color: '#18181b' },
+  rowTextMuted: { fontSize: '13px', color: '#a4a39f' },
+  progressWrap: { display: 'flex', alignItems: 'center', gap: '10px' },
+  progressTrack: { flex: 1, height: '5px', background: '#eceae6', borderRadius: '99px', overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: '99px', background: 'linear-gradient(90deg, #0066cc, #3d9eff)' },
+  progressText: { fontSize: '12px', fontWeight: 600, color: '#18181b', minWidth: '32px' },
+  phasePill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: '#eff6ff', color: '#0066cc', fontWeight: 600 },
+}
+
 function getPhase(hireDate) {
   const days = Math.floor((new Date() - new Date(hireDate)) / (1000 * 60 * 60 * 24))
   if (days <= 7) return 'Week 1'
@@ -109,30 +130,13 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
   const p = isMobile ? '16px' : '40px'
 
   const styles = {
+    ...BASE_STYLES,
     header: { padding: isMobile ? '16px 16px 14px' : '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 0 #e2e1dd', background: '#fff' },
-    title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px' },
-    sub: { fontSize: '13px', color: '#70706b', marginTop: '2px' },
-    btn: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', letterSpacing: '0.1px' },
-    statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#e2e1dd', borderBottom: '1px solid #e2e1dd' },
     stat: { background: '#fff', padding: isMobile ? '14px 16px' : '22px 40px' },
-    statLabel: { fontSize: '11px', color: '#a4a39f', marginBottom: '5px', fontWeight: 500, letterSpacing: '0.2px', textTransform: 'uppercase' },
     statValue: { fontSize: isMobile ? '22px' : '26px', fontWeight: 700, letterSpacing: '-0.8px', color: '#18181b' },
     content: { padding: isMobile ? '0' : `0 ${p}`, flex: 1 },
-    tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #eceae6', fontSize: '11px', color: '#a4a39f', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', alignItems: 'center', gap: '16px' },
-    tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #f0efe9', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '4px' },
-    avatar: { width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    avatarLg: { width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-    rowName: { fontSize: '13px', fontWeight: 500, color: '#18181b' },
-    rowMeta: { fontSize: '12px', color: '#a4a39f', marginTop: '2px' },
-    rowText: { fontSize: '13px', color: '#18181b' },
-    rowTextMuted: { fontSize: '13px', color: '#a4a39f' },
-    progressWrap: { display: 'flex', alignItems: 'center', gap: '10px' },
-    progressTrack: { flex: 1, height: '5px', background: '#eceae6', borderRadius: '99px', overflow: 'hidden' },
-    progressFill: { height: '100%', borderRadius: '99px', background: 'linear-gradient(90deg, #0066cc, #3d9eff)' },
-    progressText: { fontSize: '12px', fontWeight: 600, color: '#18181b', minWidth: '32px' },
-    phasePill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: '#eff6ff', color: '#0066cc', fontWeight: 600 },
     emptyState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center' },
-    errorState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center', fontSize: '14px' }
+    errorState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center', fontSize: '14px' },
   }
 
   return (
