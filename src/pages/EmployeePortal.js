@@ -9,36 +9,14 @@ import { handleSupabaseError } from '../utils/handleError'
 import { getHrEmail, getTechSupportEmail } from '../utils/getHrEmail'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
+import { PHASES, CURRENT_YEAR } from '../config'
+import { getInitials } from '../utils/formatUtils'
+import { TYPE_LABELS, StatusPill, TypeIcon, fmtDateRange } from '../utils/timeOffShared'
 
-const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
-const CURRENT_YEAR = new Date().getFullYear()
-
-function getInitials(name) {
-  if (!name) return '?'
-  return name.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().slice(0, 2) || '?'
-}
-
-const TYPE_OPTIONS = [
-  { value: 'personal_vacation', label: 'Personal / Vacation' },
-  { value: 'professional_development', label: 'Professional Development Training' },
-  { value: 'volunteer', label: 'Volunteer Day' },
-  { value: 'work_from_wherever', label: 'Work from Wherever Week' },
-  { value: 'bereavement', label: 'Bereavement Leave' },
-  { value: 'care_day', label: 'Care Day' },
-  { value: 'other', label: 'Other' },
-]
-const TYPE_LABELS = {
-  personal_vacation: 'Personal / Vacation',
-  professional_development: 'Professional Development Training',
-  volunteer: 'Volunteer Day',
-  work_from_wherever: 'Work from Wherever Week',
-  bereavement: 'Bereavement Leave',
-  care_day: 'Care Day',
-  other: 'Other',
-  vacation: 'Vacation',
-  sick: 'Sick Day',
-  personal: 'Personal',
-}
+const LEGACY_TYPES = new Set(['vacation', 'sick', 'personal'])
+const TYPE_OPTIONS = Object.entries(TYPE_LABELS)
+  .filter(([k]) => !LEGACY_TYPES.has(k))
+  .map(([value, label]) => ({ value, label }))
 
 const FLEXIBILITY_OPTIONS = [
   { value: 'firm', label: 'Firm' },
@@ -55,53 +33,6 @@ const TICKET_CATEGORIES = [
   { value: 'other', label: 'Other' },
 ]
 
-const STATUS_STYLES = {
-  pending:   { background: '#fffbf0', color: '#d4901a' },
-  approved:  { background: '#f0faf4', color: '#1a7a4a' },
-  denied:    { background: '#fdf0f0', color: '#c04040' },
-  cancelled: { background: '#f4f3ef', color: '#70706b' },
-}
-
-function StatusPill({ status }) {
-  const s = STATUS_STYLES[status] || STATUS_STYLES.pending
-  return (
-    <span style={{ ...s, fontSize: '11px', fontWeight: 500, padding: '2px 9px', borderRadius: '10px', display: 'inline-block' }}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  )
-}
-
-function TypeIcon({ type, size = 13 }) {
-  const vb = '0 0 14 14'
-  const st = { display: 'block', flexShrink: 0 }
-  if (type === 'vacation') return (
-    <svg width={size} height={size} viewBox={vb} fill="none" stroke="currentColor" strokeWidth={1.5} style={st}>
-      <circle cx="7" cy="7" r="2.5"/>
-      <path d="M7 1v2M7 11v2M1 7h2M11 7h2M3.05 3.05l1.41 1.41M9.54 9.54l1.41 1.41M3.05 10.95l1.41-1.41M9.54 4.46l1.41-1.41"/>
-    </svg>
-  )
-  if (type === 'sick') return (
-    <svg width={size} height={size} viewBox={vb} fill="none" stroke="currentColor" strokeWidth={1.5} style={st}>
-      <circle cx="7" cy="7" r="5"/><path d="M7 4.5v5M4.5 7h5"/>
-    </svg>
-  )
-  if (type === 'personal') return (
-    <svg width={size} height={size} viewBox={vb} fill="none" stroke="currentColor" strokeWidth={1.5} style={st}>
-      <circle cx="7" cy="5" r="2.5"/><path d="M2 13c0-2.5 2.5-4.5 5-4.5s5 2 5 4.5"/>
-    </svg>
-  )
-  return (
-    <svg width={size} height={size} viewBox={vb} fill="currentColor" style={st}>
-      <circle cx="3" cy="7" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="11" cy="7" r="1.2"/>
-    </svg>
-  )
-}
-
-function fmtDateRange(start, end) {
-  const s = new Date(start + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
-  const e = new Date(end + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
-  return start === end ? e : `${s} – ${e}`
-}
 
 function isPhaseUpcoming(phase, hireDate) {
   if (phase === 'Week 1') return false
@@ -816,7 +747,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         <button style={styles.tab(activeTab === 'time-off')} onClick={() => setActiveTab('time-off')}>
           Time Off
           {pendingTimeOffCount > 0 && (
-            <span className="il-tab-badge" style={{ background: activeTab === 'time-off' ? '#fffbf0' : '#fffbf0', color: '#d4901a' }}>
+            <span className="il-tab-badge" style={{ background: '#fffbf0', color: '#d4901a' }}>
               {pendingTimeOffCount}
             </span>
           )}

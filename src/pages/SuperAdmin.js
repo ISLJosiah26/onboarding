@@ -63,17 +63,12 @@ const TAB_MAP = {
   'super-admin-audit': 'Audit Log',
   'super-admin-settings': 'System Settings',
 }
-const PAGE_MAP = {
-  'Users': 'super-admin-users',
-  'Audit Log': 'super-admin-audit',
-  'System Settings': 'super-admin-settings',
-}
 
 export default function SuperAdmin({ session, userProfile, currentPage, onNavigate }) {
   const { isMobile } = useWindowSize()
   const tab = TAB_MAP[currentPage] || 'Users'
 
-  function setTab(t) { onNavigate(PAGE_MAP[t]) }
+  function setTab(t) { onNavigate(Object.keys(TAB_MAP).find(k => TAB_MAP[k] === t)) }
 
   const p = isMobile ? '16px' : '40px'
 
@@ -490,15 +485,14 @@ function AuditLogTab({ isMobile }) {
         <div style={s.empty}>No audit log entries yet.</div>
       ) : (
         <>
-          {logs.map(log => (
-            isMobile ? (
+          {logs.map(log => {
+            const entity = describeEntity(log)
+            return isMobile ? (
               <div key={log.id} style={{ padding: '12px 0', borderBottom: '1px solid #f0efe9' }}>
                 <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginBottom: '3px' }}>
                   {ACTION_LABELS[log.action] || log.action}
                 </div>
-                {describeEntity(log) && (
-                  <div style={{ fontSize: '12px', color: '#70706b', marginBottom: '4px' }}>{describeEntity(log)}</div>
-                )}
+                {entity && <div style={{ fontSize: '12px', color: '#70706b', marginBottom: '4px' }}>{entity}</div>}
                 <div style={{ fontSize: '11px', color: '#a4a39f' }}>
                   {formatTime(log.created_at)} · {log.user_email || 'Unknown'}
                 </div>
@@ -509,13 +503,11 @@ function AuditLogTab({ isMobile }) {
                 <div style={{ fontSize: '12px', color: '#70706b', minWidth: '160px' }}>{log.user_email || 'Unknown'}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '13px', color: '#18181b', fontWeight: 500 }}>{ACTION_LABELS[log.action] || log.action}</div>
-                  {describeEntity(log) && (
-                    <div style={{ fontSize: '12px', color: '#70706b', marginTop: '2px' }}>{describeEntity(log)}</div>
-                  )}
+                  {entity && <div style={{ fontSize: '12px', color: '#70706b', marginTop: '2px' }}>{entity}</div>}
                 </div>
               </div>
             )
-          ))}
+          })}
           {logs.length >= logLimit && (
             <button
               onClick={() => setLogLimit(l => l + 100)}
