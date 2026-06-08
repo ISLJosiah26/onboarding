@@ -106,7 +106,7 @@ function fmtDateRange(start, end) {
 function isPhaseUpcoming(phase, hireDate) {
   if (phase === 'Week 1') return false
   const days = Math.floor((new Date() - new Date(hireDate)) / 86400000)
-  const startDays = { 'Week 2': 7, '30 Day': 14, '60 Day': 30, '90 Day': 60 }
+  const startDays = { 'Week 2': 7, '30 Day': 30, '60 Day': 60, '90 Day': 90 }
   return days < (startDays[phase] ?? 0)
 }
 
