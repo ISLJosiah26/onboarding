@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase } from '../supabaseClient'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 import Toast from '../components/Toast'
@@ -106,7 +106,7 @@ function fmtDateRange(start, end) {
 function isPhaseUpcoming(phase, hireDate) {
   if (phase === 'Week 1') return false
   const days = Math.floor((new Date() - new Date(hireDate)) / 86400000)
-  const startDays = { 'Week 2': 7, '30 Day': 14, '60 Day': 30, '90 Day': 60 }
+  const startDays = { 'Week 2': 7, '30 Day': 30, '60 Day': 60, '90 Day': 90 }
   return days < (startDays[phase] ?? 0)
 }
 
@@ -516,15 +516,17 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     showToast('Ticket submitted — we\'ll be in touch soon.')
   }
 
-  function pendingDays() {
-    return timeOffRequests.filter(r => r.status === 'pending').reduce((s, r) => s + Number(r.business_days), 0)
-  }
+  const pendingDays = useMemo(
+    () => timeOffRequests.filter(r => r.status === 'pending').reduce((s, r) => s + Number(r.business_days), 0),
+    [timeOffRequests]
+  )
 
-  function totalTasks() {
-    return Object.values(tasksByPhase).flat().filter(tc => !tc.onboarding_templates.parent_id).length
-  }
+  const totalTasks = useMemo(
+    () => Object.values(tasksByPhase).flat().filter(tc => !tc.onboarding_templates.parent_id).length,
+    [tasksByPhase]
+  )
 
-  function completedTasksCount() {
+  const completedTasksCount = useMemo(() => {
     const allTasks = Object.values(tasksByPhase).flat()
     const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
     return parentTasks.filter(tc => {
@@ -532,12 +534,22 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       if (subtasks.length === 0) return completions[tc.id]
       return subtasks.every(s => completions[s.id])
     }).length
-  }
+  }, [tasksByPhase, completions])
 
-  function pct() {
-    const t = totalTasks()
-    return t > 0 ? Math.round((completedTasksCount() / t) * 100) : 0
-  }
+  const pct = useMemo(
+    () => totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0,
+    [totalTasks, completedTasksCount]
+  )
+
+  const unsignedDocCount = useMemo(
+    () => instance ? documents.filter(doc => !docCompletions[doc.id]?.hidden && !docCompletions[doc.id]?.signed).length : 0,
+    [instance, documents, docCompletions]
+  )
+
+  const pendingTimeOffCount = useMemo(
+    () => timeOffFetched ? timeOffRequests.filter(r => r.status === 'pending').length : 0,
+    [timeOffFetched, timeOffRequests]
+  )
 
   async function toggleTask(completionId, current, e) {
     if (e && e.stopPropagation) e.stopPropagation()
@@ -738,16 +750,9 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
   const displayRole = instance?.employees?.roles?.name || employee?.roles?.name || ''
   const displayHireDate = instance?.employees?.hire_date || employee?.hire_date
 
-  const unsignedDocCount = instance
-    ? documents.filter(doc => !docCompletions[doc.id]?.hidden && !docCompletions[doc.id]?.signed).length
-    : 0
-  const pendingTimeOffCount = timeOffFetched
-    ? timeOffRequests.filter(r => r.status === 'pending').length
-    : 0
-
   const torTotal = timeOffBalance ? Number(timeOffBalance.total_days) : 0
   const torUsed = timeOffBalance ? Number(timeOffBalance.used_days) : 0
-  const torPending = pendingDays()
+  const torPending = pendingDays
   const torRemaining = torTotal - torUsed - torPending
   const businessDaysPreview = torDayPortion !== 'full' ? 0.5 : torBusinessDays
   const torExceedsBalance = businessDaysPreview !== null && torRemaining - businessDaysPreview < 0
@@ -785,8 +790,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         {instance && (
           <div style={styles.progressWrap}>
             <div style={styles.progressRow}>
-              <span style={{ fontSize: '12px', color: '#8a8a86' }}>{completedTasksCount()} of {totalTasks()} tasks complete</span>
-              <span style={{ fontSize: '12px', fontWeight: 500, color: '#0070CA' }}>{pct()}%</span>
+              <span style={{ fontSize: '12px', color: '#8a8a86' }}>{completedTasksCount} of {totalTasks} tasks complete</span>
+              <span style={{ fontSize: '12px', fontWeight: 500, color: '#0070CA' }}>{pct}%</span>
             </div>
             <div style={styles.progressTrack}>
               <div style={{ ...styles.progressFill, width: `${pct()}%` }} />
