@@ -57,3 +57,23 @@ export function pageToPath(page) {
   if (page === 'super-admin-settings') return ROUTES.SUPER_ADMIN_SETTINGS
   return ROUTES.DASHBOARD
 }
+
+export const ONBOARDING_STATUS = {
+  ACTIVE: 'active',
+  COMPLETED: 'completed',
+  ARCHIVED: 'archived',
+}
+
+export const TIME_OFF_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  DENIED: 'denied',
+  CANCELLED: 'cancelled',
+}
+
+export const ROLE = {
+  SUPER_ADMIN: 'super_admin',
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  EMPLOYEE: 'employee',
+}

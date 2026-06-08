@@ -8,7 +8,7 @@ import { handleSupabaseError } from '../utils/handleError'
 import { getHrEmail, getTechSupportEmail } from '../utils/getHrEmail'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
-import { PHASES, CURRENT_YEAR } from '../config'
+import { PHASES, CURRENT_YEAR, ONBOARDING_STATUS, TIME_OFF_STATUS } from '../config'
 import { getInitials } from '../utils/formatUtils'
 import { TYPE_LABELS, StatusPill, TypeIcon, fmtDateRange } from '../utils/timeOffShared'
 
@@ -144,7 +144,7 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
           )
         `)
         .eq('employee_id', userProfile.employee_id)
-        .eq('status', 'active')
+        .eq('status', ONBOARDING_STATUS.ACTIVE)
         .single()
 
       if (instanceError && instanceError.code !== 'PGRST116') {
@@ -257,7 +257,7 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
       business_days: businessDaysVal,
       type,
       notes: notesVal || null,
-      status: 'pending',
+      status: TIME_OFF_STATUS.PENDING,
       is_half_day: isHalfDay,
       day_portion: dayPortion,
       volunteering_with: volunteeringWith,
@@ -286,7 +286,7 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
         business_days: businessDaysVal,
         type,
         notes: notesVal || null,
-        status: 'pending',
+        status: TIME_OFF_STATUS.PENDING,
         is_half_day: isHalfDay,
         day_portion: dayPortion,
         volunteering_with: volunteeringWith,
@@ -312,13 +312,13 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
     const employeeName = instance?.employees?.full_name || employee?.full_name || 'Employee'
     const total = timeOffBalance ? Number(timeOffBalance.total_days) : 0
     const used = timeOffBalance ? Number(timeOffBalance.used_days) : 0
-    const currentPending = timeOffRequests.filter(r => r.status === 'pending' && r.id !== tempId).reduce((s, r) => s + Number(r.business_days), 0)
+    const currentPending = timeOffRequests.filter(r => r.status === TIME_OFF_STATUS.PENDING && r.id !== tempId).reduce((s, r) => s + Number(r.business_days), 0)
     const remainingAfter = total - used - currentPending - businessDaysVal
 
     const { data: overlapping } = await supabase
       .from('time_off_requests')
       .select('employee_id, start_date, end_date, employees!time_off_requests_employee_id_fkey(full_name)')
-      .eq('status', 'approved')
+      .eq('status', TIME_OFF_STATUS.APPROVED)
       .neq('employee_id', userProfile.employee_id)
       .lte('start_date', endDate)
       .gte('end_date', startDate)
@@ -361,7 +361,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
   async function cancelTimeOffRequest(req) {
     setCancellingId(req.id)
 
-    if (req.status === 'approved' && timeOffBalance) {
+    if (req.status === TIME_OFF_STATUS.APPROVED && timeOffBalance) {
       const newUsed = Math.max(0, Number(timeOffBalance.used_days) - Number(req.business_days))
       const { error: balErr } = await supabase
         .from('time_off_balances')
@@ -372,7 +372,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
     const { error } = await supabase
       .from('time_off_requests')
-      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .update({ status: TIME_OFF_STATUS.CANCELLED, updated_at: new Date().toISOString() })
       .eq('id', req.id)
 
     if (error) { showToast(handleSupabaseError(error, 'Failed to cancel request.'), 'error'); setCancellingId(null); return }
@@ -474,7 +474,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
   }
 
   const pendingDays = useMemo(
-    () => timeOffRequests.filter(r => r.status === 'pending').reduce((s, r) => s + Number(r.business_days), 0),
+    () => timeOffRequests.filter(r => r.status === TIME_OFF_STATUS.PENDING).reduce((s, r) => s + Number(r.business_days), 0),
     [timeOffRequests]
   )
 
@@ -504,7 +504,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
   )
 
   const pendingTimeOffCount = useMemo(
-    () => timeOffFetched ? timeOffRequests.filter(r => r.status === 'pending').length : 0,
+    () => timeOffFetched ? timeOffRequests.filter(r => r.status === TIME_OFF_STATUS.PENDING).length : 0,
     [timeOffFetched, timeOffRequests]
   )
 
@@ -1166,11 +1166,11 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                           {req.review_notes}
                         </div>
                       )}
-                      {(req.status === 'pending' || req.status === 'approved') && !req.id?.toString().startsWith('temp-') && (
+                      {(req.status === TIME_OFF_STATUS.PENDING || req.status === TIME_OFF_STATUS.APPROVED) && !req.id?.toString().startsWith('temp-') && (
                         <button
                           style={styles.cancelBtn}
                           disabled={cancellingId === req.id}
-                          onClick={() => req.status === 'approved' ? setConfirmCancelReq(req) : cancelTimeOffRequest(req)}
+                          onClick={() => req.status === TIME_OFF_STATUS.APPROVED ? setConfirmCancelReq(req) : cancelTimeOffRequest(req)}
                         >
                           {cancellingId === req.id ? '...' : 'Cancel'}
                         </button>

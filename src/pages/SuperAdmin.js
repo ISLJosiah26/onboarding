@@ -6,6 +6,7 @@ import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
+import { ROLE } from '../config'
 
 const ACTION_LABELS = {
   onboarding_created: 'Onboarding created',
@@ -22,7 +23,7 @@ const ACTION_LABELS = {
   system_setting_updated: 'System setting updated',
 }
 
-const CHANGEABLE_ROLES = ['admin', 'manager', 'employee']
+const CHANGEABLE_ROLES = [ROLE.ADMIN, ROLE.MANAGER, ROLE.EMPLOYEE]
 
 const s = {
   table: { width: '100%', borderCollapse: 'collapse' },
@@ -111,10 +112,10 @@ function UsersTab({ isMobile }) {
   const [showInvitePanel, setShowInvitePanel] = useState(false)
   const [inviteMode, setInviteMode] = useState('employees')
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState('employee')
+  const [inviteRole, setInviteRole] = useState(ROLE.EMPLOYEE)
   const [inviteBrand, setInviteBrand] = useState('')
   const [pendingInvite, setPendingInvite] = useState(null)
-  const [pendingRole, setPendingRole] = useState('employee')
+  const [pendingRole, setPendingRole] = useState(ROLE.EMPLOYEE)
   const [inviting, setInviting] = useState(false)
   const { toast, showToast, hideToast } = useToast()
 
@@ -165,7 +166,7 @@ function UsersTab({ isMobile }) {
     } else {
       showToast(`Invite sent to ${inviteEmail}`)
       setInviteEmail('')
-      setInviteRole('employee')
+      setInviteRole(ROLE.EMPLOYEE)
       setInviteBrand('')
       fetchUsers()
     }
@@ -257,7 +258,7 @@ function UsersTab({ isMobile }) {
                           <button onClick={() => setPendingInvite(null)} style={s.btnSmall(false)}>Cancel</button>
                         </div>
                       ) : (
-                        <button onClick={() => { setPendingInvite(emp.id); setPendingRole('employee') }} style={s.btnSmall(false)}>
+                        <button onClick={() => { setPendingInvite(emp.id); setPendingRole(ROLE.EMPLOYEE) }} style={s.btnSmall(false)}>
                           Send invite
                         </button>
                       )}
@@ -317,8 +318,8 @@ function UsersTab({ isMobile }) {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                {u.role === 'super_admin' ? (
-                  <span style={s.badge('super_admin')}>super_admin</span>
+                {u.role === ROLE.SUPER_ADMIN ? (
+                  <span style={s.badge(ROLE.SUPER_ADMIN)}>super_admin</span>
                 ) : (
                   <select
                     style={s.select}
@@ -339,7 +340,7 @@ function UsersTab({ isMobile }) {
                 Joined {u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'} · Last login {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}
               </div>
 
-              {u.role !== 'super_admin' && u.role && u.role !== 'none' && (
+              {u.role !== ROLE.SUPER_ADMIN && u.role && u.role !== 'none' && (
                 <button style={s.btnSmall(u.deactivated ? false : true)} onClick={() => handleToggleDeactivated(u.id, u.deactivated, u.email)}>
                   {u.deactivated ? 'Reactivate' : 'Deactivate'}
                 </button>
@@ -370,8 +371,8 @@ function UsersTab({ isMobile }) {
                   </div>
                 </td>
                 <td style={s.td}>
-                  {u.role === 'super_admin' ? (
-                    <span style={s.badge('super_admin')}>super_admin</span>
+                  {u.role === ROLE.SUPER_ADMIN ? (
+                    <span style={s.badge(ROLE.SUPER_ADMIN)}>super_admin</span>
                   ) : (
                     <select
                       style={s.select}
@@ -391,7 +392,7 @@ function UsersTab({ isMobile }) {
                 <td style={s.td}><span style={{ fontSize: 12, color: '#70706b' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}</span></td>
                 <td style={s.td}><span style={{ fontSize: 12, color: u.deactivated ? '#c04040' : '#1a7a4a', fontWeight: 500 }}>{u.deactivated ? 'Deactivated' : 'Active'}</span></td>
                 <td style={s.td}>
-                  {u.role !== 'super_admin' && u.role && u.role !== 'none' && (
+                  {u.role !== ROLE.SUPER_ADMIN && u.role && u.role !== 'none' && (
                     <button style={s.btnSmall(u.deactivated ? false : true)} onClick={() => handleToggleDeactivated(u.id, u.deactivated, u.email)}>
                       {u.deactivated ? 'Reactivate' : 'Deactivate'}
                     </button>
