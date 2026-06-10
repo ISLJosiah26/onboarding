@@ -28,6 +28,9 @@
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 :root {
   --bg: #f4f3ef;
@@ -62,6 +65,33 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.1px;
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: rgba(0, 102, 204, 0.14);
+}
+
+/* Thin, unobtrusive scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d3cf transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4d3cf;
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #b8b7b3;
 }
 
 code {
@@ -73,30 +103,65 @@ button, input, select, textarea {
 }
 
 button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
+/* Inputs get a soft brand focus ring instead of the default outline.
+   !important is needed to win over per-element inline border styles. */
+input, select, textarea {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--subtle);
+  opacity: 1;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #8cbcec !important;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.10) !important;
+}
+input[type="checkbox"]:focus,
+input[type="radio"]:focus {
+  border-color: initial !important;
+}
+
 /* Primary button */
 .il-btn {
-  transition: opacity 0.12s ease, box-shadow 0.12s ease;
+  transition: opacity 0.12s ease, box-shadow 0.12s ease, transform 0.1s ease;
 }
 .il-btn:not([disabled]):hover {
   opacity: 0.88;
 }
+.il-btn:not([disabled]):active {
+  transform: translateY(1px);
+}
 
 /* Ghost / secondary button */
 .il-btn-ghost {
-  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease, transform 0.1s ease;
 }
 .il-btn-ghost:not([disabled]):hover {
   background: #f0efe9 !important;
   color: #18181b !important;
   border-color: #ccc !important;
+}
+.il-btn-ghost:not([disabled]):active {
+  transform: translateY(1px);
+}
+
+/* Branded loading spinner */
+.il-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }
 
 /* Sidebar nav items */

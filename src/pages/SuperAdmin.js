@@ -203,7 +203,7 @@ function UsersTab({ isMobile }) {
     transition: 'color 0.12s ease, border-color 0.12s ease',
   })
 
-  if (loading) return <div style={s.empty}>Loading...</div>
+  if (loading) return <div style={{ ...s.empty, display: 'flex', justifyContent: 'center' }}><div className="il-spinner" role="status" aria-label="Loading" /></div>
 
   return (
     <>
@@ -481,7 +481,7 @@ function AuditLogTab({ isMobile }) {
       </div>
 
       {loading ? (
-        <div style={s.empty}>Loading...</div>
+        <div style={{ ...s.empty, display: 'flex', justifyContent: 'center' }}><div className="il-spinner" role="status" aria-label="Loading" /></div>
       ) : logs.length === 0 ? (
         <div style={s.empty}>No audit log entries yet.</div>
       ) : (
