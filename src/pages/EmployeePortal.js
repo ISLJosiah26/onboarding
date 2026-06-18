@@ -537,6 +537,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     progressFill: { height: '100%', background: '#0070CA', borderRadius: '3px', transition: 'width 0.3s ease' },
     tabs: { display: 'flex', gap: '0', borderBottom: '1px solid #ebebe8', padding: '0 40px', maxWidth: '720px', margin: '0 auto' },
     tab: (active) => ({ fontSize: '13px', fontWeight: active ? 500 : 400, color: active ? '#1a1a1a' : '#8a8a86', padding: '10px 0', marginRight: '24px', background: 'none', border: 'none', borderBottom: active ? '2px solid #1a1a1a' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit' }),
+    tabDisabled: { fontSize: '13px', fontWeight: 400, color: '#c8c7c3', padding: '10px 0', marginRight: '24px', background: 'none', border: 'none', borderBottom: '2px solid transparent', cursor: 'default', fontFamily: 'inherit', pointerEvents: 'none' },
     content: { padding: '28px 40px', maxWidth: '720px', margin: '0 auto' },
     phaseLabel: { fontSize: '11px', fontWeight: 600, color: '#a8a8a4', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px', marginTop: '24px' },
     parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 0', borderBottom: '1px solid #f0efeb', cursor: 'pointer' },
@@ -626,7 +627,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       <div style={styles.tabs}>
         <button style={styles.tab(activeTab === 'checklist')} onClick={() => setActiveTab('checklist')}>My checklist</button>
         <button style={styles.tab(activeTab === 'documents')} onClick={() => setActiveTab('documents')}>Documents</button>
-        <button style={styles.tab(activeTab === 'time-off')} onClick={() => setActiveTab('time-off')}>Time Off</button>
+        <button style={styles.tabDisabled} title="Coming soon">Time Off</button>
+        <button style={styles.tabDisabled} title="Coming soon">Tech Support</button>
       </div>
 
       <div style={styles.content}>
