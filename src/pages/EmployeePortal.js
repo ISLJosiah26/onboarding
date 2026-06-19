@@ -503,11 +503,6 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     [instance, documents, docCompletions]
   )
 
-  const pendingTimeOffCount = useMemo(
-    () => timeOffFetched ? timeOffRequests.filter(r => r.status === TIME_OFF_STATUS.PENDING).length : 0,
-    [timeOffFetched, timeOffRequests]
-  )
-
   async function toggleTask(completionId, current, e) {
     if (e && e.stopPropagation) e.stopPropagation()
     const newVal = !current
@@ -651,6 +646,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     progressWrap: { marginTop: '20px', marginBottom: isMobile ? '20px' : '32px' },
     tabs: { display: 'flex', gap: '0', borderBottom: '1px solid #e2e1dd', padding: isMobile ? '0 16px' : '0 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
     tab: (active) => ({ fontSize: '13px', fontWeight: active ? 600 : 400, color: active ? '#0066cc' : '#70706b', padding: '12px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: active ? '2px solid #0066cc' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.12s ease, border-color 0.12s ease' }),
+    tabDisabled: { fontSize: '13px', fontWeight: 400, color: '#c4c3bf', padding: '12px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: '2px solid transparent', cursor: 'default', fontFamily: 'inherit', pointerEvents: 'none', whiteSpace: 'nowrap', flexShrink: 0 },
     content: { padding: isMobile ? '20px 16px' : '28px 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
     balCard: { background: '#fff', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
     balGrid: { display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '12px' : '16px' },
@@ -747,17 +743,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
           </button>
         )}
         <button style={styles.tab(activeTab === 'company-resources')} onClick={() => setActiveTab('company-resources')}>Company Resources</button>
-        <button style={styles.tab(activeTab === 'time-off')} onClick={() => setActiveTab('time-off')}>
-          Time Off
-          {pendingTimeOffCount > 0 && (
-            <span className="il-tab-badge" style={{ background: '#fffbf0', color: '#d4901a' }}>
-              {pendingTimeOffCount}
-            </span>
-          )}
-        </button>
-        <button style={styles.tab(activeTab === 'technical-tickets')} onClick={() => setActiveTab('technical-tickets')}>
-          Tech Support
-        </button>
+        <button style={styles.tabDisabled} title="Coming soon">Time Off</button>
+        <button style={styles.tabDisabled} title="Coming soon">Tech Support</button>
       </div>
 
       <div style={styles.content}>
