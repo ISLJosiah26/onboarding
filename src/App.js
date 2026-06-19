@@ -18,7 +18,11 @@ function App() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [page, setPage] = useState(pathToPage(window.location.pathname))
+  const [page, setPage] = useState(() => {
+    const hash = window.location.hash
+    if (hash.includes('type=invite') || hash.includes('type=recovery')) return 'set-password'
+    return pathToPage(window.location.pathname)
+  })
   const [selectedRole, setSelectedRole] = useState(null)
   const [activeInstanceId, setActiveInstanceId] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -90,7 +94,7 @@ useEffect(() => {
 
   function navigate(targetPage, opts = {}) {
     const nextPath = pageToPath(targetPage)
-    if (opts.replace) window.history.replaceState({}, '', nextPath)
+    if (opts.replace) window.history.replaceState({}, '', nextPath + window.location.hash)
     else if (window.location.pathname !== nextPath) window.history.pushState({}, '', nextPath)
     setPage(targetPage)
   }
