@@ -8,8 +8,9 @@ import { handleSupabaseError } from '../utils/handleError'
 import { getHrEmail, getTechSupportEmail } from '../utils/getHrEmail'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
-import { PHASES, CURRENT_YEAR, ONBOARDING_STATUS, TIME_OFF_STATUS } from '../config'
+import { SCHEDULE_BUCKETS, CURRENT_YEAR, ONBOARDING_STATUS, TIME_OFF_STATUS } from '../config'
 import { getInitials } from '../utils/formatUtils'
+import { normalizeTask, groupParentsByBucket, bucketDateHint, isBucketUpcoming } from '../utils/schedule'
 import { TYPE_LABELS, StatusPill, TypeIcon, fmtDateRange } from '../utils/timeOffShared'
 
 const BASE_STYLES = {
@@ -60,16 +61,9 @@ const TICKET_CATEGORIES = [
 ]
 
 
-function isPhaseUpcoming(phase, hireDate) {
-  if (phase === 'Week 1') return false
-  const days = Math.floor((new Date() - new Date(hireDate)) / 86400000)
-  const startDays = { 'Week 2': 7, '30 Day': 30, '60 Day': 60, '90 Day': 90 }
-  return days < (startDays[phase] ?? 0)
-}
-
 export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }) {
   const [instance, setInstance] = useState(null)
-  const [tasksByPhase, setTasksByPhase] = useState({})
+  const [tasks, setTasks] = useState([])
   const [completions, setCompletions] = useState({})
   const [expandedTasks, setExpandedTasks] = useState({})
   const [documents, setDocuments] = useState([])
@@ -139,7 +133,7 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
           id, status,
           employees (id, full_name, hire_date, role_id, manager_id, roles (name)),
           task_completions (
-            id, completed, completed_at,
+            id, completed, completed_at, day, sort_order, custom_task_name, custom_owner,
             onboarding_templates (id, task_name, phase, owner, parent_id)
           )
         `)
@@ -153,15 +147,9 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
 
       if (instanceData) {
         setInstance(instanceData)
-        const byPhase = {}
         const comp = {}
-        PHASES.forEach(p => byPhase[p] = [])
-        instanceData.task_completions.forEach(tc => {
-          const phase = tc.onboarding_templates.phase
-          if (byPhase[phase]) byPhase[phase].push(tc)
-          comp[tc.id] = tc.completed
-        })
-        setTasksByPhase(byPhase)
+        instanceData.task_completions.forEach(tc => { comp[tc.id] = tc.completed })
+        setTasks(instanceData.task_completions.map(normalizeTask))
         setCompletions(comp)
 
         const roleId = instanceData.employees?.role_id
@@ -478,20 +466,26 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     [timeOffRequests]
   )
 
+  const subtasksFor = (parent) => tasks.filter(s => s.parentId && s.parentId === parent.templateId)
+  const isTaskDone = (parent, comp) => {
+    const subs = subtasksFor(parent)
+    if (subs.length === 0) return !!comp[parent.id]
+    return subs.every(s => comp[s.id])
+  }
+
   const totalTasks = useMemo(
-    () => Object.values(tasksByPhase).flat().filter(tc => !tc.onboarding_templates.parent_id).length,
-    [tasksByPhase]
+    () => tasks.filter(t => !t.parentId).length,
+    [tasks]
   )
 
   const completedTasksCount = useMemo(() => {
-    const allTasks = Object.values(tasksByPhase).flat()
-    const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
-    return parentTasks.filter(tc => {
-      const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-      if (subtasks.length === 0) return completions[tc.id]
-      return subtasks.every(s => completions[s.id])
+    const parents = tasks.filter(t => !t.parentId)
+    return parents.filter(p => {
+      const subs = tasks.filter(s => s.parentId && s.parentId === p.templateId)
+      if (subs.length === 0) return completions[p.id]
+      return subs.every(s => completions[s.id])
     }).length
-  }, [tasksByPhase, completions])
+  }, [tasks, completions])
 
   const pct = useMemo(
     () => totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0,
@@ -521,33 +515,18 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     }
 
     if (newVal) {
-      const allTasks = Object.values(tasksByPhase).flat()
-      const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
-      const completedCount = parentTasks.filter(tc => {
-        const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-        if (subtasks.length === 0) return newCompletions[tc.id]
-        return subtasks.every(s => newCompletions[s.id])
-      }).length
+      const parentTasks = tasks.filter(t => !t.parentId)
+      const completedCount = parentTasks.filter(p => isTaskDone(p, newCompletions)).length
 
       if (completedCount === parentTasks.length) {
         setCelebration('all')
       } else {
-        PHASES.forEach(phase => {
-          const phaseTasks = allTasks.filter(tc => tc.onboarding_templates.phase === phase && !tc.onboarding_templates.parent_id)
-          if (phaseTasks.length === 0) return
-          const phaseComplete = phaseTasks.every(tc => {
-            const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-            if (subtasks.length === 0) return newCompletions[tc.id]
-            return subtasks.every(s => newCompletions[s.id])
-          })
-          if (phaseComplete) {
-            const prevPhaseComplete = phaseTasks.every(tc => {
-              const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-              if (subtasks.length === 0) return completions[tc.id]
-              return subtasks.every(s => completions[s.id])
-            })
-            if (!prevPhaseComplete) setCelebration(phase)
-          }
+        SCHEDULE_BUCKETS.forEach(bucket => {
+          const bucketTasks = parentTasks.filter(p => p.bucket === bucket)
+          if (bucketTasks.length === 0) return
+          const nowComplete = bucketTasks.every(p => isTaskDone(p, newCompletions))
+          const wasComplete = bucketTasks.every(p => isTaskDone(p, completions))
+          if (nowComplete && !wasComplete) setCelebration(bucket)
         })
       }
       clearTimeout(celebrationTimer.current)
@@ -750,63 +729,56 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       <div style={styles.content}>
         {activeTab === 'checklist' && (
           <div className="il-tab-content">
-            {PHASES.map(phase => {
-              const allTasks = tasksByPhase[phase] || []
-              const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
-              if (parentTasks.length === 0) return null
-              const upcoming = isPhaseUpcoming(phase, displayHireDate)
-              return (
-                <div key={phase} style={{ opacity: upcoming ? 0.4 : 1, pointerEvents: upcoming ? 'none' : 'auto' }}>
-                  <div style={{ ...styles.phaseLabel, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>{phase}</span>
-                    {upcoming && <span style={{ fontSize: '10px', color: '#a4a39f', fontWeight: 500, background: '#f4f3ef', padding: '1px 6px', borderRadius: '3px', textTransform: 'none', letterSpacing: 0 }}>Upcoming</span>}
-                  </div>
-                  {parentTasks.map(tc => {
-                    const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-                    const hasSubtasks = subtasks.length > 0
-                    const isExpanded = expandedTasks[tc.id]
-                    const subtasksComplete = hasSubtasks ? subtasks.every(s => completions[s.id]) : false
-                    const isChecked = hasSubtasks ? subtasksComplete : completions[tc.id]
-                    const completedSubs = subtasks.filter(s => completions[s.id]).length
-                    return (
-                      <div key={tc.id}>
-                        <div className="il-row" style={styles.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [tc.id]: !prev[tc.id] })) : toggleTask(tc.id, completions[tc.id], { stopPropagation: () => {} })}>
-                          <div className="il-checkbox" style={styles.checkbox(isChecked)} onClick={(e) => { e.stopPropagation(); if (!hasSubtasks) toggleTask(tc.id, completions[tc.id], e) }}>
-                            {isChecked && checkIcon()}
+            {(() => {
+              const parentsByBucket = groupParentsByBucket(tasks)
+              return SCHEDULE_BUCKETS.map(bucket => {
+                const parentTasks = parentsByBucket[bucket] || []
+                if (parentTasks.length === 0) return null
+                const upcoming = isBucketUpcoming(displayHireDate, bucket)
+                const dateHint = bucketDateHint(displayHireDate, bucket)
+                return (
+                  <div key={bucket}>
+                    <div style={{ ...styles.phaseLabel, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>{bucket}</span>
+                      {dateHint && <span style={{ fontSize: '11px', color: '#a4a39f', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{dateHint}</span>}
+                      {upcoming && <span style={{ fontSize: '10px', color: '#a4a39f', fontWeight: 500, background: '#f4f3ef', padding: '1px 6px', borderRadius: '3px', textTransform: 'none', letterSpacing: 0 }}>Upcoming</span>}
+                    </div>
+                    {parentTasks.map(task => {
+                      const subtasks = subtasksFor(task)
+                      const hasSubtasks = subtasks.length > 0
+                      const isExpanded = expandedTasks[task.id]
+                      const subtasksComplete = hasSubtasks ? subtasks.every(s => completions[s.id]) : false
+                      const isChecked = hasSubtasks ? subtasksComplete : completions[task.id]
+                      const completedSubs = subtasks.filter(s => completions[s.id]).length
+                      return (
+                        <div key={task.id}>
+                          <div className="il-row" style={styles.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [task.id]: !prev[task.id] })) : toggleTask(task.id, completions[task.id], { stopPropagation: () => {} })}>
+                            <div className="il-checkbox" style={styles.checkbox(isChecked)} onClick={(e) => { e.stopPropagation(); if (!hasSubtasks) toggleTask(task.id, completions[task.id], e) }}>
+                              {isChecked && checkIcon()}
+                            </div>
+                            <div style={styles.taskName(isChecked)}>{task.name}</div>
+                            {hasSubtasks && <span style={styles.subtaskCount}>{completedSubs}/{subtasks.length}</span>}
+                            {hasSubtasks && <span style={styles.chevron(isExpanded)}>▶</span>}
                           </div>
-                          <div style={styles.taskName(isChecked)}>{tc.onboarding_templates.task_name}</div>
-                          {hasSubtasks && <span style={styles.subtaskCount}>{completedSubs}/{subtasks.length}</span>}
-                          {hasSubtasks && <span style={styles.chevron(isExpanded)}>▶</span>}
-                        </div>
-                        {hasSubtasks && isExpanded && (
-                          <div>
-                            {PHASES.map(p => {
-                              const phaseSubtasks = subtasks.filter(s => s.onboarding_templates.phase === p)
-                              if (phaseSubtasks.length === 0) return null
-                              return (
-                                <div key={p}>
-                                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#c0bfbb', textTransform: 'uppercase', letterSpacing: '0.6px', padding: '8px 0 6px 32px', background: '#f7f6f4' }}>
-                                    {p}
+                          {hasSubtasks && isExpanded && (
+                            <div>
+                              {subtasks.map(s => (
+                                <div key={s.id} className="il-row" style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
+                                  <div className="il-checkbox" style={styles.subtaskCheckbox(completions[s.id])}>
+                                    {completions[s.id] && checkIcon(7)}
                                   </div>
-                                  {phaseSubtasks.map(s => (
-                                    <div key={s.id} className="il-row" style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
-                                      <div className="il-checkbox" style={styles.subtaskCheckbox(completions[s.id])}>
-                                        {completions[s.id] && checkIcon(7)}
-                                      </div>
-                                      <div style={styles.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
-                                    </div>
-                                  ))}
+                                  <div style={styles.subtaskName(completions[s.id])}>{s.name}</div>
                                 </div>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            })}
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })
+            })()}
           </div>
         )}
 

@@ -1,10 +1,14 @@
+import { useState } from 'react'
 import Layout from '../components/Layout'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 import ConfirmModal from '../components/ConfirmModal'
 import EditEmployeeModal from '../components/EditEmployeeModal'
 import Toast from '../components/Toast'
 import { useOnboardingPlan } from '../hooks/useOnboardingPlan'
-import { PHASES } from '../config'
+import { BUCKET_SECTIONS } from '../config'
+import { groupParentsByBucket, bucketDateHint } from '../utils/schedule'
+
+const OWNERS = ['HR', 'Manager', 'IT']
 
 const STYLES = {
   header: { padding: '28px 40px 24px', borderBottom: '1px solid #e2e1dd' },
@@ -19,30 +23,41 @@ const STYLES = {
   content: { padding: '32px 40px', maxWidth: '780px' },
   sectionLabel: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
   uploadLink: { fontSize: '12px', color: '#0066cc', cursor: 'pointer', fontWeight: 500, textTransform: 'none', letterSpacing: 0 },
-  parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
-  subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#fafaf9' },
+  weekHeading: { fontSize: '11px', fontWeight: 700, color: '#70706b', textTransform: 'uppercase', letterSpacing: '0.6px', margin: '30px 0 10px' },
+  bucketHeader: { display: 'flex', alignItems: 'baseline', gap: '8px', padding: '6px 0 8px', borderBottom: '1px solid #f0efe9' },
+  bucketName: (complete) => ({ fontSize: '12px', fontWeight: 600, color: complete ? '#1a7a4a' : '#18181b', letterSpacing: '-0.1px' }),
+  bucketDate: { fontSize: '11px', color: '#a4a39f' },
+  bucketCount: { fontSize: '11px', color: '#a4a39f', marginLeft: 'auto' },
+  parentRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 6px', borderBottom: '1px solid #f0efe9', cursor: 'pointer', borderRadius: '6px' },
+  subtaskRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '9px 0 9px 40px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#fafaf9' },
+  dragHandle: { cursor: 'grab', color: '#c8c7c3', fontSize: '13px', lineHeight: 1, flexShrink: 0, userSelect: 'none', padding: '0 2px' },
   checkbox: (checked) => ({ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
   subtaskCheckbox: (checked) => ({ width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
-  taskName: (checked) => ({ fontSize: '13px', color: checked ? '#a4a39f' : '#18181b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
+  taskName: (checked) => ({ fontSize: '13px', color: checked ? '#a4a39f' : '#18181b', textDecoration: checked ? 'line-through' : 'none', flex: 1, minWidth: 0 }),
   subtaskName: (checked) => ({ fontSize: '12px', color: checked ? '#a4a39f' : '#70706b', textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
-  owner: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f4f3ef', color: '#70706b', fontWeight: 500 },
+  owner: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f4f3ef', color: '#70706b', fontWeight: 500, flexShrink: 0 },
   chevron: (open) => ({ fontSize: '10px', color: '#a4a39f', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }),
   subtaskCount: { fontSize: '11px', color: '#a4a39f', flexShrink: 0 },
+  rowBtn: { fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, padding: '2px 4px' },
   expandedPanel: { background: '#fafaf9', border: '1px solid #e2e1dd', borderRadius: '8px', padding: '14px', marginTop: '2px', marginBottom: '4px' },
   noteLabel: { fontSize: '11px', color: '#70706b', marginBottom: '6px', fontWeight: 500 },
   noteInput: { width: '100%', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#18181b', resize: 'vertical', minHeight: '60px', boxSizing: 'border-box' },
   noteHint: { fontSize: '11px', color: '#a4a39f', marginTop: '6px' },
   noteIndicator: { fontSize: '11px', color: '#0066cc', marginLeft: '4px' },
-  section: { marginBottom: '36px' },
-  footer: { borderTop: '1px solid #e2e1dd', padding: '24px 40px', display: 'flex', gap: '8px' },
+  input: { border: '1px solid #e2e1dd', borderRadius: '7px', padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#18181b' },
+  addForm: { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', padding: '10px 6px 4px' },
+  addBtn: { fontSize: '12px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 6px', fontFamily: 'inherit', display: 'block' },
+  emptyBucket: { fontSize: '12px', color: '#c8c7c3', padding: '10px 6px', fontStyle: 'italic' },
   btnPrimary: { background: '#18181b', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
   btnSecondary: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+  footer: { borderTop: '1px solid #e2e1dd', padding: '24px 40px', display: 'flex', gap: '8px' },
 }
 
 export default function OnboardingPlan({ session, userProfile, instanceId, onBack, onNavigate }) {
   const {
     instance, setInstance,
-    tasksByPhase, completions, notes,
+    tasks, subtasksFor, isTaskComplete,
+    completions, notes,
     expanded, setExpanded,
     expandedTasks, setExpandedTasks,
     documents, docCompletions,
@@ -55,17 +70,72 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
     toast, hideToast,
     noteTimers,
     fetchPlan,
-    toggleTask, saveNote, handleNoteChange,
+    toggleTask, moveTask, addTask, editTask, removeTask,
+    saveNote, handleNoteChange,
     toggleDocument, hideDocument, restoreDocument, handleUploadDocument,
     handleMarkComplete, handleArchive, handleDeleteEmployee, handleInviteEmployee,
     totalTasks, completedTasksCount, pct,
   } = useOnboardingPlan({ instanceId, onBack })
+
+  const canEdit = ['admin', 'super_admin'].includes(userProfile?.role)
+
+  const [draggingId, setDraggingId] = useState(null)
+  const [dropTarget, setDropTarget] = useState(null)
+  const [addingToBucket, setAddingToBucket] = useState(null)
+  const [newName, setNewName] = useState('')
+  const [newOwner, setNewOwner] = useState('HR')
+  const [editingId, setEditingId] = useState(null)
+  const [editName, setEditName] = useState('')
+  const [editOwner, setEditOwner] = useState('HR')
 
   const checkIcon = (size = 9) => (
     <svg width={size} height={size - 2} viewBox="0 0 10 8" fill="none">
       <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
+
+  function handleDragStart(e, task) {
+    if (!canEdit) return
+    setDraggingId(task.id)
+    e.dataTransfer.effectAllowed = 'move'
+    try { e.dataTransfer.setData('text/plain', task.id) } catch (_) { /* some browsers require this call */ }
+  }
+  function handleDragEnd() { setDraggingId(null); setDropTarget(null) }
+  function handleRowDragOver(e, task) {
+    if (!draggingId) return
+    e.preventDefault(); e.stopPropagation()
+    setDropTarget({ bucket: task.bucket, beforeId: task.id })
+  }
+  function handleBucketDragOver(e, bucket) {
+    if (!draggingId) return
+    e.preventDefault()
+    setDropTarget({ bucket, beforeId: null })
+  }
+  function handleBucketDrop(e, bucket) {
+    if (!draggingId) return
+    e.preventDefault()
+    const before = dropTarget && dropTarget.bucket === bucket ? dropTarget.beforeId : null
+    const id = draggingId
+    setDraggingId(null); setDropTarget(null)
+    moveTask(id, bucket, before)
+  }
+
+  function startAdd(bucket) {
+    setAddingToBucket(bucket); setNewName(''); setNewOwner('HR')
+  }
+  async function submitAdd(bucket) {
+    if (!newName.trim()) return
+    await addTask(bucket, newName, newOwner)
+    setNewName(''); setAddingToBucket(null)
+  }
+  function startEdit(task) {
+    setEditingId(task.id); setEditName(task.name); setEditOwner(task.owner || 'HR')
+  }
+  async function submitEdit(taskId) {
+    if (!editName.trim()) return
+    await editTask(taskId, editName, editOwner)
+    setEditingId(null)
+  }
 
   if (loading) return (
     <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
@@ -84,8 +154,6 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
         <SkeletonTaskRow /><SkeletonTaskRow /><SkeletonTaskRow />
         <SkeletonLine width="100px" height="11px" style={{ margin: '28px 0 14px' }} />
         <SkeletonTaskRow /><SkeletonTaskRow />
-        <SkeletonLine width="80px" height="11px" style={{ margin: '28px 0 14px' }} />
-        <SkeletonTaskRow /><SkeletonTaskRow /><SkeletonTaskRow />
       </div>
     </Layout>
   )
@@ -103,6 +171,157 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
 
   const visibleDocs = documents.filter(doc => !docCompletions[doc.id]?.hidden)
   const hiddenDocs = documents.filter(doc => docCompletions[doc.id]?.hidden)
+  const parentsByBucket = groupParentsByBucket(tasks)
+  const hireDate = instance.employees.hire_date
+
+  function renderTaskRow(task) {
+    const subtasks = subtasksFor(task)
+    const hasSubtasks = subtasks.length > 0
+    const isTaskExpanded = expandedTasks[task.id]
+    const isChecked = isTaskComplete(task)
+    const completedSubtasks = subtasks.filter(s => completions[s.id]).length
+    const hasNote = notes[task.id] && notes[task.id].trim().length > 0
+    const isNoteExpanded = expanded === task.id
+    const isDragging = draggingId === task.id
+    const showInsertLine = draggingId && draggingId !== task.id && dropTarget && dropTarget.beforeId === task.id
+
+    if (editingId === task.id) {
+      return (
+        <div key={task.id} style={{ ...STYLES.addForm, borderBottom: '1px solid #f0efe9' }}>
+          <input style={{ ...STYLES.input, flex: 1, minWidth: '160px' }} value={editName} autoFocus
+            onChange={e => setEditName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') submitEdit(task.id); if (e.key === 'Escape') setEditingId(null) }} />
+          <select style={STYLES.input} value={editOwner} onChange={e => setEditOwner(e.target.value)}>
+            {OWNERS.map(o => <option key={o}>{o}</option>)}
+          </select>
+          <button style={STYLES.btnPrimary} onClick={() => submitEdit(task.id)}>Save</button>
+          <button style={{ ...STYLES.rowBtn, color: '#70706b' }} onClick={() => setEditingId(null)}>Cancel</button>
+        </div>
+      )
+    }
+
+    return (
+      <div key={task.id}>
+        {showInsertLine && <div style={{ height: '2px', background: '#0066cc', borderRadius: '2px', margin: '0 6px' }} />}
+        <div
+          className="il-row"
+          draggable={canEdit}
+          onDragStart={e => handleDragStart(e, task)}
+          onDragEnd={handleDragEnd}
+          onDragOver={e => handleRowDragOver(e, task)}
+          style={{ ...STYLES.parentRow, opacity: isDragging ? 0.4 : 1, background: isDragging ? '#f0f7ff' : 'transparent' }}
+          onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [task.id]: !prev[task.id] })) : setExpanded(isNoteExpanded ? null : task.id)}>
+          {canEdit && <span style={STYLES.dragHandle} title="Drag to another day" onClick={e => e.stopPropagation()}>⠿</span>}
+          {hasSubtasks ? (
+            <div style={{ ...STYLES.checkbox(isChecked), cursor: 'default' }} onClick={e => e.stopPropagation()} title="Completion is driven by subtasks">
+              {isChecked && checkIcon()}
+            </div>
+          ) : (
+            <div style={STYLES.checkbox(isChecked)} onClick={(e) => toggleTask(task.id, completions[task.id], e)}>
+              {isChecked && checkIcon()}
+            </div>
+          )}
+          <div style={STYLES.taskName(isChecked)}>
+            {task.name}
+            {!hasSubtasks && hasNote && !isNoteExpanded && (
+              <span style={STYLES.noteIndicator}>· note</span>
+            )}
+          </div>
+          {hasSubtasks && <span style={STYLES.subtaskCount}>{completedSubtasks}/{subtasks.length}</span>}
+          {task.owner && <div style={STYLES.owner}>{task.owner}</div>}
+          {canEdit && (
+            <>
+              <button style={{ ...STYLES.rowBtn, color: '#0066cc' }} onClick={e => { e.stopPropagation(); startEdit(task) }}>Edit</button>
+              <button style={{ ...STYLES.rowBtn, color: '#c04040' }} onClick={e => { e.stopPropagation(); removeTask(task.id) }}>Remove</button>
+            </>
+          )}
+          {hasSubtasks && <span style={STYLES.chevron(isTaskExpanded)}>▶</span>}
+        </div>
+
+        {hasSubtasks && isTaskExpanded && (
+          <div>
+            {subtasks.map(s => (
+              <div key={s.id} className="il-row" style={STYLES.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
+                <div className="il-checkbox" style={STYLES.subtaskCheckbox(completions[s.id])}>
+                  {completions[s.id] && checkIcon(7)}
+                </div>
+                <div style={STYLES.subtaskName(completions[s.id])}>{s.name}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!hasSubtasks && isNoteExpanded && (
+          <div style={STYLES.expandedPanel} onClick={e => e.stopPropagation()}>
+            <div style={STYLES.noteLabel}>Note</div>
+            <textarea
+              style={STYLES.noteInput}
+              value={notes[task.id] || ''}
+              onChange={e => handleNoteChange(task.id, e.target.value)}
+              onBlur={e => { clearTimeout(noteTimers.current[task.id]); saveNote(task.id, e.target.value) }}
+              placeholder="Add a note about this task..."
+            />
+            <div style={{ ...STYLES.noteHint, color: noteSaveState[task.id] === 'saved' ? '#1a7a4a' : '#a4a39f' }}>
+              {noteSaveState[task.id] === 'saving' ? 'Saving…' : noteSaveState[task.id] === 'saved' ? '✓ Saved' : 'Saves automatically.'}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  function renderBucket(bucket) {
+    const bucketTasks = parentsByBucket[bucket] || []
+    if (bucketTasks.length === 0 && !canEdit) return null
+    const complete = bucketTasks.length > 0 && bucketTasks.every(isTaskComplete)
+    const dateHint = bucketDateHint(hireDate, bucket)
+    const isDropTarget = draggingId && dropTarget && dropTarget.bucket === bucket
+    const isAdding = addingToBucket === bucket
+
+    return (
+      <div
+        key={bucket}
+        onDragOver={e => handleBucketDragOver(e, bucket)}
+        onDrop={e => handleBucketDrop(e, bucket)}
+        style={{ marginBottom: '18px', borderRadius: '8px', outline: isDropTarget ? '2px dashed #0066cc' : 'none', outlineOffset: '2px', background: isDropTarget ? '#f7fbff' : 'transparent', transition: 'background 0.12s' }}>
+        <div style={STYLES.bucketHeader}>
+          <span style={STYLES.bucketName(complete)}>{bucket}</span>
+          {dateHint && <span style={STYLES.bucketDate}>{dateHint}</span>}
+          {bucketTasks.length > 0 && (
+            <span style={STYLES.bucketCount}>
+              {bucketTasks.filter(isTaskComplete).length}/{bucketTasks.length}{complete ? ' · Complete' : ''}
+            </span>
+          )}
+        </div>
+
+        {bucketTasks.length === 0 && canEdit && !isAdding && (
+          <div style={STYLES.emptyBucket}>{draggingId ? 'Drop here' : 'No tasks'}</div>
+        )}
+
+        {bucketTasks.map(renderTaskRow)}
+
+        {/* trailing insert line when appending to end of this bucket */}
+        {draggingId && dropTarget && dropTarget.bucket === bucket && dropTarget.beforeId === null && bucketTasks.length > 0 && (
+          <div style={{ height: '2px', background: '#0066cc', borderRadius: '2px', margin: '0 6px' }} />
+        )}
+
+        {canEdit && (isAdding ? (
+          <div style={STYLES.addForm}>
+            <input style={{ ...STYLES.input, flex: 1, minWidth: '160px' }} placeholder="Task name" value={newName} autoFocus
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') submitAdd(bucket); if (e.key === 'Escape') setAddingToBucket(null) }} />
+            <select style={STYLES.input} value={newOwner} onChange={e => setNewOwner(e.target.value)}>
+              {OWNERS.map(o => <option key={o}>{o}</option>)}
+            </select>
+            <button style={STYLES.btnPrimary} onClick={() => submitAdd(bucket)}>Add</button>
+            <button style={{ ...STYLES.rowBtn, color: '#70706b' }} onClick={() => setAddingToBucket(null)}>Cancel</button>
+          </div>
+        ) : (
+          <button style={STYLES.addBtn} onClick={() => startAdd(bucket)}>+ Add task</button>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
@@ -128,7 +347,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
 
       <div style={STYLES.content}>
 
-        <div style={STYLES.section}>
+        <div style={{ marginBottom: '36px' }}>
           <div style={STYLES.sectionLabel}>
             <span>Documents</span>
             <label style={STYLES.uploadLink}>
@@ -197,106 +416,19 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
           )}
         </div>
 
-        {PHASES.map(phase => {
-          const allTasks = tasksByPhase[phase] || []
-          const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
-          if (parentTasks.length === 0) return null
-          const phaseComplete = parentTasks.every(tc => {
-            const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-            if (subtasks.length === 0) return completions[tc.id]
-            return subtasks.every(s => completions[s.id])
-          })
+        <div style={STYLES.sectionLabel}>
+          <span>Onboarding schedule</span>
+          {canEdit && <span style={{ fontSize: '11px', color: '#a4a39f', textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>Drag tasks to reschedule</span>}
+        </div>
 
-          const completedInPhase = parentTasks.filter(tc => {
-            const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-            if (subtasks.length === 0) return completions[tc.id]
-            return subtasks.every(s => completions[s.id])
-          }).length
-
+        {BUCKET_SECTIONS.map(section => {
+          const showHeading = section.buckets.length > 1 || section.label !== section.buckets[0]
+          const renderedBuckets = section.buckets.map(renderBucket).filter(Boolean)
+          if (renderedBuckets.length === 0) return null
           return (
-            <div key={phase} style={STYLES.section}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', paddingBottom: '10px', borderBottom: `1px solid ${phaseComplete ? '#c3e8d1' : '#f0efe9'}`, transition: 'border-color 0.25s ease' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: phaseComplete ? '#1a7a4a' : '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.4px', transition: 'color 0.25s ease' }}>{phase}</span>
-                <span style={{ fontSize: '11px', color: phaseComplete ? '#1a7a4a' : '#a4a39f', fontWeight: 400, transition: 'color 0.25s ease' }}>
-                  {completedInPhase}/{parentTasks.length}{phaseComplete ? ' · Complete' : ''}
-                </span>
-              </div>
-
-              {parentTasks.map(tc => {
-                const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-                const hasSubtasks = subtasks.length > 0
-                const isTaskExpanded = expandedTasks[tc.id]
-                const subtasksComplete = hasSubtasks ? subtasks.every(s => completions[s.id]) : false
-                const isChecked = hasSubtasks ? subtasksComplete : completions[tc.id]
-                const completedSubtasks = subtasks.filter(s => completions[s.id]).length
-                const hasNote = notes[tc.id] && notes[tc.id].trim().length > 0
-                const isNoteExpanded = expanded === tc.id
-
-                return (
-                  <div key={tc.id}>
-                    <div className="il-row" style={STYLES.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [tc.id]: !prev[tc.id] })) : setExpanded(isNoteExpanded ? null : tc.id)}>
-                      {hasSubtasks ? (
-                        <div style={{ ...STYLES.checkbox(isChecked), cursor: 'default' }} onClick={e => e.stopPropagation()} title="Completion is driven by subtasks">
-                          {isChecked && checkIcon()}
-                        </div>
-                      ) : (
-                        <div style={STYLES.checkbox(isChecked)} onClick={(e) => toggleTask(tc.id, completions[tc.id], e)}>
-                          {isChecked && checkIcon()}
-                        </div>
-                      )}
-                      <div style={STYLES.taskName(isChecked)}>
-                        {tc.onboarding_templates.task_name}
-                        {!hasSubtasks && hasNote && !isNoteExpanded && (
-                          <span style={STYLES.noteIndicator}>· note</span>
-                        )}
-                      </div>
-                      {hasSubtasks && <span style={STYLES.subtaskCount}>{completedSubtasks}/{subtasks.length}</span>}
-                      <div style={STYLES.owner}>{tc.onboarding_templates.owner}</div>
-                      {hasSubtasks && <span style={STYLES.chevron(isTaskExpanded)}>▶</span>}
-                    </div>
-
-                    {hasSubtasks && isTaskExpanded && (
-                      <div>
-                        {PHASES.map(p => {
-                          const phaseSubtasks = subtasks.filter(s => s.onboarding_templates.phase === p)
-                          if (phaseSubtasks.length === 0) return null
-                          return (
-                            <div key={p}>
-                              <div style={{ fontSize: '10px', fontWeight: 600, color: '#c0bfbb', textTransform: 'uppercase', letterSpacing: '0.6px', padding: '8px 0 6px 32px', background: '#fafaf9' }}>
-                                {p}
-                              </div>
-                              {phaseSubtasks.map(s => (
-                                <div key={s.id} className="il-row" style={STYLES.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
-                                  <div className="il-checkbox" style={STYLES.subtaskCheckbox(completions[s.id])}>
-                                    {completions[s.id] && checkIcon(7)}
-                                  </div>
-                                  <div style={STYLES.subtaskName(completions[s.id])}>{s.onboarding_templates.task_name}</div>
-                                </div>
-                              ))}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-
-                    {!hasSubtasks && isNoteExpanded && (
-                      <div style={STYLES.expandedPanel} onClick={e => e.stopPropagation()}>
-                        <div style={STYLES.noteLabel}>Note</div>
-                        <textarea
-                          style={STYLES.noteInput}
-                          value={notes[tc.id] || ''}
-                          onChange={e => handleNoteChange(tc.id, e.target.value)}
-                          onBlur={e => { clearTimeout(noteTimers.current[tc.id]); saveNote(tc.id, e.target.value) }}
-                          placeholder="Add a note about this task..."
-                        />
-                        <div style={{ ...STYLES.noteHint, color: noteSaveState[tc.id] === 'saved' ? '#1a7a4a' : '#a4a39f' }}>
-                          {noteSaveState[tc.id] === 'saving' ? 'Saving…' : noteSaveState[tc.id] === 'saved' ? '✓ Saved' : 'Saves automatically.'}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+            <div key={section.label}>
+              {showHeading && <div style={STYLES.weekHeading}>{section.label}</div>}
+              {renderedBuckets}
             </div>
           )
         })}

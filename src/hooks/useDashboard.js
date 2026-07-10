@@ -8,7 +8,10 @@ export function calcProgress(taskCompletions) {
   const total = parentTc.length
   if (total === 0) return { total: 0, done: 0, pct: 0 }
   const done = parentTc.filter(tc => {
-    const subtasks = taskCompletions.filter(s => s.onboarding_templates?.parent_id === tc.onboarding_templates?.id)
+    const parentId = tc.onboarding_templates?.id
+    const subtasks = parentId
+      ? taskCompletions.filter(s => s.onboarding_templates?.parent_id === parentId)
+      : []
     if (subtasks.length === 0) return tc.completed
     return subtasks.every(s => s.completed)
   }).length
