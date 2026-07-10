@@ -4,11 +4,11 @@ import useToast from './useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
 import { getHrEmail } from '../utils/getHrEmail'
-import { PHASES } from '../config'
+import { normalizeTask, sortTasks } from '../utils/schedule'
 
 export function useOnboardingPlan({ instanceId, onBack }) {
   const [instance, setInstance] = useState(null)
-  const [tasksByPhase, setTasksByPhase] = useState({})
+  const [tasks, setTasks] = useState([])
   const [completions, setCompletions] = useState({})
   const [notes, setNotes] = useState({})
   const [expanded, setExpanded] = useState(null)
@@ -36,7 +36,7 @@ export function useOnboardingPlan({ instanceId, onBack }) {
         id, status,
         employees (id, full_name, email, hire_date, role_id, roles (name)),
         task_completions (
-          id, completed, completed_at, notes,
+          id, completed, completed_at, notes, day, sort_order, custom_task_name, custom_owner,
           onboarding_templates (id, task_name, phase, owner, parent_id)
         )
       `)
@@ -50,17 +50,13 @@ export function useOnboardingPlan({ instanceId, onBack }) {
     }
 
     setInstance(data)
-    const byPhase = {}
     const comp = {}
     const nts = {}
-    PHASES.forEach(p => byPhase[p] = [])
     data.task_completions.forEach(tc => {
-      const phase = tc.onboarding_templates.phase
-      if (byPhase[phase]) byPhase[phase].push(tc)
       comp[tc.id] = tc.completed
       nts[tc.id] = tc.notes || ''
     })
-    setTasksByPhase(byPhase)
+    setTasks(data.task_completions.map(normalizeTask))
     setCompletions(comp)
     setNotes(nts)
     setLoading(false)
@@ -124,6 +120,126 @@ export function useOnboardingPlan({ instanceId, onBack }) {
       setCompletions(prev => ({ ...prev, [completionId]: current }))
       showToast(handleSupabaseError(error, 'Failed to save task. Please try again.'), 'error')
     }
+  }
+
+  // Drag-and-drop: move `draggedId` into `targetBucket`, positioned before
+  // `beforeId` (or appended when beforeId is null). Only top-level tasks move
+  // between buckets; subtasks stay attached to their parent.
+  async function moveTask(draggedId, targetBucket, beforeId) {
+    const dragged = tasks.find(t => t.id === draggedId)
+    if (!dragged || dragged.parentId) return
+    if (beforeId === draggedId) return
+
+    const targetList = tasks
+      .filter(t => t.id !== draggedId && !t.parentId && t.bucket === targetBucket)
+      .sort(sortTasks)
+
+    let insertAt = beforeId ? targetList.findIndex(t => t.id === beforeId) : targetList.length
+    if (insertAt === -1) insertAt = targetList.length
+
+    const ordered = [
+      ...targetList.slice(0, insertAt),
+      { ...dragged, bucket: targetBucket },
+      ...targetList.slice(insertAt),
+    ]
+
+    const orderMap = new Map(ordered.map((t, i) => [t.id, i]))
+    const noChange = dragged.bucket === targetBucket && dragged.sortOrder === orderMap.get(draggedId)
+      && targetList.every(t => t.sortOrder === orderMap.get(t.id))
+    if (noChange) return
+
+    setTasks(prev => prev.map(t => {
+      if (t.id === draggedId) return { ...t, bucket: targetBucket, sortOrder: orderMap.get(t.id) ?? t.sortOrder }
+      if (orderMap.has(t.id)) return { ...t, sortOrder: orderMap.get(t.id) }
+      return t
+    }))
+
+    const results = await Promise.all(ordered.map((t, i) =>
+      supabase.from('task_completions').update({ day: targetBucket, sort_order: i }).eq('id', t.id)
+    ))
+    const failed = results.find(r => r.error)
+    if (failed) {
+      showToast(handleSupabaseError(failed.error, 'Failed to move task. Please try again.'), 'error')
+      fetchPlan()
+    }
+  }
+
+  async function addTask(bucket, name, owner) {
+    const trimmed = (name || '').trim()
+    if (!trimmed) return
+    const siblings = tasks.filter(t => !t.parentId && t.bucket === bucket)
+    const sortOrder = siblings.length ? Math.max(...siblings.map(s => s.sortOrder)) + 1 : 0
+
+    const { data, error } = await supabase
+      .from('task_completions')
+      .insert({
+        instance_id: instanceId,
+        template_task_id: null,
+        completed: false,
+        day: bucket,
+        sort_order: sortOrder,
+        custom_task_name: trimmed,
+        custom_owner: owner || null,
+      })
+      .select('id, completed, completed_at, notes, day, sort_order, custom_task_name, custom_owner')
+      .single()
+
+    if (error) {
+      showToast(handleSupabaseError(error, 'Failed to add task.'), 'error')
+      return
+    }
+    const newTask = normalizeTask({ ...data, onboarding_templates: null })
+    setTasks(prev => [...prev, newTask])
+    setCompletions(prev => ({ ...prev, [data.id]: false }))
+    setNotes(prev => ({ ...prev, [data.id]: '' }))
+    if (instance) {
+      logAudit('task_added', 'task_completion', data.id, { employee_name: instance.employees.full_name, task_name: trimmed, day: bucket })
+    }
+    showToast('Task added')
+  }
+
+  async function editTask(taskId, name, owner) {
+    const trimmed = (name || '').trim()
+    if (!trimmed) return
+    const { error } = await supabase
+      .from('task_completions')
+      .update({ custom_task_name: trimmed, custom_owner: owner || null })
+      .eq('id', taskId)
+    if (error) {
+      showToast(handleSupabaseError(error, 'Failed to save task.'), 'error')
+      return
+    }
+    setTasks(prev => prev.map(t => t.id === taskId
+      ? { ...t, name: trimmed, owner: owner || t.owner }
+      : t))
+    showToast('Task updated')
+  }
+
+  function removeTask(taskId) {
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+    const subIds = tasks.filter(s => s.parentId && s.parentId === task.templateId).map(s => s.id)
+    const ids = [taskId, ...subIds]
+    setModal({
+      title: 'Remove task',
+      message: `Remove "${task.name}" from ${instance.employees.full_name}'s plan? This only affects this employee, not the role template.`,
+      confirmLabel: 'Remove',
+      confirmDanger: true,
+      onConfirm: async () => {
+        const { error } = await supabase.from('task_completions').delete().in('id', ids)
+        if (error) {
+          showToast(handleSupabaseError(error, 'Failed to remove task.'), 'error')
+          setModal(null)
+          return
+        }
+        setTasks(prev => prev.filter(t => !ids.includes(t.id)))
+        if (instance) {
+          logAudit('task_removed', 'task_completion', taskId, { employee_name: instance.employees.full_name, task_name: task.name })
+        }
+        setModal(null)
+        showToast('Task removed')
+      }
+    })
   }
 
   async function saveNote(completionId, value) {
@@ -235,18 +351,24 @@ export function useOnboardingPlan({ instanceId, onBack }) {
     setUploading(false)
   }
 
+  const parentTasks = tasks.filter(t => !t.parentId)
+
+  function subtasksFor(parent) {
+    return tasks.filter(s => s.parentId && s.parentId === parent.templateId)
+  }
+
+  function isTaskComplete(parent) {
+    const subs = subtasksFor(parent)
+    if (subs.length === 0) return !!completions[parent.id]
+    return subs.every(s => completions[s.id])
+  }
+
   function totalTasks() {
-    return Object.values(tasksByPhase).flat().filter(tc => !tc.onboarding_templates.parent_id).length
+    return parentTasks.length
   }
 
   function completedTasksCount() {
-    const allTasks = Object.values(tasksByPhase).flat()
-    const parentTasks = allTasks.filter(tc => !tc.onboarding_templates.parent_id)
-    return parentTasks.filter(tc => {
-      const subtasks = allTasks.filter(s => s.onboarding_templates.parent_id === tc.onboarding_templates.id)
-      if (subtasks.length === 0) return completions[tc.id]
-      return subtasks.every(s => completions[s.id])
-    }).length
+    return parentTasks.filter(isTaskComplete).length
   }
 
   function pct() {
@@ -344,7 +466,10 @@ export function useOnboardingPlan({ instanceId, onBack }) {
 
   return {
     instance, setInstance,
-    tasksByPhase,
+    tasks,
+    parentTasks,
+    subtasksFor,
+    isTaskComplete,
     completions,
     notes,
     expanded, setExpanded,
@@ -364,6 +489,10 @@ export function useOnboardingPlan({ instanceId, onBack }) {
     noteTimers,
     fetchPlan,
     toggleTask,
+    moveTask,
+    addTask,
+    editTask,
+    removeTask,
     saveNote,
     handleNoteChange,
     toggleDocument,

@@ -3,7 +3,28 @@ export const BRAND = {
   company: 'Integrated Staffing Limited'
 }
 
-export const PHASES = ['Week 1', 'Week 2', '30 Day', '60 Day', '90 Day']
+// The onboarding schedule. The first two weeks are broken into individual
+// business days (Day 1–Day 10); after that come weekly buckets and the
+// longer-range milestones. This ordered list is the source of truth for
+// how tasks are bucketed and drag-and-dropped.
+export const DAY_BUCKETS = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7', 'Day 8', 'Day 9', 'Day 10']
+export const WEEK_BUCKETS = ['Week 3', 'Week 4']
+export const MILESTONE_BUCKETS = ['30 Day', '60 Day', '90 Day']
+export const SCHEDULE_BUCKETS = [...DAY_BUCKETS, ...WEEK_BUCKETS, ...MILESTONE_BUCKETS]
+
+// Days are grouped under a week heading for scannability; each entry's
+// `buckets` are the individual drop targets rendered under that heading.
+export const BUCKET_SECTIONS = [
+  { label: 'Week 1', buckets: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'] },
+  { label: 'Week 2', buckets: ['Day 6', 'Day 7', 'Day 8', 'Day 9', 'Day 10'] },
+  { label: 'Week 3', buckets: ['Week 3'] },
+  { label: 'Week 4', buckets: ['Week 4'] },
+  { label: 'Milestones', buckets: ['30 Day', '60 Day', '90 Day'] },
+]
+
+// Kept as an alias so existing imports keep working; represents every bucket.
+export const PHASES = SCHEDULE_BUCKETS
+
 export const TODAY = new Date().toISOString().slice(0, 10)
 export const CURRENT_YEAR = new Date().getFullYear()
 

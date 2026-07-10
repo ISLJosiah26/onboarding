@@ -7,7 +7,7 @@ import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
-import { PHASES, ONBOARDING_STATUS } from '../config'
+import { PHASES, BUCKET_SECTIONS, ONBOARDING_STATUS } from '../config'
 
 const OWNERS = ['HR', 'Manager', 'IT']
 
@@ -72,7 +72,7 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [addingTaskToPhase, setAddingTaskToPhase] = useState(null)
   const [bulkMode, setBulkMode] = useState(false)
   const [bulkText, setBulkText] = useState('')
-  const [bulkPhase, setBulkPhase] = useState('Week 1')
+  const [bulkPhase, setBulkPhase] = useState('Day 1')
   const [bulkOwner, setBulkOwner] = useState('HR')
   const [templateCounts, setTemplateCounts] = useState({})
   const [libraryOpen, setLibraryOpen] = useState(false)
@@ -204,7 +204,7 @@ async function addRole() {
         confirmDanger: false,
         onConfirm: async () => {
           await supabase.from('task_completions').insert(
-            activeInstances.map(inst => ({ instance_id: inst.id, template_task_id: newTask.id, completed: false }))
+            activeInstances.map(inst => ({ instance_id: inst.id, template_task_id: newTask.id, completed: false, day: newTask.phase, sort_order: 0 }))
           )
           setModal(null)
         }
@@ -273,7 +273,7 @@ async function addSubtask(parentId) {
   const { error } = await supabase.from('onboarding_templates').insert({
     role_id: selectedRole.id,
     task_name: newSubtaskName.trim(),
-    phase: parent?.phase || 'Week 1',
+    phase: parent?.phase || 'Day 1',
     owner: parent?.owner,
     parent_id: parentId
   })
@@ -658,8 +658,13 @@ function renderModal() {
                     </div>
                   )}
 
-                  {/* Phases */}
-                  {PHASES.map(phase => {
+                  {/* Schedule buckets, grouped by week */}
+                  {BUCKET_SECTIONS.map(section => {
+                    const showHeading = section.buckets.length > 1 || section.label !== section.buckets[0]
+                    return (
+                    <div key={section.label}>
+                      {showHeading && <div style={{ fontSize: '11px', fontWeight: 700, color: '#70706b', textTransform: 'uppercase', letterSpacing: '0.6px', margin: '18px 0 6px' }}>{section.label}</div>}
+                      {section.buckets.map(phase => {
                     const phaseTasks = templates.filter(t => t.phase === phase && !t.parent_id)
                     const isAddingToThis = addingTaskToPhase === phase
                     return (
@@ -795,6 +800,9 @@ function renderModal() {
                           </button>
                         )}
                       </div>
+                    )
+                      })}
+                    </div>
                     )
                   })}
                 </div>
