@@ -75,7 +75,7 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [bulkPhase, setBulkPhase] = useState('Week 1')
   const [bulkOwner, setBulkOwner] = useState('HR')
   const [templateCounts, setTemplateCounts] = useState({})
-  const [showLibrary, setShowLibrary] = useState(false)
+  const [libraryOpen, setLibraryOpen] = useState(false)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchRoles is stable, mount-only fetch
   useEffect(() => { fetchRoles() }, [])
@@ -88,6 +88,13 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
     else if (initialTab === 'history') fetchHistory()
     else if (initialTab === 'templates') { fetchTaskLibrary(); fetchTemplateCounts() }
   }, [initialTab])
+
+  useEffect(() => {
+    if (!libraryOpen) return
+    const onKey = e => { if (e.key === 'Escape') setLibraryOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [libraryOpen])
 
   async function fetchRoles() {
     const { data } = await supabase.from('roles').select('*').order('name')
@@ -562,7 +569,16 @@ function renderModal() {
       <Layout session={session} userProfile={userProfile} currentPage="templates" onNavigate={onNavigate}>
         {renderAdminHeader('Task templates', '')}
 
-        <div style={{ display: 'flex', minHeight: 'calc(100vh - 130px)' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: isMobile ? '10px 16px' : '12px 40px', borderBottom: '1px solid #f0efe9', background: '#fff' }}>
+          <button
+            onClick={() => setLibraryOpen(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#0066cc', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+            Manage task library
+            <span style={{ color: '#a0a09c' }}>({taskLibrary.length})</span>
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', minHeight: 'calc(100vh - 182px)' }}>
 
           {/* Left panel: role list */}
           <div style={{ width: isMobile ? '140px' : '200px', flexShrink: 0, borderRight: '1px solid #e2e1dd', overflowY: 'auto', padding: '12px 0' }}>
@@ -787,29 +803,34 @@ function renderModal() {
           </div>
         </div>
 
-        {/* Task library management */}
-        <div style={{ borderTop: '1px solid #e2e1dd', padding: '16px 32px', marginLeft: isMobile ? '140px' : '200px' }}>
-          <button
-            onClick={() => setShowLibrary(v => !v)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
-            <span style={{ fontSize: '13px', fontWeight: 500, color: '#18181b' }}>Task library</span>
-            <span style={{ fontSize: '11px', color: '#a0a09c' }}>({taskLibrary.length})</span>
-            <span style={{ fontSize: '9px', color: '#a0a09c', marginLeft: '2px' }}>{showLibrary ? '▲' : '▼'}</span>
-          </button>
-          {showLibrary && (
-            <div style={{ marginTop: '12px', maxWidth: '480px' }}>
-              <div style={{ fontSize: '12px', color: '#70706b', marginBottom: '10px' }}>Tasks saved to the library appear in the dropdown when adding. Remove typos or outdated entries here.</div>
-              {taskLibrary.length === 0 ? (
-                <div style={{ fontSize: '12px', color: '#a0a09c' }}>Library is empty.</div>
-              ) : taskLibrary.map(t => (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0efe9' }}>
-                  <span style={{ fontSize: '13px', color: '#18181b' }}>{t.task_name}</span>
-                  <button style={styles.btnGhost} onClick={() => deleteLibraryTask(t.id)}>Remove</button>
+        {libraryOpen && (
+          <div
+            className="il-backdrop"
+            style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.3)', display: 'flex', justifyContent: 'flex-end', fontFamily: "'Inter', -apple-system, sans-serif" }}
+            onClick={() => setLibraryOpen(false)}>
+            <div
+              style={{ background: '#fff', height: '100%', width: isMobile ? '100%' : '400px', maxWidth: '100%', boxShadow: '-4px 0 24px rgba(0,0,0,0.10)', display: 'flex', flexDirection: 'column' }}
+              onClick={e => e.stopPropagation()}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f0efe9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.2px' }}>Task library</div>
+                  <div style={{ fontSize: '12px', color: '#70706b', marginTop: '4px', lineHeight: 1.5 }}>Tasks saved here appear in the dropdown when adding tasks to a role. Remove typos or outdated entries.</div>
                 </div>
-              ))}
+                <button onClick={() => setLibraryOpen(false)} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: '22px', lineHeight: 1, color: '#a0a09c', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>×</button>
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '8px 24px 24px' }}>
+                {taskLibrary.length === 0 ? (
+                  <div style={{ fontSize: '12px', color: '#a0a09c', paddingTop: '12px' }}>Library is empty. Tasks you add to a role are saved here automatically.</div>
+                ) : taskLibrary.map(t => (
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f0efe9' }}>
+                    <span style={{ fontSize: '13px', color: '#18181b' }}>{t.task_name}</span>
+                    <button style={styles.btnGhost} onClick={() => deleteLibraryTask(t.id)}>Remove</button>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {renderModal()}
       </Layout>
