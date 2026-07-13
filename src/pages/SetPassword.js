@@ -54,6 +54,7 @@ export default function SetPassword({ onComplete }) {
           <label style={{ fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 }}>New password</label>
           <input
             type="password"
+            autoComplete="new-password"
             placeholder="At least 8 characters"
             value={password}
             autoFocus
@@ -63,6 +64,7 @@ export default function SetPassword({ onComplete }) {
           <label style={{ fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 }}>Confirm password</label>
           <input
             type="password"
+            autoComplete="new-password"
             placeholder="Repeat your password"
             value={confirm}
             onChange={e => setConfirm(e.target.value)}
@@ -70,7 +72,7 @@ export default function SetPassword({ onComplete }) {
             style={{ display: 'block', width: '100%', marginBottom: '20px', padding: '10px 14px', border: '1px solid #e2e1dd', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#18181b', background: '#fff', boxSizing: 'border-box' }}
           />
           {error && (
-            <div style={{ fontSize: '12px', color: '#c04040', marginBottom: '16px', padding: '10px 12px', background: '#fdf0f0', border: '1px solid #f5d6d6', borderRadius: '7px' }}>
+            <div role="alert" style={{ fontSize: '12px', color: '#c04040', marginBottom: '16px', padding: '10px 12px', background: '#fdf0f0', border: '1px solid #f5d6d6', borderRadius: '7px' }}>
               {error}
             </div>
           )}

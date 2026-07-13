@@ -25,7 +25,8 @@ export default function Toast({ message, type = 'success', onClose }) {
       display: 'flex', alignItems: 'center', gap: '10px',
       boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
       zIndex: 1000, fontFamily: 'Inter, -apple-system, sans-serif',
-      whiteSpace: 'nowrap',
+      maxWidth: 'min(440px, calc(100vw - 32px))',
+      lineHeight: 1.45,
       animation: 'slideUp 0.3s ease'
     }}>
       {type === 'success' && <span>✓</span>}

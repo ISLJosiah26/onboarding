@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
@@ -72,13 +70,27 @@ button, input, select, textarea {
   font: inherit;
 }
 
+/* !important so the ring survives inline `outline: none` on inputs */
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--focus) !important;
   outline-offset: 2px;
+}
+
+/* Centered loading spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.il-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }
 
 /* Primary button */

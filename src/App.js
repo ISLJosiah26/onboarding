@@ -18,6 +18,7 @@ function App() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [authBusy, setAuthBusy] = useState(false)
   const [page, setPage] = useState(() => {
     const hash = window.location.hash
     if (hash.includes('type=invite') || hash.includes('type=recovery')) return 'set-password'
@@ -77,20 +78,30 @@ useEffect(() => {
   }
 
   async function handleLogin() {
+    if (authBusy) return
     setError('')
+    setAuthBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setError(error.message)
+    if (error) {
+      setError(error.message.includes('Invalid login credentials')
+        ? 'Incorrect email or password.'
+        : error.message)
+    }
+    setAuthBusy(false)
   }
 
   async function handleForgotPassword() {
-  if (!email) { setError('Please enter your email address first.'); return }
-  setError('')
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin
-  })
-  if (error) setError(error.message)
-  else setResetSent(true)
-}
+    if (authBusy) return
+    if (!email) { setError('Please enter your email address first.'); return }
+    setError('')
+    setAuthBusy(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin
+    })
+    if (error) setError(error.message)
+    else setResetSent(true)
+    setAuthBusy(false)
+  }
 
   function navigate(targetPage, opts = {}) {
     const nextPath = pageToPath(targetPage)
@@ -110,77 +121,79 @@ useEffect(() => {
   }
 
 if (!session) {
+  const inputStyle = { display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: '1px solid #e2e1dd', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: '#18181b', background: '#fff', boxSizing: 'border-box' }
+  const labelStyle = { fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 }
+  const errorStyle = { fontSize: '12px', color: '#c04040', marginBottom: '16px', padding: '10px 12px', background: '#fdf0f0', border: '1px solid #f5d6d6', borderRadius: '7px' }
+  const primaryBtn = { width: '100%', background: authBusy ? '#9ca3af' : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '11px', fontSize: '13px', fontWeight: 500, cursor: authBusy ? 'default' : 'pointer', fontFamily: 'inherit', marginBottom: '12px', letterSpacing: '0.1px' }
+  const linkBtn = { width: '100%', background: 'transparent', color: '#70706b', border: 'none', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: '4px' }
+
   return (
-    <div style={{ minHeight: '100vh', background: '#fafaf9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, -apple-system, sans-serif', padding: '20px' }}>
+    <div style={{ minHeight: '100vh', background: '#f4f3ef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, -apple-system, sans-serif', padding: '20px' }}>
       <div style={{ width: '100%', maxWidth: '380px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
-          <div style={{ width: '44px', height: '44px', background: '#0070CA', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>IL</div>
-          <div style={{ fontSize: '22px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.5px', marginBottom: '4px' }}>Welcome back</div>
-          <div style={{ fontSize: '13px', color: '#8a8a86' }}>Sign in to Integrated Launch</div>
+          <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, #004db3 0%, #0080ff 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 700, marginBottom: '18px', boxShadow: '0 4px 16px rgba(0,102,204,0.3)' }}>IL</div>
+          <div style={{ fontSize: '22px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.6px', marginBottom: '4px' }}>Welcome back</div>
+          <div style={{ fontSize: '13px', color: '#70706b' }}>Sign in to Integrated Launch</div>
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid #ebebe8', borderRadius: '12px', padding: '28px' }}>
+        <div style={{ background: '#fff', border: '1px solid #e2e1dd', borderRadius: '14px', padding: '28px', boxShadow: '0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
           {resetSent ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '8px' }}>Check your email</div>
-              <div style={{ fontSize: '13px', color: '#8a8a86', lineHeight: '1.6', marginBottom: '20px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '8px' }}>Check your email</div>
+              <div style={{ fontSize: '13px', color: '#70706b', lineHeight: '1.6', marginBottom: '20px' }}>
                 We sent a password reset link to {email}. Click the link to set a new password.
               </div>
               <button onClick={() => { setResetSent(false); setForgotPassword(false) }}
-                style={{ fontSize: '13px', color: '#0070CA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ fontSize: '13px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                 Back to sign in
               </button>
             </div>
           ) : forgotPassword ? (
             <>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a1a', marginBottom: '4px' }}>Reset your password</div>
-              <div style={{ fontSize: '13px', color: '#8a8a86', marginBottom: '20px' }}>Enter your email and we'll send you a reset link.</div>
-              <label style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' }}>Email</label>
-              <input type="email" placeholder="you@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)}
+              <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '4px' }}>Reset your password</div>
+              <div style={{ fontSize: '13px', color: '#70706b', marginBottom: '20px' }}>Enter your email and we'll send you a reset link.</div>
+              <label htmlFor="login-email" style={labelStyle}>Email</label>
+              <input id="login-email" type="email" autoComplete="email" placeholder="you@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleForgotPassword()}
-                style={{ display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: '1px solid #ebebe8', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#1a1a1a', background: '#fff', boxSizing: 'border-box' }} />
+                style={inputStyle} />
               {error && (
-                <div style={{ fontSize: '12px', color: '#c74848', marginBottom: '16px', padding: '10px 12px', background: '#fdf0f0', border: '1px solid #f5d6d6', borderRadius: '6px' }}>
+                <div role="alert" style={errorStyle}>
                   {error}
                 </div>
               )}
-              <button onClick={handleForgotPassword}
-                style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '11px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '12px' }}>
-                Send reset link
+              <button className="il-btn" onClick={handleForgotPassword} disabled={authBusy} style={primaryBtn}>
+                {authBusy ? 'Sending…' : 'Send reset link'}
               </button>
-              <button onClick={() => { setForgotPassword(false); setError('') }}
-                style={{ width: '100%', background: 'transparent', color: '#8a8a86', border: 'none', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: '4px' }}>
+              <button onClick={() => { setForgotPassword(false); setError('') }} style={linkBtn}>
                 Back to sign in
               </button>
             </>
           ) : (
             <>
-              <label style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' }}>Email</label>
-              <input type="email" placeholder="you@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)}
+              <label htmlFor="login-email" style={labelStyle}>Email</label>
+              <input id="login-email" type="email" autoComplete="email" placeholder="you@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                style={{ display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: '1px solid #ebebe8', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#1a1a1a', background: '#fff', boxSizing: 'border-box' }} />
-              <label style={{ fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' }}>Password</label>
-              <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)}
+                style={inputStyle} />
+              <label htmlFor="login-password" style={labelStyle}>Password</label>
+              <input id="login-password" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                style={{ display: 'block', width: '100%', marginBottom: '20px', padding: '10px 14px', border: '1px solid #ebebe8', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#1a1a1a', background: '#fff', boxSizing: 'border-box' }} />
+                style={{ ...inputStyle, marginBottom: '20px' }} />
               {error && (
-                <div style={{ fontSize: '12px', color: '#c74848', marginBottom: '16px', padding: '10px 12px', background: '#fdf0f0', border: '1px solid #f5d6d6', borderRadius: '6px' }}>
+                <div role="alert" style={errorStyle}>
                   {error}
                 </div>
               )}
-              <button onClick={handleLogin}
-                style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '11px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '12px' }}>
-                Sign in
+              <button className="il-btn" onClick={handleLogin} disabled={authBusy} style={primaryBtn}>
+                {authBusy ? 'Signing in…' : 'Sign in'}
               </button>
-              <button onClick={() => { setForgotPassword(true); setError('') }}
-                style={{ width: '100%', background: 'transparent', color: '#8a8a86', border: 'none', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: '4px' }}>
+              <button onClick={() => { setForgotPassword(true); setError('') }} style={linkBtn}>
                 Forgot password?
               </button>
             </>
           )}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '12px', color: '#a8a8a4' }}>
+        <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '12px', color: '#a4a39f' }}>
           Integrated Staffing Limited · onboarding portal
         </div>
       </div>
@@ -190,8 +203,8 @@ if (!session) {
 
   if (profileLoading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, -apple-system, sans-serif', color: '#a8a8a4', fontSize: '13px' }}>
-        Loading...
+      <div style={{ minHeight: '100vh', background: '#f4f3ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Loading">
+        <div className="il-spinner" />
       </div>
     )
   }
