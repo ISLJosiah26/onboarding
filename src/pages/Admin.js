@@ -395,7 +395,7 @@ async function handleAdminDocumentUpload(e) {
 
   function renderHeader(title, sub) {
     return (
-      <div style={styles.header}>
+      <div className="il-header" style={styles.header}>
         <div style={styles.title}>{title}</div>
         {sub && <div style={styles.sub}>{sub}</div>}
       </div>
@@ -411,7 +411,7 @@ function renderAdminHeader(title, sub) {
     { id: 'roles', label: 'Roles' },
   ]
   return (
-    <div style={{ boxShadow: '0 1px 0 #e2e1dd', background: '#fff' }}>
+    <div className="il-header" style={{ boxShadow: '0 1px 0 #e2e1dd', background: '#fff' }}>
       <div style={{ padding: isMobile ? '16px 16px 12px' : '28px 40px 20px' }}>
         <div style={styles.title}>{title}</div>
         {sub && <div style={styles.sub}>{sub}</div>}

@@ -52,7 +52,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
     ...BASE_STYLES,
     header: { padding: isMobile ? '16px 16px 14px' : '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 0 #e2e1dd', background: '#fff' },
     stat: { background: '#fff', padding: isMobile ? '14px 16px' : '22px 40px' },
-    statValue: { fontSize: isMobile ? '22px' : '26px', fontWeight: 700, letterSpacing: '-0.8px', color: '#18181b' },
+    statValue: { fontSize: isMobile ? '22px' : '26px', fontWeight: 700, letterSpacing: '-0.8px', color: '#18181b', fontVariantNumeric: 'tabular-nums' },
     content: { padding: isMobile ? '0' : `0 ${p}`, flex: 1 },
     emptyState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center' },
     errorState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center', fontSize: '14px' },
@@ -60,7 +60,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
 
   return (
     <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
-      <div style={styles.header}>
+      <div className="il-header" style={styles.header}>
         <div>
           <div style={styles.title}>Dashboard</div>
           {!isMobile && <div style={styles.sub}>Overview of active employee onboardings.</div>}
@@ -111,14 +111,14 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
               </div>
             ))
           ) : (
-            <>
+            <div className="il-card" style={{ margin: '24px 0 40px', padding: '0 20px' }}>
               <div style={{ ...styles.tableHeader, padding: '14px 0' }}>
                 <div></div><div>Employee</div><div>Role</div>
                 <div>Progress</div><div>Phase</div>
                 <div style={{ textAlign: 'right' }}>Started</div>
               </div>
               <SkeletonRow /><SkeletonRow /><SkeletonRow /><SkeletonRow />
-            </>
+            </div>
           )
         ) : fetchError ? (
           <div style={styles.errorState}>
@@ -157,7 +157,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                   <div style={{ fontSize: '12px', color: '#70706b', marginBottom: '8px' }}>{o.employees.roles?.name || 'Unknown role'}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={styles.progressTrack}>
-                      <div style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? 'linear-gradient(90deg, #1a7a4a, #2ea864)' : 'linear-gradient(90deg, #0066cc, #3d9eff)' }} />
+                      <div className="il-progress-fill" style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? 'linear-gradient(90deg, #1a7a4a, #2ea864)' : 'linear-gradient(90deg, #0066cc, #3d9eff)' }} />
                     </div>
                     <span style={{ fontSize: '12px', fontWeight: 500, color: pct === 100 ? '#1a7a4a' : '#18181b', flexShrink: 0 }}>{pct}%</span>
                   </div>
@@ -167,7 +167,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
             )
           })
         ) : (
-          <>
+          <div className="il-card" style={{ margin: '24px 0 40px', padding: '0 20px' }}>
             <div style={styles.tableHeader}>
               <div></div><div>Employee</div><div>Role</div>
               <div>Progress</div><div>Phase</div>
@@ -194,7 +194,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                   </div>
                   <div style={styles.rowText}>{o.employees.roles?.name || 'Unknown role'}</div>
                   <div style={styles.progressWrap}>
-                    <div style={styles.progressTrack}><div style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? 'linear-gradient(90deg, #1a7a4a, #2ea864)' : 'linear-gradient(90deg, #0066cc, #3d9eff)' }}></div></div>
+                    <div style={styles.progressTrack}><div className="il-progress-fill" style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? 'linear-gradient(90deg, #1a7a4a, #2ea864)' : 'linear-gradient(90deg, #0066cc, #3d9eff)' }}></div></div>
                     <div style={{ ...styles.progressText, color: pct === 100 ? '#1a7a4a' : '#18181b' }}>{pct}%</div>
                   </div>
                   <div><span style={styles.phasePill}>{phase}</span></div>
@@ -204,7 +204,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                 </div>
               )
             })}
-          </>
+          </div>
         )}
       </div>
 

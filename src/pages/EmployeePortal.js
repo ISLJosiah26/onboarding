@@ -634,7 +634,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
   if (loading) return (
     <div style={styles.app}>
-      <div style={styles.topbar}>
+      <div className="il-header" data-topbar="true" style={styles.topbar}>
         <div style={styles.logo}>Integrated Launch</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {onSwitchToAdmin && (
@@ -669,7 +669,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
   return (
     <div style={styles.app}>
-      <div style={styles.topbar}>
+      <div className="il-header" data-topbar="true" style={styles.topbar}>
         <div style={styles.logo}>Integrated Launch</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {onSwitchToAdmin && (

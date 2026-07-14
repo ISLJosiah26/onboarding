@@ -8,9 +8,9 @@ export default function Toast({ message, type = 'success', onClose }) {
   }, [onClose, type])
 
   const colors = {
-    success: { bg: '#18181b', color: '#fff' },
-    error: { bg: '#c04040', color: '#fff' },
-    warning: { bg: '#d4901a', color: '#fff' }
+    success: { bg: 'rgba(24,24,27,0.92)', color: '#fff' },
+    error: { bg: 'rgba(178,52,52,0.94)', color: '#fff' },
+    warning: { bg: 'rgba(200,134,18,0.94)', color: '#fff' }
   }
 
   const { bg, color } = colors[type] || colors.success
@@ -23,7 +23,9 @@ export default function Toast({ message, type = 'success', onClose }) {
       borderRadius: '10px', padding: '12px 16px 12px 20px',
       fontSize: '13px', fontWeight: 500,
       display: 'flex', alignItems: 'center', gap: '10px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)',
+      backdropFilter: 'saturate(180%) blur(10px)',
+      WebkitBackdropFilter: 'saturate(180%) blur(10px)',
       zIndex: 1000, fontFamily: 'Inter, -apple-system, sans-serif',
       maxWidth: 'min(440px, calc(100vw - 32px))',
       lineHeight: 1.45,

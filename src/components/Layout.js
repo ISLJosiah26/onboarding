@@ -82,7 +82,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
 
     return (
       <div style={{ minHeight: '100vh', background: '#f4f3ef', fontFamily: "'Inter', -apple-system, sans-serif", color: '#18181b' }}>
-        <div style={{
+        <div className="il-header" data-topbar="true" style={{
           position: 'sticky', top: 0, zIndex: 40,
           background: '#fff', boxShadow: '0 1px 0 #e2e1dd',
           height: '54px', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '10px',
@@ -95,7 +95,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
           <div key={currentPage} className="il-page">{children}</div>
         </div>
 
-        <div style={{
+        <div className="il-tabbar" style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           background: '#fff', boxShadow: '0 -1px 0 #e2e1dd',
           display: 'flex', zIndex: 40,
