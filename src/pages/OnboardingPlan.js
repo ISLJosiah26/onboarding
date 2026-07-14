@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Layout from '../components/Layout'
 import { SkeletonLine, SkeletonTaskRow } from '../components/Skeleton'
 import ConfirmModal from '../components/ConfirmModal'
 import EditEmployeeModal from '../components/EditEmployeeModal'
 import Toast from '../components/Toast'
 import { useOnboardingPlan } from '../hooks/useOnboardingPlan'
-import { BUCKET_SECTIONS } from '../config'
+import { BUCKET_SECTIONS, SCHEDULE_BUCKETS } from '../config'
 import { groupParentsByBucket, bucketDateHint } from '../utils/schedule'
 
 const OWNERS = ['HR', 'Manager', 'IT']
@@ -30,7 +30,7 @@ const STYLES = {
   bucketCount: { fontSize: '11px', color: '#a4a39f', marginLeft: 'auto' },
   parentRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 6px', borderBottom: '1px solid #f0efe9', cursor: 'pointer', borderRadius: '6px' },
   subtaskRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '9px 0 9px 40px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#fafaf9' },
-  dragHandle: { cursor: 'grab', color: '#c8c7c3', fontSize: '13px', lineHeight: 1, flexShrink: 0, userSelect: 'none', padding: '0 2px' },
+  dragHandle: { color: '#c8c7c3', fontSize: '13px', lineHeight: 1, flexShrink: 0, userSelect: 'none', padding: '4px', margin: '-4px -2px' },
   checkbox: (checked) => ({ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
   subtaskCheckbox: (checked) => ({ width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #e2e1dd', background: checked ? '#0066cc' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
   taskName: (checked) => ({ fontSize: '13px', color: checked ? '#a4a39f' : '#18181b', textDecoration: checked ? 'line-through' : 'none', flex: 1, minWidth: 0 }),
@@ -87,6 +87,33 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editOwner, setEditOwner] = useState('HR')
+  const [editBucket, setEditBucket] = useState(SCHEDULE_BUCKETS[0])
+  const [flashId, setFlashId] = useState(null)
+  const flashTimer = useRef(null)
+
+  // Briefly highlight a row after it lands in a new spot
+  function flashTask(id) {
+    clearTimeout(flashTimer.current)
+    setFlashId(id)
+    flashTimer.current = setTimeout(() => setFlashId(null), 1200)
+  }
+  useEffect(() => () => clearTimeout(flashTimer.current), [])
+
+  // Native HTML5 drag doesn't scroll the window in all browsers (notably
+  // Firefox), and the schedule is long — nudge the viewport when the drag
+  // pointer nears the top or bottom edge.
+  useEffect(() => {
+    if (!draggingId) return
+    const EDGE = 90
+    const onDragOver = (e) => {
+      const y = e.clientY
+      const h = window.innerHeight
+      if (y < EDGE) window.scrollBy(0, -Math.ceil((EDGE - y) / 4))
+      else if (y > h - EDGE) window.scrollBy(0, Math.ceil((y - (h - EDGE)) / 4))
+    }
+    window.addEventListener('dragover', onDragOver)
+    return () => window.removeEventListener('dragover', onDragOver)
+  }, [draggingId])
 
   const checkIcon = (size = 9) => (
     <svg width={size} height={size - 2} viewBox="0 0 10 8" fill="none">
@@ -101,10 +128,15 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
     try { e.dataTransfer.setData('text/plain', task.id) } catch (_) { /* some browsers require this call */ }
   }
   function handleDragEnd() { setDraggingId(null); setDropTarget(null) }
-  function handleRowDragOver(e, task) {
+  function handleRowDragOver(e, task, index, bucketTasks) {
     if (!draggingId) return
     e.preventDefault(); e.stopPropagation()
-    setDropTarget({ bucket: task.bucket, beforeId: task.id })
+    // Top half of the row inserts before it, bottom half inserts after
+    // (i.e. before the next row, or appended when it's the last row).
+    const rect = e.currentTarget.getBoundingClientRect()
+    const after = e.clientY > rect.top + rect.height / 2
+    const beforeId = after ? (bucketTasks[index + 1]?.id ?? null) : task.id
+    setDropTarget({ bucket: task.bucket, beforeId })
   }
   function handleBucketDragOver(e, bucket) {
     if (!draggingId) return
@@ -118,6 +150,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
     const id = draggingId
     setDraggingId(null); setDropTarget(null)
     moveTask(id, bucket, before)
+    flashTask(id)
   }
 
   function startAdd(bucket) {
@@ -129,11 +162,15 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
     setNewName(''); setAddingToBucket(null)
   }
   function startEdit(task) {
-    setEditingId(task.id); setEditName(task.name); setEditOwner(task.owner || 'HR')
+    setEditingId(task.id); setEditName(task.name); setEditOwner(task.owner || 'HR'); setEditBucket(task.bucket)
   }
-  async function submitEdit(taskId) {
+  async function submitEdit(task) {
     if (!editName.trim()) return
-    await editTask(taskId, editName, editOwner)
+    await editTask(task.id, editName, editOwner)
+    if (editBucket !== task.bucket) {
+      await moveTask(task.id, editBucket, null)
+      flashTask(task.id)
+    }
     setEditingId(null)
   }
 
@@ -174,7 +211,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
   const parentsByBucket = groupParentsByBucket(tasks)
   const hireDate = instance.employees.hire_date
 
-  function renderTaskRow(task) {
+  function renderTaskRow(task, index, bucketTasks) {
     const subtasks = subtasksFor(task)
     const hasSubtasks = subtasks.length > 0
     const isTaskExpanded = expandedTasks[task.id]
@@ -190,11 +227,14 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
         <div key={task.id} style={{ ...STYLES.addForm, borderBottom: '1px solid #f0efe9' }}>
           <input style={{ ...STYLES.input, flex: 1, minWidth: '160px' }} value={editName} autoFocus
             onChange={e => setEditName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') submitEdit(task.id); if (e.key === 'Escape') setEditingId(null) }} />
-          <select style={STYLES.input} value={editOwner} onChange={e => setEditOwner(e.target.value)}>
+            onKeyDown={e => { if (e.key === 'Enter') submitEdit(task); if (e.key === 'Escape') setEditingId(null) }} />
+          <select style={STYLES.input} value={editOwner} onChange={e => setEditOwner(e.target.value)} aria-label="Owner">
             {OWNERS.map(o => <option key={o}>{o}</option>)}
           </select>
-          <button style={STYLES.btnPrimary} onClick={() => submitEdit(task.id)}>Save</button>
+          <select style={STYLES.input} value={editBucket} onChange={e => setEditBucket(e.target.value)} aria-label="Schedule" title="Move to another day">
+            {SCHEDULE_BUCKETS.map(b => <option key={b}>{b}</option>)}
+          </select>
+          <button style={STYLES.btnPrimary} onClick={() => submitEdit(task)}>Save</button>
           <button style={{ ...STYLES.rowBtn, color: '#70706b' }} onClick={() => setEditingId(null)}>Cancel</button>
         </div>
       )
@@ -204,14 +244,14 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
       <div key={task.id}>
         {showInsertLine && <div style={{ height: '2px', background: '#0066cc', borderRadius: '2px', margin: '0 6px' }} />}
         <div
-          className="il-row"
+          className={`il-row${flashId === task.id ? ' il-row-flash' : ''}`}
           draggable={canEdit}
           onDragStart={e => handleDragStart(e, task)}
           onDragEnd={handleDragEnd}
-          onDragOver={e => handleRowDragOver(e, task)}
+          onDragOver={e => handleRowDragOver(e, task, index, bucketTasks)}
           style={{ ...STYLES.parentRow, opacity: isDragging ? 0.4 : 1, background: isDragging ? '#f0f7ff' : 'transparent' }}
           onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [task.id]: !prev[task.id] })) : setExpanded(isNoteExpanded ? null : task.id)}>
-          {canEdit && <span style={STYLES.dragHandle} title="Drag to another day" onClick={e => e.stopPropagation()}>⠿</span>}
+          {canEdit && <span className="il-drag-handle" style={STYLES.dragHandle} title="Drag to another day" onClick={e => e.stopPropagation()}>⠿</span>}
           {hasSubtasks ? (
             <div style={{ ...STYLES.checkbox(isChecked), cursor: 'default' }} onClick={e => e.stopPropagation()} title="Completion is driven by subtasks">
               {isChecked && checkIcon()}
@@ -283,7 +323,15 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
         key={bucket}
         onDragOver={e => handleBucketDragOver(e, bucket)}
         onDrop={e => handleBucketDrop(e, bucket)}
-        style={{ marginBottom: '18px', borderRadius: '8px', outline: isDropTarget ? '2px dashed #0066cc' : 'none', outlineOffset: '2px', background: isDropTarget ? '#f7fbff' : 'transparent', transition: 'background 0.12s' }}>
+        style={{
+          marginBottom: '18px', borderRadius: '8px',
+          // While a drag is in flight, faintly outline every bucket so all
+          // valid drop zones are visible; the hovered one gets the bold cue.
+          outline: isDropTarget ? '2px dashed #0066cc' : draggingId ? '1px dashed #d8d7d3' : 'none',
+          outlineOffset: '2px',
+          background: isDropTarget ? '#f7fbff' : 'transparent',
+          transition: 'background 0.12s',
+        }}>
         <div style={STYLES.bucketHeader}>
           <span style={STYLES.bucketName(complete)}>{bucket}</span>
           {dateHint && <span style={STYLES.bucketDate}>{dateHint}</span>}
