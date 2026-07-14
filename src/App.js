@@ -129,7 +129,7 @@ if (!session) {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f4f3ef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, -apple-system, sans-serif', padding: '20px' }}>
-      <div style={{ width: '100%', maxWidth: '380px' }}>
+      <div className="il-auth" style={{ width: '100%', maxWidth: '380px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
           <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, #004db3 0%, #0080ff 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 700, marginBottom: '18px', boxShadow: '0 4px 16px rgba(0,102,204,0.3)' }}>IL</div>
           <div style={{ fontSize: '22px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.6px', marginBottom: '4px' }}>Welcome back</div>

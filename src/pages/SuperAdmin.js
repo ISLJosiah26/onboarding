@@ -74,7 +74,7 @@ export default function SuperAdmin({ session, userProfile, currentPage, onNaviga
 
   return (
     <Layout session={session} userProfile={userProfile} currentPage={currentPage} onNavigate={onNavigate}>
-      <div style={{ padding: isMobile ? '16px 16px 0' : '28px 40px 0', boxShadow: '0 1px 0 #e2e1dd', background: '#fff' }}>
+      <div className="il-header" style={{ padding: isMobile ? '16px 16px 0' : '28px 40px 0', boxShadow: '0 1px 0 #e2e1dd', background: '#fff' }}>
         <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 600, letterSpacing: '-0.5px', marginBottom: '16px', color: '#18181b' }}>System</div>
         <div style={{ display: 'flex', gap: '0', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', marginBottom: '-1px' }}>
           {['Users', 'Audit Log', 'System Settings'].map(t => (
