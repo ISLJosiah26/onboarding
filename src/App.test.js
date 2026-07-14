@@ -1,15 +1,16 @@
 import { render, screen } from '@testing-library/react'
+import { vi } from 'vitest'
 
-jest.mock('./supabaseClient', () => {
+vi.mock('./supabaseClient', () => {
   const mockSupabase = {
     auth: {
       getSession: () => Promise.resolve({ data: { session: null } }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: jest.fn() } } })
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } })
     }
   }
   return {
     supabase: mockSupabase,
-    getUserProfile: jest.fn().mockResolvedValue(null)
+    getUserProfile: vi.fn().mockResolvedValue(null)
   }
 })
 

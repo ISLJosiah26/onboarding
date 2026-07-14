@@ -25,8 +25,21 @@ export const BUCKET_SECTIONS = [
 // Kept as an alias so existing imports keep working; represents every bucket.
 export const PHASES = SCHEDULE_BUCKETS
 
-export const TODAY = new Date().toISOString().slice(0, 10)
-export const CURRENT_YEAR = new Date().getFullYear()
+// Computed on call, not at module load, so a long-lived tab doesn't keep using
+// yesterday's date or last year after midnight / New Year.
+export function getToday() {
+  return new Date().toISOString().slice(0, 10)
+}
+export function getCurrentYear() {
+  return new Date().getFullYear()
+}
+
+// Feature flags for surfaces that are built but not yet launched. Flipping a
+// flag to true is all it takes to enable the corresponding UI.
+export const FEATURES = {
+  employeeTimeOff: false,
+  techSupport: false,
+}
 
 export const ROUTES = {
   DASHBOARD: '/dashboard',
@@ -45,10 +58,22 @@ export const ROUTES = {
   SUPER_ADMIN_SETTINGS: '/system/settings'
 }
 
+// The plan route carries the onboarding instance id so the page is
+// deep-linkable and survives a refresh: /onboarding/plan/<id>.
+export function planPath(instanceId) {
+  return instanceId ? `${ROUTES.PLAN}/${instanceId}` : ROUTES.PLAN
+}
+export function parseInstanceId(pathname) {
+  if (pathname.startsWith(ROUTES.PLAN + '/')) {
+    return pathname.slice(ROUTES.PLAN.length + 1) || null
+  }
+  return null
+}
+
 export function pathToPage(pathname) {
   if (pathname === ROUTES.ACTIVE) return 'new-onboarding-select'
   if (pathname === ROUTES.NEW_ONBOARDING) return 'new-onboarding'
-  if (pathname === ROUTES.PLAN) return 'plan'
+  if (pathname === ROUTES.PLAN || pathname.startsWith(ROUTES.PLAN + '/')) return 'plan'
   if (pathname === ROUTES.TEMPLATES) return 'templates'
   if (pathname === ROUTES.DOCUMENTS) return 'documents'
   if (pathname === ROUTES.COMPANY_RESOURCES) return 'company-resources'

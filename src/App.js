@@ -8,7 +8,7 @@ import SuperAdmin from './pages/SuperAdmin'
 import TimeOff from './pages/TimeOff'
 import EmployeePortal from './pages/EmployeePortal'
 import SetPassword from './pages/SetPassword'
-import { pageToPath, pathToPage, ROLE } from './config'
+import { pageToPath, pathToPage, planPath, parseInstanceId, ROLE } from './config'
 
 
 function App() {
@@ -25,14 +25,19 @@ function App() {
     return pathToPage(window.location.pathname)
   })
   const [selectedRole, setSelectedRole] = useState(null)
-  const [activeInstanceId, setActiveInstanceId] = useState(null)
+  // Hydrate from the URL so /onboarding/plan/<id> restores on refresh/deep-link.
+  const [activeInstanceId, setActiveInstanceId] = useState(() => parseInstanceId(window.location.pathname))
   const [refreshKey, setRefreshKey] = useState(0)
   const [forgotPassword, setForgotPassword] = useState(false)
   const [resetSent, setResetSent] = useState(false)
   const [employeeView, setEmployeeView] = useState(() => localStorage.getItem('il-view-mode') === 'employee')
 
   useEffect(() => {
-    const onPopState = () => setPage(pathToPage(window.location.pathname))
+    const onPopState = () => {
+      setPage(pathToPage(window.location.pathname))
+      const id = parseInstanceId(window.location.pathname)
+      if (id) setActiveInstanceId(id)
+    }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
@@ -104,7 +109,9 @@ useEffect(() => {
   }
 
   function navigate(targetPage, opts = {}) {
-    const nextPath = pageToPath(targetPage)
+    const nextPath = targetPage === 'plan' && opts.instanceId
+      ? planPath(opts.instanceId)
+      : pageToPath(targetPage)
     if (opts.replace) window.history.replaceState({}, '', nextPath + window.location.hash)
     else if (window.location.pathname !== nextPath) window.history.pushState({}, '', nextPath)
     setPage(targetPage)
@@ -265,7 +272,7 @@ if (!session) {
         onNavigate={handleNavigate}
         onComplete={(instanceId) => {
           setActiveInstanceId(instanceId)
-          navigate('plan')
+          navigate('plan', { instanceId })
         }}
       />
     )
@@ -311,7 +318,7 @@ if (!session) {
         }}
         onViewOnboarding={(instanceId) => {
           setActiveInstanceId(instanceId)
-          navigate('plan')
+          navigate('plan', { instanceId })
         }}
       />
     )
@@ -329,7 +336,7 @@ if (!session) {
       }}
       onViewOnboarding={(instanceId) => {
         setActiveInstanceId(instanceId)
-        navigate('plan')
+        navigate('plan', { instanceId })
       }}
     />
   )

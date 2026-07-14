@@ -5,6 +5,8 @@ import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
 import { getHrEmail } from '../utils/getHrEmail'
 import { normalizeTask, sortTasks } from '../utils/schedule'
+import { attachResolvedUrls } from '../utils/documentUrls'
+import { escapeHtml } from '../utils/escapeHtml'
 
 export function useOnboardingPlan({ instanceId, onBack }) {
   const [instance, setInstance] = useState(null)
@@ -89,7 +91,7 @@ export function useOnboardingPlan({ instanceId, onBack }) {
 
     const map = {}
     if (dc) dc.forEach(d => map[d.document_id] = d)
-    setDocCompletions(map)
+    setDocCompletions(await attachResolvedUrls(map))
   }, [instanceId])
 
   useEffect(() => {
@@ -393,9 +395,9 @@ export function useOnboardingPlan({ instanceId, onBack }) {
             html: `
               <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #18181b;">
                 <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Onboarding marked complete</h2>
-                <p style="font-size: 14px; color: #444; line-height: 1.6;"><strong>${instance.employees.full_name}</strong> has completed their onboarding plan.</p>
+                <p style="font-size: 14px; color: #444; line-height: 1.6;"><strong>${escapeHtml(instance.employees.full_name)}</strong> has completed their onboarding plan.</p>
                 <table style="font-size: 14px; color: #444; margin-top: 16px;">
-                  <tr><td style="padding: 4px 16px 4px 0; color: #888;">Role</td><td>${instance.employees.roles?.name || 'N/A'}</td></tr>
+                  <tr><td style="padding: 4px 16px 4px 0; color: #888;">Role</td><td>${escapeHtml(instance.employees.roles?.name || 'N/A')}</td></tr>
                   <tr><td style="padding: 4px 16px 4px 0; color: #888;">Started</td><td>${new Date(instance.employees.hire_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</td></tr>
                   <tr><td style="padding: 4px 16px 4px 0; color: #888;">Completed</td><td>${new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</td></tr>
                   <tr><td style="padding: 4px 16px 4px 0; color: #888;">Tasks completed</td><td>${completedTasksCount()} of ${totalTasks()}</td></tr>

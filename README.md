@@ -31,11 +31,11 @@ A full-featured employee onboarding management system built for **Integrated Sta
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 19, Create React App |
+| Frontend | React 19, Vite |
 | Backend & Database | Supabase (PostgreSQL + Auth + Edge Functions) |
 | Authentication | Supabase Auth with invite-based signup |
 | Styling | Custom CSS with Inter font, CSS variables |
-| Testing | Jest & React Testing Library |
+| Testing | Vitest & React Testing Library |
 
 ---
 
@@ -67,9 +67,11 @@ Every authenticated user has a profile with one of four roles, each with differe
 | Role | Access |
 |---|---|
 | `employee` | Employee self-service portal only |
-| `manager` | Time-off management, employee portal view |
-| `admin` | Dashboard, onboarding management, admin panel, time-off |
+| `manager` | Read-only view of the dashboard and onboarding plans (via row-level security on employees, instances, and task completions) |
+| `admin` | Dashboard, onboarding management, admin panel, time-off approvals |
 | `super_admin` | Everything above plus user management, audit log, system settings |
+
+> Note: time-off approval/denial is restricted to `admin` and `super_admin` in both the UI and row-level security. Managers have read access to onboarding data but do not manage time off.
 
 `App.js` reads the user's role on login and enforces routing — if a user tries to access a page outside their permissions, they are redirected automatically.
 
@@ -164,6 +166,13 @@ Serve the `build/` folder with any static host, or use the included `serve` pack
 
 ```bash
 npx serve -s build
+```
+
+### Running Tests
+
+```bash
+npm test          # run once
+npm run test:watch # watch mode
 ```
 
 ---
