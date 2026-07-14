@@ -5,13 +5,17 @@ import Toast from '../components/Toast'
 import ConfirmModal from '../components/ConfirmModal'
 import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
-import { getHrEmail, getTechSupportEmail } from '../utils/getHrEmail'
+import { getTechSupportEmail } from '../utils/getHrEmail'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
-import { SCHEDULE_BUCKETS, CURRENT_YEAR, ONBOARDING_STATUS, TIME_OFF_STATUS } from '../config'
+import { SCHEDULE_BUCKETS, getCurrentYear, FEATURES, ONBOARDING_STATUS, TIME_OFF_STATUS } from '../config'
 import { getInitials } from '../utils/formatUtils'
 import { normalizeTask, groupParentsByBucket, bucketDateHint, isBucketUpcoming } from '../utils/schedule'
 import { TYPE_LABELS, StatusPill, TypeIcon, fmtDateRange } from '../utils/timeOffShared'
+import { escapeHtml, escapeHtmlMultiline } from '../utils/escapeHtml'
+import { notifyHrAndManager } from '../utils/emailNotify'
+import { computeProgress, isParentComplete } from '../utils/taskProgress'
+import { attachResolvedUrls } from '../utils/documentUrls'
 
 const BASE_STYLES = {
   app: { minHeight: '100vh', background: '#f4f3ef', fontFamily: 'Inter, -apple-system, sans-serif', color: '#18181b' },
@@ -77,6 +81,8 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
   const { isMobile } = useWindowSize()
   const [uploadingDocId, setUploadingDocId] = useState(null)
   const celebrationTimer = useRef(null)
+  // Recomputed each render so a long-lived tab doesn't stick to last year.
+  const CURRENT_YEAR = getCurrentYear()
 
   // Time off state
   const [timeOffBalance, setTimeOffBalance] = useState(null)
@@ -164,7 +170,7 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
         const { data: dc } = await supabase.from('document_completions').select('*').eq('employee_id', userProfile.employee_id)
         const map = {}
         if (dc) dc.forEach(d => map[d.document_id] = d)
-        setDocCompletions(map)
+        setDocCompletions(await attachResolvedUrls(map))
       }
 
       const { data: resources } = await supabase.from('documents').select('*').eq('is_company_resource', true).order('uploaded_at', { ascending: false })
@@ -312,36 +318,28 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
       .gte('end_date', startDate)
 
     const overlapList = (overlapping || [])
-      .map(r => `${r.employees?.full_name}: ${fmtDateRange(r.start_date, r.end_date)}`)
+      .map(r => `${escapeHtml(r.employees?.full_name)}: ${fmtDateRange(r.start_date, r.end_date)}`)
       .join('<br/>')
 
     const dayPortionLabel = dayPortion === 'am' ? ' (AM)' : dayPortion === 'pm' ? ' (PM)' : ''
+    const flexibilityLabel = FLEXIBILITY_OPTIONS.find(f => f.value === flexibility)?.label || flexibility
     const emailBody = `
-<p><strong>${employeeName}</strong> has submitted a time off request.</p>
+<p><strong>${escapeHtml(employeeName)}</strong> has submitted a time off request.</p>
 <p>
   <strong>Dates:</strong> ${fmtDateRange(startDate, endDate)}<br/>
-  <strong>Type:</strong> ${TYPE_LABELS[type] || type}<br/>
+  <strong>Type:</strong> ${escapeHtml(TYPE_LABELS[type] || type)}<br/>
   <strong>Business days:</strong> ${businessDaysVal}${dayPortionLabel}<br/>
-  <strong>Flexibility:</strong> ${FLEXIBILITY_OPTIONS.find(f => f.value === flexibility)?.label || flexibility}${flexibilityNote ? ` — ${flexibilityNote}` : ''}<br/>
-  <strong>Remaining balance if approved:</strong> ${remainingAfter}d${volunteeringWith ? `<br/><strong>Volunteering with:</strong> ${volunteeringWith}` : ''}${notesVal ? `<br/><strong>Notes:</strong> ${notesVal}` : ''}
+  <strong>Flexibility:</strong> ${escapeHtml(flexibilityLabel)}${flexibilityNote ? ` — ${escapeHtml(flexibilityNote)}` : ''}<br/>
+  <strong>Remaining balance if approved:</strong> ${remainingAfter}d${volunteeringWith ? `<br/><strong>Volunteering with:</strong> ${escapeHtml(volunteeringWith)}` : ''}${notesVal ? `<br/><strong>Notes:</strong> ${escapeHtml(notesVal)}` : ''}
 </p>
 ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/>${overlapList}</p>` : ''}
 <p>Please review in the admin panel.</p>`
 
-    const hrEmail = await getHrEmail()
-    if (hrEmail) {
-      const { error: hrErr } = await supabase.functions.invoke('send-email', { body: { to: hrEmail, subject: `Time off request: ${employeeName}`, html: emailBody } })
-      if (hrErr) console.error('Failed to notify HR:', hrErr)
-    }
-
-    const managerId = instance?.employees?.manager_id || employee?.manager_id
-    if (managerId) {
-      const { data: mgr } = await supabase.from('employees').select('email').eq('id', managerId).maybeSingle()
-      if (mgr?.email) {
-        const { error: mgrErr } = await supabase.functions.invoke('send-email', { body: { to: mgr.email, subject: `Time off request: ${employeeName}`, html: emailBody } })
-        if (mgrErr) console.error('Failed to notify manager:', mgrErr)
-      }
-    }
+    await notifyHrAndManager({
+      subject: `Time off request: ${employeeName}`,
+      html: emailBody,
+      managerId: instance?.employees?.manager_id || employee?.manager_id,
+    })
 
     showToast('Request submitted.')
   }
@@ -349,49 +347,27 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
   async function cancelTimeOffRequest(req) {
     setCancellingId(req.id)
 
-    if (req.status === TIME_OFF_STATUS.APPROVED && timeOffBalance) {
-      const newUsed = Math.max(0, Number(timeOffBalance.used_days) - Number(req.business_days))
-      const { error: balErr } = await supabase
-        .from('time_off_balances')
-        .update({ used_days: newUsed, updated_at: new Date().toISOString() })
-        .eq('id', timeOffBalance.id)
-      if (balErr) { showToast(handleSupabaseError(balErr, 'Failed to update balance.'), 'error'); setCancellingId(null); return }
-    }
-
-    const { error } = await supabase
-      .from('time_off_requests')
-      .update({ status: TIME_OFF_STATUS.CANCELLED, updated_at: new Date().toISOString() })
-      .eq('id', req.id)
-
+    // Status change and balance refund happen atomically server-side.
+    const { error } = await supabase.rpc('cancel_time_off_request', { p_request_id: req.id })
     if (error) { showToast(handleSupabaseError(error, 'Failed to cancel request.'), 'error'); setCancellingId(null); return }
 
     logAudit('time_off_cancelled', 'time_off_request', req.id, { type: req.type, days: req.business_days, previous_status: req.status })
 
-    // Notify HR and manager (fire and forget)
     const employeeName = instance?.employees?.full_name || employee?.full_name || 'Employee'
     const cancelBody = `
-<p><strong>${employeeName}</strong> has cancelled their time off request.</p>
+<p><strong>${escapeHtml(employeeName)}</strong> has cancelled their time off request.</p>
 <p>
   <strong>Dates:</strong> ${fmtDateRange(req.start_date, req.end_date)}<br/>
-  <strong>Type:</strong> ${TYPE_LABELS[req.type]}<br/>
+  <strong>Type:</strong> ${escapeHtml(TYPE_LABELS[req.type] || req.type)}<br/>
   <strong>Business days:</strong> ${req.business_days}<br/>
-  <strong>Previous status:</strong> ${req.status}
+  <strong>Previous status:</strong> ${escapeHtml(req.status)}
 </p>`
 
-    const hrEmail = await getHrEmail()
-    if (hrEmail) {
-      const { error: hrErr } = await supabase.functions.invoke('send-email', { body: { to: hrEmail, subject: `Time off cancelled: ${employeeName}`, html: cancelBody } })
-      if (hrErr) console.error('Failed to notify HR of cancellation:', hrErr)
-    }
-
-    const managerId = instance?.employees?.manager_id || employee?.manager_id
-    if (managerId) {
-      const { data: mgr } = await supabase.from('employees').select('email').eq('id', managerId).maybeSingle()
-      if (mgr?.email) {
-        const { error: mgrErr } = await supabase.functions.invoke('send-email', { body: { to: mgr.email, subject: `Time off cancelled: ${employeeName}`, html: cancelBody } })
-        if (mgrErr) console.error('Failed to notify manager of cancellation:', mgrErr)
-      }
-    }
+    await notifyHrAndManager({
+      subject: `Time off cancelled: ${employeeName}`,
+      html: cancelBody,
+      managerId: instance?.employees?.manager_id || employee?.manager_id,
+    })
 
     showToast('Request cancelled.')
     setCancellingId(null)
@@ -412,14 +388,14 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     const techEmail = await getTechSupportEmail()
 
     const emailHtml = `
-<p><strong>${employeeName}</strong> has submitted a technical support request.</p>
+<p><strong>${escapeHtml(employeeName)}</strong> has submitted a technical support request.</p>
 <p>
-  <strong>Category:</strong> ${categoryLabel}<br/>
-  <strong>Subject:</strong> ${ticketTitle.trim()}<br/>
-  <strong>Employee email:</strong> ${employeeEmail}<br/>
-  <strong>Submitted:</strong> ${timestamp}
+  <strong>Category:</strong> ${escapeHtml(categoryLabel)}<br/>
+  <strong>Subject:</strong> ${escapeHtml(ticketTitle.trim())}<br/>
+  <strong>Employee email:</strong> ${escapeHtml(employeeEmail)}<br/>
+  <strong>Submitted:</strong> ${escapeHtml(timestamp)}
 </p>
-<p><strong>Description:</strong><br/>${ticketDescription.trim().replace(/\n/g, '<br/>')}</p>`
+<p><strong>Description:</strong><br/>${escapeHtmlMultiline(ticketDescription.trim())}</p>`
 
     const [emailResult, dbResult] = await Promise.all([
       techEmail
@@ -467,30 +443,12 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
   )
 
   const subtasksFor = (parent) => tasks.filter(s => s.parentId && s.parentId === parent.templateId)
-  const isTaskDone = (parent, comp) => {
-    const subs = subtasksFor(parent)
-    if (subs.length === 0) return !!comp[parent.id]
-    return subs.every(s => comp[s.id])
-  }
+  const isTaskDone = (parent, comp) => isParentComplete(parent, tasks, comp)
 
-  const totalTasks = useMemo(
-    () => tasks.filter(t => !t.parentId).length,
-    [tasks]
-  )
-
-  const completedTasksCount = useMemo(() => {
-    const parents = tasks.filter(t => !t.parentId)
-    return parents.filter(p => {
-      const subs = tasks.filter(s => s.parentId && s.parentId === p.templateId)
-      if (subs.length === 0) return completions[p.id]
-      return subs.every(s => completions[s.id])
-    }).length
-  }, [tasks, completions])
-
-  const pct = useMemo(
-    () => totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0,
-    [totalTasks, completedTasksCount]
-  )
+  const progress = useMemo(() => computeProgress(tasks, completions), [tasks, completions])
+  const totalTasks = progress.total
+  const completedTasksCount = progress.done
+  const pct = progress.pct
 
   const unsignedDocCount = useMemo(
     () => instance ? documents.filter(doc => !docCompletions[doc.id]?.hidden && !docCompletions[doc.id]?.signed).length : 0,
@@ -578,33 +536,28 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       return
     }
 
-    const { data: urlData, error: urlError } = await supabase.storage
+    // Persist the storage path; a short-lived signed URL is minted on demand
+    // for viewing (see documentUrls.js) so links never silently expire.
+    const { data: urlData } = await supabase.storage
       .from('employee-documents')
-      .createSignedUrl(filePath, 60 * 60 * 24 * 365)
-
-    if (urlError || !urlData?.signedUrl) {
-      showToast('Failed to generate file URL. Please try again.', 'error')
-      setUploadingDocId(null)
-      return
-    }
-
-    const fileUrl = urlData.signedUrl
+      .createSignedUrl(filePath, 60 * 60)
+    const resolvedUrl = urlData?.signedUrl || null
     const existing = docCompletions[docId]
 
     if (existing) {
       const { error } = await supabase
         .from('document_completions')
-        .update({ completed_file_url: fileUrl, signed: true, completed_at: new Date().toISOString() })
+        .update({ completed_file_path: filePath, signed: true, completed_at: new Date().toISOString() })
         .eq('id', existing.id)
       if (error) { showToast('Failed to save upload.', 'error'); setUploadingDocId(null); return }
-      setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, completed_file_url: fileUrl, signed: true } }))
+      setDocCompletions(prev => ({ ...prev, [docId]: { ...existing, completed_file_path: filePath, signed: true, resolvedUrl } }))
     } else {
       const { data, error } = await supabase
         .from('document_completions')
-        .insert({ employee_id: employeeId, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString(), completed_file_url: fileUrl })
+        .insert({ employee_id: employeeId, document_id: docId, signed: true, received: true, completed_at: new Date().toISOString(), completed_file_path: filePath })
         .select().single()
       if (error) { showToast('Failed to save upload.', 'error'); setUploadingDocId(null); return }
-      if (data) setDocCompletions(prev => ({ ...prev, [docId]: data }))
+      if (data) setDocCompletions(prev => ({ ...prev, [docId]: { ...data, resolvedUrl } }))
     }
 
     showToast('Document uploaded successfully')
@@ -722,8 +675,12 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
           </button>
         )}
         <button style={styles.tab(activeTab === 'company-resources')} onClick={() => setActiveTab('company-resources')}>Company Resources</button>
-        <button style={styles.tabDisabled} title="Coming soon">Time Off</button>
-        <button style={styles.tabDisabled} title="Coming soon">Tech Support</button>
+        {FEATURES.employeeTimeOff
+          ? <button style={styles.tab(activeTab === 'time-off')} onClick={() => setActiveTab('time-off')}>Time Off</button>
+          : <button style={styles.tabDisabled} title="Coming soon">Time Off</button>}
+        {FEATURES.techSupport
+          ? <button style={styles.tab(activeTab === 'technical-tickets')} onClick={() => setActiveTab('technical-tickets')}>Tech Support</button>
+          : <button style={styles.tabDisabled} title="Coming soon">Tech Support</button>}
       </div>
 
       <div style={styles.content}>
@@ -790,7 +747,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
             {documents.filter(doc => !docCompletions[doc.id]?.hidden).map(doc => {
               const dc = docCompletions[doc.id]
               const signed = dc?.signed || false
-              const completedFileUrl = dc?.completed_file_url || null
+              const completedFileUrl = dc?.resolvedUrl || dc?.completed_file_url || null
               const isUploading = uploadingDocId === doc.id
               return (
                 <div key={doc.id} style={{ padding: '16px 0', borderBottom: '1px solid #f0efe9' }}>

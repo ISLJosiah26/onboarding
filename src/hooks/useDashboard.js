@@ -1,21 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { handleSupabaseError } from '../utils/handleError'
-import { TODAY } from '../config'
+import { getToday } from '../config'
+import { computeProgressFromRaw } from '../utils/taskProgress'
 
 export function calcProgress(taskCompletions) {
-  const parentTc = taskCompletions.filter(tc => !tc.onboarding_templates?.parent_id)
-  const total = parentTc.length
-  if (total === 0) return { total: 0, done: 0, pct: 0 }
-  const done = parentTc.filter(tc => {
-    const parentId = tc.onboarding_templates?.id
-    const subtasks = parentId
-      ? taskCompletions.filter(s => s.onboarding_templates?.parent_id === parentId)
-      : []
-    if (subtasks.length === 0) return tc.completed
-    return subtasks.every(s => s.completed)
-  }).length
-  return { total, done, pct: Math.round((done / total) * 100) }
+  return computeProgressFromRaw(taskCompletions)
 }
 
 export function useDashboard(refreshKey) {
@@ -64,12 +54,13 @@ export function useDashboard(refreshKey) {
   }
 
   async function fetchOffToday() {
+    const today = getToday()
     const { data } = await supabase
       .from('time_off_requests')
       .select('employee_id, employees!time_off_requests_employee_id_fkey(full_name)')
       .eq('status', 'approved')
-      .lte('start_date', TODAY)
-      .gte('end_date', TODAY)
+      .lte('start_date', today)
+      .gte('end_date', today)
     setOffToday(data || [])
   }
 
@@ -78,9 +69,9 @@ export function useDashboard(refreshKey) {
     const employeeIds = onboardingData.map(o => o.employees.id)
     const { data } = await supabase
       .from('document_completions')
-      .select('employee_id, completed_file_url')
+      .select('employee_id, completed_file_url, completed_file_path')
       .in('employee_id', employeeIds)
-      .not('completed_file_url', 'is', null)
+      .or('completed_file_url.not.is.null,completed_file_path.not.is.null')
 
     const stats = {}
     if (data) data.forEach(dc => { stats[dc.employee_id] = (stats[dc.employee_id] || 0) + 1 })

@@ -7,8 +7,9 @@ import useToast from '../hooks/useToast'
 import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
-import { TODAY, CURRENT_YEAR, TIME_OFF_STATUS } from '../config'
+import { getToday, getCurrentYear, TIME_OFF_STATUS } from '../config'
 import { TYPE_LABELS, StatusPill, TypeIcon, fmtDate, fmtDateRange } from '../utils/timeOffShared'
+import { escapeHtml } from '../utils/escapeHtml'
 
 // No blue — reserved for today highlight and UI accents
 const PALETTE = [
@@ -145,6 +146,10 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
   const { toast, showToast, hideToast } = useToast()
   const { isMobile } = useWindowSize()
 
+  // Recomputed each render so a long-lived tab stays on the correct date/year.
+  const TODAY = getToday()
+  const CURRENT_YEAR = getCurrentYear()
+
   // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchData is stable, re-fetch on view change
   useEffect(() => { fetchData() }, [subView])
 
@@ -256,43 +261,10 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
   async function approveRequest(req) {
     setReviewingId(req.id)
     const notes = reviewNotes[req.id] || ''
-    const bal = getBalForEmployee(req.employee_id)
 
-    // Update balance first, track previous state for rollback
-    let prevUsedDays = null
-    let createdBalId = null
-
-    if (bal) {
-      prevUsedDays = Number(bal.used_days)
-      const { error: balErr } = await supabase.from('time_off_balances')
-        .update({ used_days: prevUsedDays + Number(req.business_days), updated_at: new Date().toISOString() })
-        .eq('id', bal.id)
-      if (balErr) { showToast(handleSupabaseError(balErr, 'Failed to update balance.'), 'error'); setReviewingId(null); return }
-    } else {
-      const { data: newBal, error: balErr } = await supabase.from('time_off_balances')
-        .insert({ employee_id: req.employee_id, year: CURRENT_YEAR, total_days: 0, used_days: Number(req.business_days) })
-        .select().single()
-      if (balErr) { showToast(handleSupabaseError(balErr, 'Failed to create balance.'), 'error'); setReviewingId(null); return }
-      createdBalId = newBal?.id
-    }
-
-    // Approve the request — roll back balance if this fails
-    const { error } = await supabase.from('time_off_requests')
-      .update({ status: TIME_OFF_STATUS.APPROVED, review_notes: notes || null, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-      .eq('id', req.id)
-
-    if (error) {
-      if (bal && prevUsedDays !== null) {
-        await supabase.from('time_off_balances')
-          .update({ used_days: prevUsedDays, updated_at: new Date().toISOString() })
-          .eq('id', bal.id)
-      } else if (createdBalId) {
-        await supabase.from('time_off_balances').delete().eq('id', createdBalId)
-      }
-      showToast(handleSupabaseError(error, 'Failed to approve request.'), 'error')
-      setReviewingId(null)
-      return
-    }
+    // Request status + balance are updated atomically server-side.
+    const { error } = await supabase.rpc('approve_time_off_request', { p_request_id: req.id, p_notes: notes || null })
+    if (error) { showToast(handleSupabaseError(error, 'Failed to approve request.'), 'error'); setReviewingId(null); return }
 
     logAudit('time_off_approved', 'time_off_request', req.id, { employee_id: req.employee_id, days: req.business_days, type: req.type })
 
@@ -302,11 +274,11 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
         body: {
           to: req.employee.email,
           subject: 'Your time off request has been approved',
-          html: `<p>Hi ${req.employee.full_name},</p>
+          html: `<p>Hi ${escapeHtml(req.employee.full_name)},</p>
 <p>Your time off request has been <strong>approved</strong>.</p>
 <p><strong>Dates:</strong> ${fmtDateRange(req.start_date, req.end_date)}<br/>
-<strong>Type:</strong> ${TYPE_LABELS[req.type] || req.type}<br/>
-<strong>Business days:</strong> ${req.business_days}${notes ? `<br/><strong>Notes:</strong> ${notes}` : ''}</p>
+<strong>Type:</strong> ${escapeHtml(TYPE_LABELS[req.type] || req.type)}<br/>
+<strong>Business days:</strong> ${req.business_days}${notes ? `<br/><strong>Notes:</strong> ${escapeHtml(notes)}` : ''}</p>
 <p>Enjoy your time off!</p>`
         }
       })
@@ -321,7 +293,9 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
   async function denyRequest(req) {
     setReviewingId(req.id)
     const notes = reviewNotes[req.id] || ''
-    const { error } = await supabase.from('time_off_requests').update({ status: TIME_OFF_STATUS.DENIED, review_notes: notes || null, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', req.id)
+
+    // Server-side RPC sets denied and refunds the balance if it was approved.
+    const { error } = await supabase.rpc('deny_time_off_request', { p_request_id: req.id, p_notes: notes || null })
     if (error) { showToast(handleSupabaseError(error, 'Failed to deny.'), 'error'); setReviewingId(null); return }
 
     logAudit('time_off_denied', 'time_off_request', req.id, { employee_id: req.employee_id, days: req.business_days, type: req.type })
@@ -332,11 +306,11 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
         body: {
           to: req.employee.email,
           subject: 'Your time off request has been denied',
-          html: `<p>Hi ${req.employee.full_name},</p>
+          html: `<p>Hi ${escapeHtml(req.employee.full_name)},</p>
 <p>Your time off request has been <strong>denied</strong>.</p>
 <p><strong>Dates:</strong> ${fmtDateRange(req.start_date, req.end_date)}<br/>
-<strong>Type:</strong> ${TYPE_LABELS[req.type] || req.type}<br/>
-<strong>Business days:</strong> ${req.business_days}${notes ? `<br/><strong>Reason:</strong> ${notes}` : ''}</p>
+<strong>Type:</strong> ${escapeHtml(TYPE_LABELS[req.type] || req.type)}<br/>
+<strong>Business days:</strong> ${req.business_days}${notes ? `<br/><strong>Reason:</strong> ${escapeHtml(notes)}` : ''}</p>
 <p>Please reach out to HR if you have questions.</p>`
         }
       })

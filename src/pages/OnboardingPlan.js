@@ -411,7 +411,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
           {visibleDocs.map(doc => {
             const dc = docCompletions[doc.id]
             const signed = dc?.signed || false
-            const completedFileUrl = dc?.completed_file_url || null
+            const completedFileUrl = dc?.resolvedUrl || dc?.completed_file_url || null
             return (
               <div key={doc.id} style={{ borderBottom: '1px solid #f0efe9', paddingBottom: '12px', marginBottom: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0 4px' }} onClick={(e) => toggleDocument(doc.id, e)}>
