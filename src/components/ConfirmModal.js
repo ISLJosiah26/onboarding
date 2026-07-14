@@ -9,7 +9,10 @@ export default function ConfirmModal({ title, message, confirmLabel, confirmDang
 
   useLayoutEffect(() => {
     const focusable = modalRef.current?.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])')
-    if (focusable?.length) focusable[focusable.length - 1].focus()
+    if (!focusable?.length) return
+    // Danger modals focus Cancel so a stray Enter can't confirm a destructive action
+    focusable[confirmDanger ? 0 : focusable.length - 1].focus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
