@@ -18,7 +18,7 @@ const BASE_STYLES = {
   statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: T.border, borderBottom: `1px solid ${T.border}` },
   statLabel: { fontSize: '11px', color: T.subtle, marginBottom: '5px', fontWeight: 500, letterSpacing: '0.2px', textTransform: 'uppercase' },
   tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: `1px solid ${T.borderSubtle}`, fontSize: '11px', color: T.subtle, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', alignItems: 'center', gap: '16px' },
-  tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '4px' },
+  tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '8px' },
   avatar: { width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   avatarLg: { width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   rowName: { fontSize: '13px', fontWeight: 500, color: T.text },
