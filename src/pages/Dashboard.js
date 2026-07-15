@@ -7,26 +7,27 @@ import { getInitials } from '../utils/formatUtils'
 import { useDashboard, calcProgress } from '../hooks/useDashboard'
 import Button from '../ui/Button'
 import EmptyState from '../ui/EmptyState'
+import { T } from '../ui/theme'
 
 const BASE_STYLES = {
   title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px' },
-  sub: { fontSize: '13px', color: '#70706b', marginTop: '2px' },
-  btn: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', letterSpacing: '0.1px' },
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#e2e1dd', borderBottom: '1px solid #e2e1dd' },
-  statLabel: { fontSize: '11px', color: '#a4a39f', marginBottom: '5px', fontWeight: 500, letterSpacing: '0.2px', textTransform: 'uppercase' },
-  tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #eceae6', fontSize: '11px', color: '#a4a39f', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', alignItems: 'center', gap: '16px' },
+  sub: { fontSize: '13px', color: T.muted, marginTop: '2px' },
+  btn: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', letterSpacing: '0.1px' },
+  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: T.border, borderBottom: `1px solid ${T.border}` },
+  statLabel: { fontSize: '11px', color: T.subtle, marginBottom: '5px', fontWeight: 500, letterSpacing: '0.2px', textTransform: 'uppercase' },
+  tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: `1px solid ${T.borderSubtle}`, fontSize: '11px', color: T.subtle, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', alignItems: 'center', gap: '16px' },
   tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #f0efe9', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '4px' },
   avatar: { width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   avatarLg: { width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  rowName: { fontSize: '13px', fontWeight: 500, color: '#18181b' },
-  rowMeta: { fontSize: '12px', color: '#a4a39f', marginTop: '2px' },
-  rowText: { fontSize: '13px', color: '#18181b' },
-  rowTextMuted: { fontSize: '13px', color: '#a4a39f' },
+  rowName: { fontSize: '13px', fontWeight: 500, color: T.text },
+  rowMeta: { fontSize: '12px', color: T.subtle, marginTop: '2px' },
+  rowText: { fontSize: '13px', color: T.text },
+  rowTextMuted: { fontSize: '13px', color: T.subtle },
   progressWrap: { display: 'flex', alignItems: 'center', gap: '10px' },
-  progressTrack: { flex: 1, height: '5px', background: '#eceae6', borderRadius: '99px', overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: '99px', background: 'linear-gradient(90deg, #0066cc, #3d9eff)' },
-  progressText: { fontSize: '12px', fontWeight: 600, color: '#18181b', minWidth: '32px' },
-  phasePill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: '#eff6ff', color: '#0066cc', fontWeight: 600 },
+  progressTrack: { flex: 1, height: '5px', background: T.borderSubtle, borderRadius: '99px', overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: '99px', background: `linear-gradient(90deg, ${T.brand}, ${T.brandMid})` },
+  progressText: { fontSize: '12px', fontWeight: 600, color: T.text, minWidth: '32px' },
+  phasePill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: T.brandLight, color: T.brand, fontWeight: 600 },
 }
 
 function getPhase(hireDate) {
