@@ -16,6 +16,7 @@ import { escapeHtml, escapeHtmlMultiline } from '../utils/escapeHtml'
 import { notifyHrAndManager } from '../utils/emailNotify'
 import { computeProgress, isParentComplete } from '../utils/taskProgress'
 import { attachResolvedUrls } from '../utils/documentUrls'
+import EmptyState, { EmptyIcons } from '../ui/EmptyState'
 
 const BASE_STYLES = {
   app: { minHeight: '100vh', background: '#f4f3ef', fontFamily: 'Inter, -apple-system, sans-serif', color: '#18181b' },
@@ -35,7 +36,7 @@ const BASE_STYLES = {
   chevron: (open) => ({ fontSize: '10px', color: '#a4a39f', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }),
   subtaskCount: { fontSize: '11px', color: '#a4a39f' },
   balStat: { textAlign: 'center' },
-  balNum: (warn) => ({ fontSize: '26px', fontWeight: 700, color: warn ? '#c04040' : '#18181b', letterSpacing: '-0.8px' }),
+  balNum: (warn) => ({ fontSize: '26px', fontWeight: 700, color: warn ? '#c04040' : '#18181b', letterSpacing: '-0.8px', fontVariantNumeric: 'tabular-nums' }),
   balLabel: { fontSize: '11px', color: '#a4a39f', marginTop: '4px', fontWeight: 500, letterSpacing: '0.1px' },
   fieldLabel: { fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 },
   fieldInput: { width: '100%', minWidth: 0, background: '#fff', border: '1px solid #e2e1dd', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', color: '#18181b', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none' },
@@ -709,23 +710,40 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                       const completedSubs = subtasks.filter(s => completions[s.id]).length
                       return (
                         <div key={task.id}>
-                          <div className="il-row" style={styles.parentRow} onClick={() => hasSubtasks ? setExpandedTasks(prev => ({ ...prev, [task.id]: !prev[task.id] })) : toggleTask(task.id, completions[task.id], { stopPropagation: () => {} })}>
-                            <div className="il-checkbox" style={styles.checkbox(isChecked)} onClick={(e) => { e.stopPropagation(); if (!hasSubtasks) toggleTask(task.id, completions[task.id], e) }}>
-                              {isChecked && checkIcon()}
-                            </div>
-                            <div style={styles.taskName(isChecked)}>{task.name}</div>
-                            {hasSubtasks && <span style={styles.subtaskCount}>{completedSubs}/{subtasks.length}</span>}
-                            {hasSubtasks && <span style={styles.chevron(isExpanded)}>▶</span>}
-                          </div>
+                          {hasSubtasks ? (
+                            <button type="button" className="il-row" aria-expanded={!!isExpanded}
+                              style={{ ...styles.parentRow, width: '100%', background: 'none', border: 'none', borderBottom: '1px solid #f0efe9', textAlign: 'left', font: 'inherit' }}
+                              onClick={() => setExpandedTasks(prev => ({ ...prev, [task.id]: !prev[task.id] }))}>
+                              <span className="il-checkbox" style={styles.checkbox(isChecked)} aria-hidden="true">
+                                {isChecked && checkIcon()}
+                              </span>
+                              <span style={styles.taskName(isChecked)}>{task.name}</span>
+                              <span style={styles.subtaskCount}>{completedSubs}/{subtasks.length}</span>
+                              <span style={styles.chevron(isExpanded)}>▶</span>
+                            </button>
+                          ) : (
+                            <button type="button" className="il-row" aria-pressed={!!completions[task.id]}
+                              aria-label={`Mark "${task.name}" ${completions[task.id] ? 'incomplete' : 'complete'}`}
+                              style={{ ...styles.parentRow, width: '100%', background: 'none', border: 'none', borderBottom: '1px solid #f0efe9', textAlign: 'left', font: 'inherit' }}
+                              onClick={(e) => toggleTask(task.id, completions[task.id], e)}>
+                              <span className="il-checkbox" style={styles.checkbox(isChecked)} aria-hidden="true">
+                                {isChecked && checkIcon()}
+                              </span>
+                              <span style={styles.taskName(isChecked)}>{task.name}</span>
+                            </button>
+                          )}
                           {hasSubtasks && isExpanded && (
                             <div>
                               {subtasks.map(s => (
-                                <div key={s.id} className="il-row" style={styles.subtaskRow} onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
-                                  <div className="il-checkbox" style={styles.subtaskCheckbox(completions[s.id])}>
+                                <button key={s.id} type="button" className="il-row" aria-pressed={!!completions[s.id]}
+                                  aria-label={`Mark "${s.name}" ${completions[s.id] ? 'incomplete' : 'complete'}`}
+                                  style={{ ...styles.subtaskRow, width: '100%', border: 'none', borderBottom: '1px solid #f4f3ef', textAlign: 'left', font: 'inherit' }}
+                                  onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
+                                  <span className="il-checkbox" style={styles.subtaskCheckbox(completions[s.id])} aria-hidden="true">
                                     {completions[s.id] && checkIcon(7)}
-                                  </div>
-                                  <div style={styles.subtaskName(completions[s.id])}>{s.name}</div>
-                                </div>
+                                  </span>
+                                  <span style={styles.subtaskName(completions[s.id])}>{s.name}</span>
+                                </button>
                               ))}
                             </div>
                           )}
@@ -742,7 +760,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         {activeTab === 'documents' && (
           <div className="il-tab-content">
             {documents.filter(doc => !docCompletions[doc.id]?.hidden).length === 0 && (
-              <div style={{ fontSize: '13px', color: '#a4a39f', padding: '20px 0' }}>No documents have been assigned yet.</div>
+              <EmptyState icon={EmptyIcons.doc} title="No documents yet"
+                message="When HR assigns documents for you to review or sign, they'll appear here." />
             )}
             {documents.filter(doc => !docCompletions[doc.id]?.hidden).map(doc => {
               const dc = docCompletions[doc.id]
@@ -792,7 +811,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         {activeTab === 'company-resources' && (
           <div className="il-tab-content">
             {companyResources.length === 0 ? (
-              <div style={{ fontSize: '13px', color: '#a4a39f', padding: '20px 0' }}>No company resources have been added yet.</div>
+              <EmptyState icon={EmptyIcons.folder} title="No company resources yet"
+                message="Shared handbooks, policies, and guides will show up here once they're added." />
             ) : (
               <>
                 {companyResources.length > 3 && (
@@ -817,7 +837,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                     ? companyResources.filter(d => d.name.toLowerCase().includes(resourceSearch.toLowerCase()))
                     : companyResources
                   if (filtered.length === 0) return (
-                    <div style={{ fontSize: '13px', color: '#a4a39f', padding: '20px 0' }}>No resources match "{resourceSearch}".</div>
+                    <EmptyState compact icon={EmptyIcons.search} title="No matches"
+                      message={`Nothing matches "${resourceSearch}". Try a different search.`} />
                   )
                   return (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
@@ -1053,15 +1074,33 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                     </div>
                   )}
 
+                  {torStartDate && torEndDate && torEndDate < torStartDate && (
+                    <div className="il-field-hint" data-tone="error" style={{ marginBottom: '12px' }}>
+                      End date must be on or after the start date.
+                    </div>
+                  )}
+
                   <button style={styles.submitBtn(submitDisabled)} disabled={submitDisabled} onClick={submitTimeOffRequest}>
                     {torSubmitting ? 'Submitting...' : 'Submit request'}
                   </button>
+                  {submitDisabled && !torSubmitting && (
+                    <div className="il-field-hint" data-tone="muted" style={{ marginTop: '8px' }}>
+                      {!torStartDate || !torEndDate
+                        ? 'Choose your start and end dates to continue.'
+                        : !torFlexibility
+                          ? 'Select a flexibility option to continue.'
+                          : torCalculating
+                            ? 'Calculating business days…'
+                            : ''}
+                    </div>
+                  )}
                 </div>
 
                 {/* Request history */}
                 <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '12px' }}>History</div>
                 {timeOffRequests.length === 0 ? (
-                  <div style={{ fontSize: '13px', color: '#a4a39f', padding: '12px 0' }}>No requests yet.</div>
+                  <EmptyState compact icon={EmptyIcons.calendar} title="No requests yet"
+                    message="Time off you request will appear here so you can track its status." />
                 ) : (
                   timeOffRequests.map(req => (
                     <div key={req.id} style={{ ...styles.torRow, opacity: req.id?.toString().startsWith('temp-') ? 0.6 : 1 }}>

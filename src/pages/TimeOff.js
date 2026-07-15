@@ -640,6 +640,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                 return (
                   <div key={row.employee.id}>
                     <div
+                      className="il-tabular"
                       style={{ ...s.tRow(BAL_COLS), cursor: 'pointer', background: isExpanded ? '#fafaf9' : '#fff' }}
                       onClick={() => setExpandedEmployeeId(isExpanded ? null : row.employee.id)}
                     >

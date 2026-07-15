@@ -9,6 +9,8 @@ import TimeOff from './pages/TimeOff'
 import EmployeePortal from './pages/EmployeePortal'
 import SetPassword from './pages/SetPassword'
 import { pageToPath, pathToPage, planPath, parseInstanceId, ROLE } from './config'
+import Button from './ui/Button'
+import { T } from './ui/theme'
 
 
 function App() {
@@ -128,37 +130,35 @@ useEffect(() => {
   }
 
 if (!session) {
-  const inputStyle = { display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: '1px solid #e2e1dd', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: '#18181b', background: '#fff', boxSizing: 'border-box' }
-  const labelStyle = { fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 }
-  const errorStyle = { fontSize: '12px', color: '#c04040', marginBottom: '16px', padding: '10px 12px', background: '#fdf0f0', border: '1px solid #f5d6d6', borderRadius: '7px' }
-  const primaryBtn = { width: '100%', background: authBusy ? '#9ca3af' : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '11px', fontSize: '13px', fontWeight: 500, cursor: authBusy ? 'default' : 'pointer', fontFamily: 'inherit', marginBottom: '12px', letterSpacing: '0.1px' }
-  const linkBtn = { width: '100%', background: 'transparent', color: '#70706b', border: 'none', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: '4px' }
+  const inputStyle = { display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: `1px solid ${T.border}`, borderRadius: T.radiusMd, fontSize: '13px', fontFamily: 'inherit', color: T.text, background: T.surface, boxSizing: 'border-box' }
+  const labelStyle = { fontSize: '12px', color: T.muted, marginBottom: '6px', display: 'block', fontWeight: 500 }
+  const errorStyle = { fontSize: '12px', color: T.danger, marginBottom: '16px', padding: '10px 12px', background: T.dangerBg, border: `1px solid ${T.dangerBorder}`, borderRadius: '7px' }
+  const linkBtn = { width: '100%', background: 'transparent', color: T.muted, border: 'none', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: '4px', marginTop: '4px' }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f3ef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, -apple-system, sans-serif', padding: '20px' }}>
+    <div style={{ minHeight: '100vh', background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.font, padding: '20px' }}>
       <div className="il-auth" style={{ width: '100%', maxWidth: '380px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
-          <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, #004db3 0%, #0080ff 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 700, marginBottom: '18px', boxShadow: '0 4px 16px rgba(0,102,204,0.3)' }}>IL</div>
-          <div style={{ fontSize: '22px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.6px', marginBottom: '4px' }}>Welcome back</div>
-          <div style={{ fontSize: '13px', color: '#70706b' }}>Sign in to Integrated Launch</div>
+          <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, #004db3 0%, #0080ff 100%)', borderRadius: T.radiusLg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 700, marginBottom: '18px', boxShadow: '0 4px 16px rgba(0,102,204,0.3)' }}>IL</div>
+          <div style={{ fontSize: '22px', fontWeight: 600, color: T.text, letterSpacing: '-0.6px', marginBottom: '4px' }}>Welcome back</div>
+          <div style={{ fontSize: '13px', color: T.muted }}>Sign in to Integrated Launch</div>
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid #e2e1dd', borderRadius: '14px', padding: '28px', boxShadow: '0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '28px', boxShadow: '0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
           {resetSent ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '8px' }}>Check your email</div>
-              <div style={{ fontSize: '13px', color: '#70706b', lineHeight: '1.6', marginBottom: '20px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: T.text, marginBottom: '8px' }}>Check your email</div>
+              <div style={{ fontSize: '13px', color: T.muted, lineHeight: '1.6', marginBottom: '20px' }}>
                 We sent a password reset link to {email}. Click the link to set a new password.
               </div>
-              <button onClick={() => { setResetSent(false); setForgotPassword(false) }}
-                style={{ fontSize: '13px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <Button variant="ghost" fullWidth onClick={() => { setResetSent(false); setForgotPassword(false) }} style={{ color: T.brand }}>
                 Back to sign in
-              </button>
+              </Button>
             </div>
           ) : forgotPassword ? (
             <>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '4px' }}>Reset your password</div>
-              <div style={{ fontSize: '13px', color: '#70706b', marginBottom: '20px' }}>Enter your email and we'll send you a reset link.</div>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: T.text, marginBottom: '4px' }}>Reset your password</div>
+              <div style={{ fontSize: '13px', color: T.muted, marginBottom: '20px' }}>Enter your email and we'll send you a reset link.</div>
               <label htmlFor="login-email" style={labelStyle}>Email</label>
               <input id="login-email" type="email" autoComplete="email" placeholder="you@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleForgotPassword()}
@@ -168,9 +168,9 @@ if (!session) {
                   {error}
                 </div>
               )}
-              <button className="il-btn" onClick={handleForgotPassword} disabled={authBusy} style={primaryBtn}>
-                {authBusy ? 'Sending…' : 'Send reset link'}
-              </button>
+              <Button fullWidth busy={authBusy} busyLabel="Sending…" onClick={handleForgotPassword}>
+                Send reset link
+              </Button>
               <button onClick={() => { setForgotPassword(false); setError('') }} style={linkBtn}>
                 Back to sign in
               </button>
@@ -190,9 +190,9 @@ if (!session) {
                   {error}
                 </div>
               )}
-              <button className="il-btn" onClick={handleLogin} disabled={authBusy} style={primaryBtn}>
-                {authBusy ? 'Signing in…' : 'Sign in'}
-              </button>
+              <Button fullWidth busy={authBusy} busyLabel="Signing in…" onClick={handleLogin}>
+                Sign in
+              </Button>
               <button onClick={() => { setForgotPassword(true); setError('') }} style={linkBtn}>
                 Forgot password?
               </button>
@@ -200,7 +200,7 @@ if (!session) {
           )}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '12px', color: '#a4a39f' }}>
+        <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '12px', color: T.subtle }}>
           Integrated Staffing Limited · onboarding portal
         </div>
       </div>

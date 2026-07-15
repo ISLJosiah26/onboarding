@@ -138,7 +138,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
             >
               <div style={{ width: '36px', height: '4px', background: '#e2e1dd', borderRadius: '2px', margin: '12px auto 4px' }} />
               <div style={{ padding: '4px 0 8px' }}>
-                <div style={drawerSection}>Settings</div>
+                <div style={drawerSection}>Manage</div>
                 {SETTINGS_ITEMS.map(item => (
                   <button key={item.id} style={drawerBtn(currentPage === item.id)} onClick={() => { onNavigate(item.id); setDrawerOpen(false) }}>
                     <Icon type={item.icon} size={17} />
@@ -234,8 +234,8 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
           ))}
         </div>
 
-        {/* Settings */}
-        <div style={{ fontSize: '11px', color: '#a0a09c', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Settings</div>
+        {/* Manage */}
+        <div style={{ fontSize: '11px', color: '#a0a09c', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Manage</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
           {SETTINGS_ITEMS.map(item => (
             <button key={item.id} className={`il-nav-item${currentPage === item.id ? ' il-nav-active' : ''}`} aria-current={currentPage === item.id ? 'page' : undefined} style={navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>

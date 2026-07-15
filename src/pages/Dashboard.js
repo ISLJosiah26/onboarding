@@ -5,6 +5,8 @@ import useToast from '../hooks/useToast'
 import { useWindowSize } from '../hooks/useWindowSize'
 import { getInitials } from '../utils/formatUtils'
 import { useDashboard, calcProgress } from '../hooks/useDashboard'
+import Button from '../ui/Button'
+import EmptyState from '../ui/EmptyState'
 
 const BASE_STYLES = {
   title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px' },
@@ -65,10 +67,10 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
           <div style={styles.title}>Dashboard</div>
           {!isMobile && <div style={styles.sub}>Overview of active employee onboardings.</div>}
         </div>
-        <button style={styles.btn} onClick={() => onNavigate('active')}>
+        <Button size="sm" onClick={() => onNavigate('active')}>
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 2v10M2 7h10"/></svg>
           {isMobile ? 'New' : 'New onboarding'}
-        </button>
+        </Button>
       </div>
 
       <div style={styles.statsRow}>
@@ -123,31 +125,33 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
         ) : fetchError ? (
           <div style={styles.errorState}>
             <div style={{ color: '#c04040', marginBottom: '12px' }}>{fetchError}</div>
-            <button onClick={fetchOnboardings} style={{ fontSize: '13px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+            <Button variant="ghost" onClick={fetchOnboardings} style={{ color: '#0066cc' }}>
               Try again
-            </button>
+            </Button>
           </div>
         ) : onboardings.length === 0 ? (
-          <div style={styles.emptyState}>
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style={{ marginBottom: '14px', color: '#d4d3cf' }}>
-              <circle cx="18" cy="12" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M5 34c0-7.2 5.8-13 13-13s13 5.8 13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <circle cx="27" cy="27" r="6" fill="#f7f6f3" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M24.5 27l1.5 1.5 3-3" stroke="#1a7a4a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.2px', marginBottom: '6px' }}>No active onboardings</div>
-            <div style={{ fontSize: '13px', color: '#6b6b67', lineHeight: '1.6', marginBottom: '20px' }}>Start a new onboarding to get someone up to speed.</div>
-            <button className="il-btn" onClick={() => onNavigate('active')} style={{ background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }}>
-              New onboarding
-            </button>
-          </div>
+          <EmptyState
+            icon={(
+              <svg width="24" height="24" viewBox="0 0 36 36" fill="none">
+                <circle cx="18" cy="12" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M5 34c0-7.2 5.8-13 13-13s13 5.8 13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="27" cy="27" r="6" fill="#f7f6f3" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M24.5 27l1.5 1.5 3-3" stroke="#1a7a4a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+            title="No active onboardings"
+            message="Start a new onboarding to get someone up to speed."
+            action={<Button onClick={() => onNavigate('active')}>New onboarding</Button>}
+          />
         ) : isMobile ? (
           onboardings.map(o => {
             const { pct } = calcProgress(o.task_completions)
             const name = o.employees.full_name
             const phase = getPhase(o.employees.hire_date)
             return (
-              <div key={o.id} style={{ padding: '14px 16px', borderBottom: '1px solid #f0efe9', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }} onClick={() => onViewOnboarding(o.id)}>
+              <button type="button" key={o.id} className="il-row" aria-label={`View ${name}'s onboarding`}
+                style={{ width: '100%', padding: '14px 16px', border: 'none', borderBottom: '1px solid #f0efe9', background: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}
+                onClick={() => onViewOnboarding(o.id)}>
                 <div style={styles.avatarLg}>{getInitials(name)}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
@@ -163,7 +167,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                   </div>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#d4d3cf" strokeWidth="1.5" style={{ flexShrink: 0 }}><path d="M5 3l4 4-4 4"/></svg>
-              </div>
+              </button>
             )
           })
         ) : (
@@ -179,7 +183,9 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
               const phase = getPhase(o.employees.hire_date)
               const uploadedDocs = docStats[o.employees.id] || 0
               return (
-                <div key={o.id} className="il-row" style={styles.tableRow} onClick={() => onViewOnboarding(o.id)}>
+                <button type="button" key={o.id} className="il-row" aria-label={`View ${name}'s onboarding`}
+                  style={{ ...styles.tableRow, width: '100%', border: 'none', borderBottom: '1px solid #f0efe9', background: 'none', font: 'inherit', textAlign: 'left' }}
+                  onClick={() => onViewOnboarding(o.id)}>
                   <div style={styles.avatar}>{getInitials(name)}</div>
                   <div>
                     <div style={styles.rowName}>{name}</div>
@@ -198,10 +204,10 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                     <div style={{ ...styles.progressText, color: pct === 100 ? '#1a7a4a' : '#18181b' }}>{pct}%</div>
                   </div>
                   <div><span style={styles.phasePill}>{phase}</span></div>
-                  <div style={{ ...styles.rowTextMuted, textAlign: 'right' }}>
+                  <div style={{ ...styles.rowTextMuted, textAlign: 'right' }} className="il-tabular">
                     {new Date(o.employees.hire_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>
