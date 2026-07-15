@@ -23,7 +23,7 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
     label: { fontSize: '12px', color: T.muted, marginBottom: '6px', display: 'block' },
     input: { width: '100%', background: T.surface, border: `1px solid ${T.border}`, borderRadius: '7px', padding: '10px 14px', fontSize: '13px', color: T.text, fontFamily: 'inherit', outline: 'none', marginBottom: '16px', display: 'block', boxSizing: 'border-box' },
     footer: { display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' },
-    btnPrimary: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' },
+    btnPrimary: { background: T.btnPrimaryBg, color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' },
     btnSecondary: { background: 'transparent', color: T.muted, border: `1px solid ${T.border}`, borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
     error: { fontSize: '12px', color: T.danger, marginBottom: '12px' },
     warning: { fontSize: '12px', color: '#d4901a', marginBottom: '12px', padding: '10px 12px', background: '#fffbf0', border: '1px solid #f5e4b0', borderRadius: '6px' }
@@ -129,7 +129,7 @@ async function handleSave() {
         <input style={styles.input} type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
         <label style={styles.label}>Role</label>
         {optionsLoading ? (
-          <div style={{ ...styles.input, background: '#f7f6f3', color: '#a0a09c', marginBottom: '16px' }}>Loading roles…</div>
+          <div style={{ ...styles.input, background: 'var(--surface-raised)', color: 'var(--subtle)', marginBottom: '16px' }}>Loading roles…</div>
         ) : (
           <select style={{ ...styles.input, marginBottom: '16px' }} value={roleId} onChange={e => setRoleId(e.target.value)}>
             <option value="">Select a role...</option>
@@ -138,7 +138,7 @@ async function handleSave() {
         )}
         <label style={styles.label}>Manager</label>
         {optionsLoading ? (
-          <div style={{ ...styles.input, background: '#f7f6f3', color: '#a0a09c', marginBottom: '20px' }}>Loading employees…</div>
+          <div style={{ ...styles.input, background: 'var(--surface-raised)', color: 'var(--subtle)', marginBottom: '20px' }}>Loading employees…</div>
         ) : (
           <select style={{ ...styles.input, marginBottom: '20px' }} value={managerId} onChange={e => setManagerId(e.target.value)}>
             <option value="">No manager</option>

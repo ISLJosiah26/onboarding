@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { useWindowSize } from '../hooks/useWindowSize'
 import { ROLE } from '../config'
+import ThemeToggle from '../ui/ThemeToggle'
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -61,34 +62,34 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
       flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: '3px', height: '56px',
       background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-      color: active ? '#0066cc' : '#a4a39f',
+      color: active ? 'var(--brand)' : 'var(--subtle)',
       fontSize: '10px', fontWeight: active ? 600 : 400,
       padding: '6px 4px 4px',
     })
 
     const drawerSection = {
-      fontSize: '11px', color: '#a0a09c', fontWeight: 500,
+      fontSize: '11px', color: 'var(--subtle)', fontWeight: 500,
       padding: '12px 20px 4px', letterSpacing: '0.3px', textTransform: 'uppercase',
     }
 
     const drawerBtn = (active) => ({
       display: 'flex', alignItems: 'center', gap: '14px',
       padding: '13px 20px', width: '100%',
-      background: active ? '#f5f4f0' : 'none',
+      background: active ? 'var(--hover-bg)' : 'none',
       border: 'none', fontSize: '15px',
-      fontWeight: active ? 500 : 400, color: '#18181b',
+      fontWeight: active ? 500 : 400, color: 'var(--text)',
       cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
     })
 
     return (
-      <div style={{ minHeight: '100vh', background: '#f4f3ef', fontFamily: "'Inter', -apple-system, sans-serif", color: '#18181b' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: "'Inter', -apple-system, sans-serif", color: 'var(--text)' }}>
         <div className="il-header" data-topbar="true" style={{
           position: 'sticky', top: 0, zIndex: 40,
-          background: '#fff', boxShadow: '0 1px 0 #e2e1dd',
+          background: 'var(--surface)', boxShadow: '0 1px 0 var(--border)',
           height: '54px', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '10px',
         }}>
           <div style={{ width: '24px', height: '24px', background: 'linear-gradient(135deg, #004db3 0%, #0080ff 100%)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 700, flexShrink: 0, letterSpacing: '-0.2px' }}>IL</div>
-          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#18181b' }}>Integrated Launch</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: 'var(--text)' }}>Integrated Launch</div>
         </div>
 
         <div style={{ paddingBottom: '64px' }}>
@@ -97,7 +98,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
 
         <div className="il-tabbar" style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
-          background: '#fff', boxShadow: '0 -1px 0 #e2e1dd',
+          background: 'var(--surface)', boxShadow: '0 -1px 0 var(--border)',
           display: 'flex', zIndex: 40,
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}>
@@ -130,13 +131,13 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
               className="il-drawer"
               style={{
                 position: 'absolute', bottom: 0, left: 0, right: 0,
-                background: '#fff', borderRadius: '16px 16px 0 0',
+                background: 'var(--surface)', borderRadius: '16px 16px 0 0',
                 paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
                 maxHeight: '80vh', overflowY: 'auto',
               }}
               onClick={e => e.stopPropagation()}
             >
-              <div style={{ width: '36px', height: '4px', background: '#e2e1dd', borderRadius: '2px', margin: '12px auto 4px' }} />
+              <div style={{ width: '36px', height: '4px', background: 'var(--border)', borderRadius: '2px', margin: '12px auto 4px' }} />
               <div style={{ padding: '4px 0 8px' }}>
                 <div style={drawerSection}>Manage</div>
                 {SETTINGS_ITEMS.map(item => (
@@ -174,17 +175,20 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                   </>
                 )}
               </div>
-              <div style={{ borderTop: '1px solid #e2e1dd', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ borderTop: '1px solid var(--border)', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e 0%, #374151 100%)', color: '#fff', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{initials}</div>
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', letterSpacing: '-0.1px' }}>{name}</div>
-                    <div style={{ fontSize: '11px', color: '#a0a09c' }}>{email}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.1px' }}>{name}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--subtle)' }}>{email}</div>
                   </div>
                 </div>
-                <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '7px 14px', fontSize: '13px', color: '#70706b', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
-                  Sign out
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ThemeToggle compact />
+                  <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '7px', padding: '7px 14px', fontSize: '13px', color: 'var(--muted)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+                    Sign out
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -198,8 +202,8 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
     display: 'flex', alignItems: 'center', gap: '10px',
     padding: '7px 12px',
     borderRadius: '7px', fontSize: '13px',
-    color: active ? '#0066cc' : '#70706b',
-    background: active ? '#eff6ff' : 'transparent',
+    color: active ? 'var(--brand)' : 'var(--muted)',
+    background: active ? 'var(--brand-light)' : 'transparent',
     fontWeight: active ? 500 : 400,
     cursor: 'pointer',
     border: 'none',
@@ -209,19 +213,19 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#f4f3ef',
+      minHeight: '100vh', background: 'var(--bg)',
       display: 'grid', gridTemplateColumns: '240px 1fr',
-      fontFamily: "'Inter', -apple-system, sans-serif", color: '#18181b',
+      fontFamily: "'Inter', -apple-system, sans-serif", color: 'var(--text)',
     }}>
       <div style={{
-        background: '#fff', borderRight: '1px solid #e2e1dd',
+        background: 'var(--surface)', borderRight: '1px solid var(--border)',
         padding: '0 10px', display: 'flex', flexDirection: 'column',
         position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
       }}>
         {/* Brand */}
         <div style={{ padding: '22px 12px 20px', display: 'flex', alignItems: 'center', gap: '9px' }}>
           <div style={{ width: '26px', height: '26px', background: 'linear-gradient(135deg, #004db3 0%, #0080ff 100%)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 700, letterSpacing: '-0.2px', flexShrink: 0 }}>IL</div>
-          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: '#18181b' }}>Integrated Launch</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '-0.3px', color: 'var(--text)' }}>Integrated Launch</div>
         </div>
 
         {/* Primary nav */}
@@ -235,7 +239,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
         </div>
 
         {/* Manage */}
-        <div style={{ fontSize: '11px', color: '#a0a09c', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Manage</div>
+        <div style={{ fontSize: '11px', color: 'var(--subtle)', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Manage</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
           {SETTINGS_ITEMS.map(item => (
             <button key={item.id} className={`il-nav-item${currentPage === item.id ? ' il-nav-active' : ''}`} aria-current={currentPage === item.id ? 'page' : undefined} style={navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
@@ -248,7 +252,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
         {/* Employee Hub */}
         {(userProfile?.role === ROLE.ADMIN || userProfile?.role === ROLE.SUPER_ADMIN || userProfile?.role === ROLE.MANAGER) && (
           <>
-            <div style={{ fontSize: '11px', color: '#a0a09c', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Employee Hub</div>
+            <div style={{ fontSize: '11px', color: 'var(--subtle)', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Employee Hub</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
               {(userProfile?.role === ROLE.ADMIN || userProfile?.role === ROLE.SUPER_ADMIN) && EMPLOYEE_HUB_ITEMS.map(item => (
                 <button key={item.id} className={`il-nav-item${currentPage === item.id ? ' il-nav-active' : ''}`} aria-current={currentPage === item.id ? 'page' : undefined} style={navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
@@ -269,7 +273,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
         {/* System */}
         {userProfile?.role === ROLE.SUPER_ADMIN && (
           <>
-            <div style={{ fontSize: '11px', color: '#a0a09c', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>System</div>
+            <div style={{ fontSize: '11px', color: 'var(--subtle)', fontWeight: 500, padding: '14px 12px 4px', letterSpacing: '0.3px', textTransform: 'uppercase' }}>System</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
               {SYSTEM_ITEMS.map(item => (
                 <button key={item.id} className={`il-nav-item${currentPage === item.id ? ' il-nav-active' : ''}`} aria-current={currentPage === item.id ? 'page' : undefined} style={navItem(currentPage === item.id)} onClick={() => onNavigate(item.id)}>
@@ -282,15 +286,16 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
         )}
 
         {/* User / sign out */}
-        <div style={{ marginTop: 'auto', borderTop: '1px solid #e2e1dd', padding: '14px 12px' }}>
+        <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', padding: '14px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e 0%, #374151 100%)', color: '#fff', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{initials}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', letterSpacing: '-0.1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
-              <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: '#a4a39f', fontSize: '11px', display: 'block', textAlign: 'left', letterSpacing: 0 }}>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
+              <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', color: 'var(--subtle)', fontSize: '11px', display: 'block', textAlign: 'left', letterSpacing: 0 }}>
                 Sign out
               </button>
             </div>
+            <ThemeToggle />
           </div>
         </div>
       </div>

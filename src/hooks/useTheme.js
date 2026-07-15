@@ -1,0 +1,39 @@
+import { useEffect, useState } from 'react'
+
+// Theme is 'light' | 'dark' | 'system'. We persist the choice and reflect it on
+// <html data-theme>. 'system' removes the attribute so the CSS media query and
+// :root:not([data-theme=light]) rules follow the OS preference.
+const KEY = 'il-theme'
+
+function apply(theme) {
+  const root = document.documentElement
+  if (theme === 'system') root.removeAttribute('data-theme')
+  else root.setAttribute('data-theme', theme)
+}
+
+// Apply immediately on module load so there's no flash before React mounts.
+const stored = (typeof localStorage !== 'undefined' && localStorage.getItem(KEY)) || 'system'
+apply(stored)
+
+export function useTheme() {
+  const [theme, setThemeState] = useState(stored)
+
+  useEffect(() => { apply(theme) }, [theme])
+
+  function setTheme(next) {
+    setThemeState(next)
+    try {
+      if (next === 'system') localStorage.removeItem(KEY)
+      else localStorage.setItem(KEY, next)
+    } catch { /* ignore storage failures */ }
+  }
+
+  // Convenience toggle that flips between light and dark based on what's shown.
+  function toggle() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+      || (theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+    setTheme(isDark ? 'light' : 'dark')
+  }
+
+  return { theme, setTheme, toggle }
+}

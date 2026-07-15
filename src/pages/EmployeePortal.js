@@ -18,6 +18,10 @@ import { computeProgress, isParentComplete } from '../utils/taskProgress'
 import { attachResolvedUrls } from '../utils/documentUrls'
 import EmptyState, { EmptyIcons } from '../ui/EmptyState'
 import { T } from '../ui/theme'
+import ThemeToggle from '../ui/ThemeToggle'
+import ProgressRing from '../ui/ProgressRing'
+import AnimatedNumber from '../ui/AnimatedNumber'
+import { avatarStyle } from '../utils/avatarColor'
 
 const BASE_STYLES = {
   app: { minHeight: '100vh', background: T.bg, fontFamily: 'Inter, -apple-system, sans-serif', color: T.text },
@@ -28,8 +32,8 @@ const BASE_STYLES = {
   progressTrack: { height: '8px', background: T.borderSubtle, borderRadius: '99px', overflow: 'hidden' },
   progressFill: { height: '100%', background: `linear-gradient(90deg, ${T.brand}, ${T.brandMid})`, borderRadius: '99px', boxShadow: '0 0 8px rgba(0,102,204,0.28)', transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)' },
   phaseLabel: { fontSize: '11px', fontWeight: 600, color: T.subtle, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px', marginTop: '28px' },
-  parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0', borderBottom: '1px solid #f0efe9', cursor: 'pointer' },
-  subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: `1px solid ${T.bg}`, cursor: 'pointer', background: '#f9f8f5' },
+  parentRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' },
+  subtaskRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0 10px 32px', borderBottom: `1px solid ${T.bg}`, cursor: 'pointer', background: 'var(--surface-raised)' },
   checkbox: (checked) => ({ width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d0cfc9', background: checked ? `linear-gradient(135deg, ${T.brand}, ${T.brandMid})` : T.surface, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer', boxShadow: checked ? '0 0 0 3px rgba(0,102,204,0.12)' : 'none' }),
   subtaskCheckbox: (checked) => ({ width: '15px', height: '15px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : '1.5px solid #d0cfc9', background: checked ? `linear-gradient(135deg, ${T.brand}, ${T.brandMid})` : T.surface, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }),
   taskName: (checked) => ({ fontSize: '14px', color: checked ? T.subtle : T.text, textDecoration: checked ? 'line-through' : 'none', flex: 1 }),
@@ -41,8 +45,8 @@ const BASE_STYLES = {
   balLabel: { fontSize: '11px', color: T.subtle, marginTop: '4px', fontWeight: 500, letterSpacing: '0.1px' },
   fieldLabel: { fontSize: '12px', color: T.muted, marginBottom: '6px', display: 'block', fontWeight: 500 },
   fieldInput: { width: '100%', minWidth: 0, background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radiusMd, padding: '9px 12px', fontSize: '13px', color: T.text, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none' },
-  submitBtn: (disabled) => ({ background: disabled ? T.border : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }),
-  torRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 0', borderBottom: '1px solid #f0efe9', flexWrap: 'wrap' },
+  submitBtn: (disabled) => ({ background: disabled ? T.border : T.btnPrimaryBg, color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '10px 20px', fontSize: '13px', fontWeight: 500, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }),
+  torRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 0', borderBottom: '1px solid var(--border-subtle)', flexWrap: 'wrap' },
   cancelBtn: { fontSize: '12px', color: T.muted, background: 'none', border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 },
 }
 
@@ -574,17 +578,17 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
   const styles = {
     ...BASE_STYLES,
-    topbar: { background: '#fff', boxShadow: '0 1px 0 #e2e1dd', padding: isMobile ? '0 16px' : '0 32px', height: isMobile ? '52px' : '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+    topbar: { background: 'var(--surface)', boxShadow: '0 1px 0 var(--border)', padding: isMobile ? '0 16px' : '0 32px', height: isMobile ? '52px' : '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
     hero: { padding: isMobile ? '24px 16px 0' : '44px 40px 0', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
     name: { fontSize: isMobile ? '22px' : '26px', fontWeight: 600, letterSpacing: '-0.8px', marginBottom: '4px' },
     progressWrap: { marginTop: '20px', marginBottom: isMobile ? '20px' : '32px' },
-    tabs: { display: 'flex', gap: '0', borderBottom: '1px solid #e2e1dd', padding: isMobile ? '0 16px' : '0 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
-    tab: (active) => ({ fontSize: '13px', fontWeight: active ? 600 : 400, color: active ? '#0066cc' : '#70706b', padding: '12px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: active ? '2px solid #0066cc' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.12s ease, border-color 0.12s ease' }),
+    tabs: { display: 'flex', gap: '0', borderBottom: '1px solid var(--border)', padding: isMobile ? '0 16px' : '0 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
+    tab: (active) => ({ fontSize: '13px', fontWeight: active ? 600 : 400, color: active ? 'var(--brand)' : 'var(--muted)', padding: '12px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: active ? '2px solid var(--brand)' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.12s ease, border-color 0.12s ease' }),
     tabDisabled: { fontSize: '13px', fontWeight: 400, color: '#c4c3bf', padding: '12px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: '2px solid transparent', cursor: 'default', fontFamily: 'inherit', pointerEvents: 'none', whiteSpace: 'nowrap', flexShrink: 0 },
     content: { padding: isMobile ? '20px 16px' : '28px 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
-    balCard: { background: '#fff', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
+    balCard: { background: 'var(--surface)', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
     balGrid: { display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '12px' : '16px' },
-    formCard: { background: '#fff', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
+    formCard: { background: 'var(--surface)', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
   }
 
   if (loading) return (
@@ -593,10 +597,11 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         <div style={styles.logo}>Integrated Launch</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {onSwitchToAdmin && (
-            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
               ← Admin view
             </button>
           )}
+          <ThemeToggle compact />
           <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
         </div>
       </div>
@@ -628,20 +633,21 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         <div style={styles.logo}>Integrated Launch</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {onSwitchToAdmin && (
-            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+            <button onClick={onSwitchToAdmin} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
               ← Admin view
             </button>
           )}
+          <ThemeToggle compact />
           <button style={styles.signout} onClick={() => supabase.auth.signOut()}>Sign out</button>
         </div>
       </div>
 
       <div style={styles.hero}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '4px' }}>
-          <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e 0%, #374151 100%)', color: '#fff', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, letterSpacing: '-0.2px', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+          <div style={{ width: '46px', height: '46px', borderRadius: '50%', ...avatarStyle(displayName), fontSize: '15px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, letterSpacing: '-0.2px', boxShadow: T.shadowSm }}>
             {getInitials(displayName)}
           </div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={styles.name}>Welcome, {displayName.split(' ')[0]}</div>
             <div style={styles.sub}>
               {displayRole && `${displayRole} · `}
@@ -650,12 +656,24 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 : (employee?.brand || userProfile?.brand || 'Integrated Staffing')}
             </div>
           </div>
+          {instance && !isMobile && (
+            <ProgressRing value={pct} size={64} stroke={6} />
+          )}
         </div>
         {instance && (
           <div style={styles.progressWrap}>
+            {isMobile && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                <ProgressRing value={pct} size={72} stroke={7} />
+              </div>
+            )}
             <div style={styles.progressRow}>
-              <span style={{ fontSize: '12px', color: '#70706b' }}>{completedTasksCount} of {totalTasks} tasks complete</span>
-              <span style={{ fontSize: '12px', fontWeight: 500, color: '#0066cc' }}>{pct}%</span>
+              <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                <AnimatedNumber value={completedTasksCount} duration={500} /> of {totalTasks} tasks complete
+              </span>
+              <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brand)' }}>
+                {completedTasksCount === totalTasks && totalTasks > 0 ? 'All done 🎉' : `${totalTasks - completedTasksCount} left`}
+              </span>
             </div>
             <div style={styles.progressTrack}>
               <div style={{ ...styles.progressFill, width: `${pct}%` }} />
@@ -699,8 +717,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                   <div key={bucket}>
                     <div style={{ ...styles.phaseLabel, display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span>{bucket}</span>
-                      {dateHint && <span style={{ fontSize: '11px', color: '#a4a39f', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{dateHint}</span>}
-                      {upcoming && <span style={{ fontSize: '10px', color: '#a4a39f', fontWeight: 500, background: '#f4f3ef', padding: '1px 6px', borderRadius: '3px', textTransform: 'none', letterSpacing: 0 }}>Upcoming</span>}
+                      {dateHint && <span style={{ fontSize: '11px', color: 'var(--subtle)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{dateHint}</span>}
+                      {upcoming && <span style={{ fontSize: '10px', color: 'var(--subtle)', fontWeight: 500, background: 'var(--bg)', padding: '1px 6px', borderRadius: '3px', textTransform: 'none', letterSpacing: 0 }}>Upcoming</span>}
                     </div>
                     {parentTasks.map(task => {
                       const subtasks = subtasksFor(task)
@@ -713,7 +731,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                         <div key={task.id}>
                           {hasSubtasks ? (
                             <button type="button" className="il-row" aria-expanded={!!isExpanded}
-                              style={{ ...styles.parentRow, width: '100%', background: 'none', border: 'none', borderBottom: '1px solid #f0efe9', textAlign: 'left', font: 'inherit' }}
+                              style={{ ...styles.parentRow, width: '100%', background: 'none', border: 'none', borderBottom: '1px solid var(--border-subtle)', textAlign: 'left', font: 'inherit' }}
                               onClick={() => setExpandedTasks(prev => ({ ...prev, [task.id]: !prev[task.id] }))}>
                               <span className="il-checkbox" style={styles.checkbox(isChecked)} aria-hidden="true">
                                 {isChecked && checkIcon()}
@@ -725,7 +743,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                           ) : (
                             <button type="button" className="il-row" aria-pressed={!!completions[task.id]}
                               aria-label={`Mark "${task.name}" ${completions[task.id] ? 'incomplete' : 'complete'}`}
-                              style={{ ...styles.parentRow, width: '100%', background: 'none', border: 'none', borderBottom: '1px solid #f0efe9', textAlign: 'left', font: 'inherit' }}
+                              style={{ ...styles.parentRow, width: '100%', background: 'none', border: 'none', borderBottom: '1px solid var(--border-subtle)', textAlign: 'left', font: 'inherit' }}
                               onClick={(e) => toggleTask(task.id, completions[task.id], e)}>
                               <span className="il-checkbox" style={styles.checkbox(isChecked)} aria-hidden="true">
                                 {isChecked && checkIcon()}
@@ -738,7 +756,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                               {subtasks.map(s => (
                                 <button key={s.id} type="button" className="il-row" aria-pressed={!!completions[s.id]}
                                   aria-label={`Mark "${s.name}" ${completions[s.id] ? 'incomplete' : 'complete'}`}
-                                  style={{ ...styles.subtaskRow, width: '100%', border: 'none', borderBottom: '1px solid #f4f3ef', textAlign: 'left', font: 'inherit' }}
+                                  style={{ ...styles.subtaskRow, width: '100%', border: 'none', borderBottom: '1px solid var(--border-subtle)', textAlign: 'left', font: 'inherit' }}
                                   onClick={(e) => toggleTask(s.id, completions[s.id], e)}>
                                   <span className="il-checkbox" style={styles.subtaskCheckbox(completions[s.id])} aria-hidden="true">
                                     {completions[s.id] && checkIcon(7)}
@@ -770,17 +788,17 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
               const completedFileUrl = dc?.resolvedUrl || dc?.completed_file_url || null
               const isUploading = uploadingDocId === doc.id
               return (
-                <div key={doc.id} style={{ padding: '16px 0', borderBottom: '1px solid #f0efe9' }}>
+                <div key={doc.id} style={{ padding: '16px 0', borderBottom: '1px solid var(--border-subtle)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ flex: 1, fontSize: '14px', color: '#18181b', fontWeight: 500 }}>{doc.name}</div>
-                    <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#70706b', textDecoration: 'underline', flexShrink: 0 }}>View</a>
+                    <div style={{ flex: 1, fontSize: '14px', color: 'var(--text)', fontWeight: 500 }}>{doc.name}</div>
+                    <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--muted)', textDecoration: 'underline', flexShrink: 0 }}>View</a>
                     {signed ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                         <span style={{ fontSize: '12px', color: '#1a7a4a', fontWeight: 500 }}>✓ Received</span>
-                        <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '11px', color: '#a4a39f', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Undo</button>
+                        <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '11px', color: 'var(--subtle)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Undo</button>
                       </div>
                     ) : (
-                      <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '12px', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '5px', padding: '4px 10px', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                      <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '12px', color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: '5px', padding: '4px 10px', background: 'var(--surface)', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
                         Mark as received
                       </button>
                     )}
@@ -789,7 +807,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                     {completedFileUrl ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{ fontSize: '12px', color: '#1a7a4a' }}>✓ Uploaded</span>
-                        <a href={completedFileUrl} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none' }}>View file</a>
+                        <a href={completedFileUrl} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'none' }}>View file</a>
                         <label style={{ fontSize: '12px', color: isUploading ? '#a4a39f' : '#70706b', cursor: isUploading ? 'default' : 'pointer' }}>
                           {isUploading ? 'Uploading...' : 'Replace'}
                           <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={e => handleEmployeeDocumentUpload(e, doc.id)} disabled={!!uploadingDocId} />
@@ -826,10 +844,10 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                       placeholder="Search resources…"
                       value={resourceSearch}
                       onChange={e => setResourceSearch(e.target.value)}
-                      style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '8px 32px 8px 32px', fontSize: '13px', fontFamily: 'inherit', color: '#18181b', background: '#fff', outline: 'none' }}
+                      style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--border)', borderRadius: '7px', padding: '8px 32px 8px 32px', fontSize: '13px', fontFamily: 'inherit', color: 'var(--text)', background: 'var(--surface)', outline: 'none' }}
                     />
                     {resourceSearch && (
-                      <button onClick={() => setResourceSearch('')} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#a4a39f', fontSize: '16px', lineHeight: 1, padding: 0 }}>×</button>
+                      <button onClick={() => setResourceSearch('')} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--subtle)', fontSize: '16px', lineHeight: 1, padding: 0 }}>×</button>
                     )}
                   </div>
                 )}
@@ -851,18 +869,18 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                         const iconStroke = ext === 'pdf' ? '#c04040' : ext === 'docx' || ext === 'doc' ? '#0066cc' : ext === 'xlsx' || ext === 'xls' ? '#1a7a4a' : ext === 'pptx' || ext === 'ppt' ? '#c27a30' : '#6b6b67'
                         return (
                           <a key={doc.id} href={doc.file_url} target="_blank" rel="noreferrer" className="il-resource-tile"
-                            style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', padding: '14px', textDecoration: 'none', color: '#18181b' }}>
+                            style={{ display: 'flex', flexDirection: 'column', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '14px', textDecoration: 'none', color: 'var(--text)' }}>
                             <div style={{ width: '34px', height: '34px', borderRadius: '7px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', flexShrink: 0 }}>
                               <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke={iconStroke} strokeWidth="1.5">
                                 <path d="M3 2h6l3 3v7H3z"/><path d="M9 2v3h3"/>
                               </svg>
                             </div>
-                            <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', lineHeight: '1.4', flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', lineHeight: '1.4', flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
                               {doc.name}
                             </div>
                             <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                              <span style={{ fontSize: '10px', fontWeight: 600, color: '#70706b', background: '#f0efe9', borderRadius: '3px', padding: '1px 5px' }}>{typeLabel}</span>
-                              <span style={{ fontSize: '11px', color: '#a4a39f' }}>Open ↗</span>
+                              <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', background: '#f0efe9', borderRadius: '3px', padding: '1px 5px' }}>{typeLabel}</span>
+                              <span style={{ fontSize: '11px', color: 'var(--subtle)' }}>Open ↗</span>
                             </div>
                           </a>
                         )
@@ -888,13 +906,13 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 {/* Balance card or empty state */}
                 {!timeOffBalance && timeOffRequests.length === 0 ? (
                   <div style={{ ...styles.balCard, textAlign: 'center', padding: '28px 20px' }}>
-                    <div style={{ fontSize: '13px', color: '#70706b', lineHeight: 1.6 }}>
+                    <div style={{ fontSize: '13px', color: 'var(--muted)', lineHeight: 1.6 }}>
                       Your entitlement hasn't been set yet — contact HR.
                     </div>
                   </div>
                 ) : (
                   <div style={styles.balCard}>
-                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--subtle)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px' }}>
                       {CURRENT_YEAR} Balance
                     </div>
                     <div style={styles.balGrid}>
@@ -917,7 +935,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                       </div>
                     </div>
                     {torTotal > 0 && (
-                      <div style={{ marginTop: '14px', borderTop: '1px solid #f0efe9', paddingTop: '14px' }}>
+                      <div style={{ marginTop: '14px', borderTop: '1px solid var(--border-subtle)', paddingTop: '14px' }}>
                         <div style={{ height: '5px', borderRadius: '3px', background: '#f0efe9', overflow: 'hidden', display: 'flex' }}>
                           {torUsed > 0 && <div style={{ width: `${Math.min(100, (torUsed / torTotal) * 100)}%`, background: '#18181b', transition: 'width 0.3s ease' }} />}
                           {torPending > 0 && <div style={{ width: `${Math.min(100 - (torUsed / torTotal) * 100, (torPending / torTotal) * 100)}%`, background: '#d4901a', transition: 'width 0.3s ease' }} />}
@@ -929,7 +947,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
                 {/* Request form */}
                 <div style={styles.formCard}>
-                  <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '20px' }}>Request time off</div>
+                  <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '20px' }}>Request time off</div>
 
                   {/* Leave dates */}
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
@@ -984,16 +1002,16 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                   {/* Type of leave */}
                   <div style={{ marginBottom: '20px' }}>
                     <label style={styles.fieldLabel}>Type of leave</label>
-                    <div style={{ border: '1px solid #e2e1dd', borderRadius: '8px', overflow: 'hidden' }}>
+                    <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
                       {TYPE_OPTIONS.map((o, i) => {
                         const active = torType === o.value
                         return (
                           <label key={o.value} onClick={() => setTorType(o.value)}
-                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', cursor: 'pointer', background: active ? '#fafaf9' : '#fff', borderTop: i > 0 ? '1px solid #f0efe9' : 'none' }}>
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', cursor: 'pointer', background: active ? '#fafaf9' : '#fff', borderTop: i > 0 ? '1px solid var(--border-subtle)' : 'none' }}>
                             <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `1.5px solid ${active ? '#18181b' : '#e2e1dd'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.12s' }}>
                               {active && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#18181b' }} />}
                             </div>
-                            <span style={{ fontSize: '13px', color: '#18181b', fontWeight: active ? 500 : 400 }}>{o.label}</span>
+                            <span style={{ fontSize: '13px', color: 'var(--text)', fontWeight: active ? 500 : 400 }}>{o.label}</span>
                           </label>
                         )
                       })}
@@ -1029,17 +1047,17 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                   {/* Flexibility */}
                   <div style={{ marginBottom: '20px' }}>
                     <label style={styles.fieldLabel}>Flexibility <span style={{ color: '#c04040' }}>*</span></label>
-                    <div style={{ fontSize: '11px', color: '#a0a09c', marginBottom: '8px' }}>In case of conflicting business issues or overlapping leave requests</div>
-                    <div style={{ border: '1px solid #e2e1dd', borderRadius: '8px', overflow: 'hidden' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--subtle)', marginBottom: '8px' }}>In case of conflicting business issues or overlapping leave requests</div>
+                    <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
                       {FLEXIBILITY_OPTIONS.map((o, i) => {
                         const active = torFlexibility === o.value
                         return (
                           <label key={o.value} onClick={() => setTorFlexibility(o.value)}
-                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', cursor: 'pointer', background: active ? '#fafaf9' : '#fff', borderTop: i > 0 ? '1px solid #f0efe9' : 'none' }}>
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', cursor: 'pointer', background: active ? '#fafaf9' : '#fff', borderTop: i > 0 ? '1px solid var(--border-subtle)' : 'none' }}>
                             <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `1.5px solid ${active ? '#18181b' : '#e2e1dd'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.12s' }}>
                               {active && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#18181b' }} />}
                             </div>
-                            <span style={{ fontSize: '13px', color: '#18181b', fontWeight: active ? 500 : 400 }}>{o.label}</span>
+                            <span style={{ fontSize: '13px', color: 'var(--text)', fontWeight: active ? 500 : 400 }}>{o.label}</span>
                           </label>
                         )
                       })}
@@ -1058,11 +1076,11 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
                   {/* Business days display */}
                   {torStartDate && torEndDate && (
-                    <div style={{ marginBottom: '16px', fontSize: '13px', color: '#70706b' }}>
+                    <div style={{ marginBottom: '16px', fontSize: '13px', color: 'var(--muted)' }}>
                       {torDayPortion !== 'full' ? (
                         <span style={{ fontWeight: 500 }}>½ day ({torDayPortion.toUpperCase()})</span>
                       ) : torCalculating ? (
-                        <span style={{ color: '#a4a39f' }}>Calculating...</span>
+                        <span style={{ color: 'var(--subtle)' }}>Calculating...</span>
                       ) : torBusinessDays !== null ? (
                         <span><strong>{torBusinessDays}</strong> business day{torBusinessDays !== 1 ? 's' : ''}</span>
                       ) : null}
@@ -1098,7 +1116,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 </div>
 
                 {/* Request history */}
-                <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '12px' }}>History</div>
+                <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '12px' }}>History</div>
                 {timeOffRequests.length === 0 ? (
                   <EmptyState compact icon={EmptyIcons.calendar} title="No requests yet"
                     message="Time off you request will appear here so you can track its status." />
@@ -1108,17 +1126,17 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                       <div style={{ flex: 1, minWidth: '140px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <TypeIcon type={req.type} size={12} />
-                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#18181b' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>
                             {fmtDateRange(req.start_date, req.end_date)}
                           </span>
                         </div>
-                        <div style={{ fontSize: '11px', color: '#70706b', marginTop: '2px' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
                           {TYPE_LABELS[req.type] || req.type} · {req.business_days}d{req.day_portion && req.day_portion !== 'full' ? ` (${req.day_portion.toUpperCase()})` : req.is_half_day ? ' (half day)' : ''}
                         </div>
                       </div>
                       <StatusPill status={req.status} />
                       {req.review_notes && (
-                        <div style={{ fontSize: '11px', color: '#70706b', fontStyle: 'italic', flex: 1 }}>
+                        <div style={{ fontSize: '11px', color: 'var(--muted)', fontStyle: 'italic', flex: 1 }}>
                           {req.review_notes}
                         </div>
                       )}
@@ -1142,7 +1160,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         {activeTab === 'technical-tickets' && (
           <div className="il-tab-content">
             <div style={styles.formCard}>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '20px' }}>Submit a tech issue</div>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '20px' }}>Submit a tech issue</div>
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={styles.fieldLabel}>Category</label>
@@ -1191,14 +1209,14 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
 
             {submittedTickets.length > 0 && (
               <>
-                <div style={{ fontSize: '14px', fontWeight: 500, color: '#18181b', marginBottom: '12px' }}>Submitted this session</div>
+                <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '12px' }}>Submitted this session</div>
                 {submittedTickets.map(ticket => (
-                  <div key={ticket.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0efe9' }}>
+                  <div key={ticket.id} style={{ padding: '14px 0', borderBottom: '1px solid var(--border-subtle)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 500, background: '#f4f3ef', color: '#70706b', borderRadius: '4px', padding: '2px 7px' }}>{ticket.categoryLabel}</span>
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#18181b' }}>{ticket.title}</span>
+                      <span style={{ fontSize: '11px', fontWeight: 500, background: 'var(--bg)', color: 'var(--muted)', borderRadius: '4px', padding: '2px 7px' }}>{ticket.categoryLabel}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>{ticket.title}</span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#70706b' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--muted)' }}>
                       {new Date(ticket.submittedAt).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       <span style={{ marginLeft: '8px', color: '#1a7a4a', fontWeight: 500 }}>✓ Sent</span>
                     </div>
