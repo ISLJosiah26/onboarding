@@ -10,6 +10,7 @@ import { useWindowSize } from '../hooks/useWindowSize'
 import { getToday, getCurrentYear, TIME_OFF_STATUS } from '../config'
 import { TYPE_LABELS, StatusPill, TypeIcon, fmtDate, fmtDateRange } from '../utils/timeOffShared'
 import { escapeHtml } from '../utils/escapeHtml'
+import { T } from '../ui/theme'
 
 // No blue — reserved for today highlight and UI accents
 const PALETTE = [
@@ -50,20 +51,20 @@ const EVENT_GAP = 3
 const SLOT_H = EVENT_H + EVENT_GAP
 
 const BASE_STYLES = {
-  title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.3px', color: '#18181b', marginBottom: '4px' },
-  subNav: { display: 'flex', borderBottom: '1px solid #e2e1dd', marginBottom: '20px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
-  subTab: (a) => ({ fontSize: '13px', fontWeight: a ? 500 : 400, color: a ? '#18181b' : '#70706b', padding: '10px 0', marginRight: '20px', background: 'none', border: 'none', borderBottom: a ? '2px solid #18181b' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }),
-  card: { background: '#fff', border: '1px solid #e2e1dd', borderRadius: '10px', overflow: 'hidden' },
-  tHead: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '10px 16px', background: '#fafaf9', borderBottom: '1px solid #e2e1dd', fontSize: '11px', fontWeight: 500, color: '#70706b', textTransform: 'uppercase', letterSpacing: '0.4px' }),
-  tRow: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '13px 16px', borderBottom: '1px solid #f0efe9', alignItems: 'center', fontSize: '13px', color: '#18181b' }),
-  empty: { padding: '40px', textAlign: 'center', fontSize: '13px', color: '#a4a39f' },
-  inp: { background: '#fff', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', color: '#18181b', fontFamily: 'Inter, -apple-system, sans-serif', outline: 'none', boxSizing: 'border-box' },
-  btnApprove: { background: '#f0faf4', color: '#1a7a4a', border: '1px solid #c3e8d1', borderRadius: '6px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
-  btnDeny: { background: '#fdf0f0', color: '#c04040', border: '1px solid #f5d6d6', borderRadius: '6px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
-  btnEdit: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
-  btnSave: { background: '#18181b', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 11px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
-  btnCancel: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 8px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
-  navBtn: { background: 'transparent', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 10px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#70706b', lineHeight: 1 },
+  title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.3px', color: T.text, marginBottom: '4px' },
+  subNav: { display: 'flex', borderBottom: `1px solid ${T.border}`, marginBottom: '20px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' },
+  subTab: (a) => ({ fontSize: '13px', fontWeight: a ? 500 : 400, color: a ? T.text : T.muted, padding: '10px 0', marginRight: '20px', background: 'none', border: 'none', borderBottom: a ? `2px solid ${T.text}` : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }),
+  card: { background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radiusLg, overflow: 'hidden' },
+  tHead: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '10px 16px', background: '#fafaf9', borderBottom: `1px solid ${T.border}`, fontSize: '11px', fontWeight: 500, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.4px' }),
+  tRow: (cols) => ({ display: 'grid', gridTemplateColumns: cols, padding: '13px 16px', borderBottom: '1px solid #f0efe9', alignItems: 'center', fontSize: '13px', color: T.text }),
+  empty: { padding: '40px', textAlign: 'center', fontSize: '13px', color: T.subtle },
+  inp: { background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: '6px 10px', fontSize: '12px', color: T.text, fontFamily: 'Inter, -apple-system, sans-serif', outline: 'none', boxSizing: 'border-box' },
+  btnApprove: { background: '#f0faf4', color: T.success, border: '1px solid #c3e8d1', borderRadius: T.radiusSm, padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
+  btnDeny: { background: T.dangerBg, color: T.danger, border: `1px solid ${T.dangerBorder}`, borderRadius: T.radiusSm, padding: '7px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flex: 1 },
+  btnEdit: { background: 'transparent', color: T.muted, border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: '4px 10px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
+  btnSave: { background: T.text, color: '#fff', border: 'none', borderRadius: T.radiusSm, padding: '5px 11px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+  btnCancel: { background: 'transparent', color: T.muted, border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: '5px 8px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' },
+  navBtn: { background: 'transparent', border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: '5px 10px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: T.muted, lineHeight: 1 },
 }
 
 function getWeekEventLayout(weekDates, allRequests) {
@@ -375,7 +376,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
   const s = {
     ...BASE_STYLES,
     page: { padding: isMobile ? '16px' : '32px 40px', maxWidth: '1100px' },
-    sub: { fontSize: '13px', color: '#70706b', marginBottom: isMobile ? '16px' : '28px' },
+    sub: { fontSize: '13px', color: T.muted, marginBottom: isMobile ? '16px' : '28px' },
   }
 
   const REQ_COLS = '1.4fr 1fr 90px 60px 100px 80px 170px'
@@ -640,6 +641,7 @@ export default function TimeOff({ session, userProfile, onNavigate }) {
                 return (
                   <div key={row.employee.id}>
                     <div
+                      className="il-tabular"
                       style={{ ...s.tRow(BAL_COLS), cursor: 'pointer', background: isExpanded ? '#fafaf9' : '#fff' }}
                       onClick={() => setExpandedEmployeeId(isExpanded ? null : row.employee.id)}
                     >

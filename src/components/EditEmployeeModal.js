@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { logAudit } from '../utils/auditLog'
+import { T } from '../ui/theme'
 
 export default function EditEmployeeModal({ employee, instanceId, onClose, onSave }) {
   const [fullName, setFullName] = useState(employee.full_name)
@@ -17,14 +18,14 @@ export default function EditEmployeeModal({ employee, instanceId, onClose, onSav
 
   const styles = {
     overlay: { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, -apple-system, sans-serif' },
-    modal: { background: '#fff', borderRadius: '12px', border: '1px solid #e2e1dd', padding: '28px', width: '100%', maxWidth: '420px', margin: '0 24px' },
-    title: { fontSize: '16px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.3px', marginBottom: '20px' },
-    label: { fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block' },
-    input: { width: '100%', background: '#fff', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '10px 14px', fontSize: '13px', color: '#18181b', fontFamily: 'inherit', outline: 'none', marginBottom: '16px', display: 'block', boxSizing: 'border-box' },
+    modal: { background: T.surface, borderRadius: T.radiusLg, border: `1px solid ${T.border}`, padding: '28px', width: '100%', maxWidth: '420px', margin: '0 24px' },
+    title: { fontSize: '16px', fontWeight: 600, color: T.text, letterSpacing: '-0.3px', marginBottom: '20px' },
+    label: { fontSize: '12px', color: T.muted, marginBottom: '6px', display: 'block' },
+    input: { width: '100%', background: T.surface, border: `1px solid ${T.border}`, borderRadius: '7px', padding: '10px 14px', fontSize: '13px', color: T.text, fontFamily: 'inherit', outline: 'none', marginBottom: '16px', display: 'block', boxSizing: 'border-box' },
     footer: { display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' },
-    btnPrimary: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' },
-    btnSecondary: { background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
-    error: { fontSize: '12px', color: '#c04040', marginBottom: '12px' },
+    btnPrimary: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' },
+    btnSecondary: { background: 'transparent', color: T.muted, border: `1px solid ${T.border}`, borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+    error: { fontSize: '12px', color: T.danger, marginBottom: '12px' },
     warning: { fontSize: '12px', color: '#d4901a', marginBottom: '12px', padding: '10px 12px', background: '#fffbf0', border: '1px solid #f5e4b0', borderRadius: '6px' }
   }
 

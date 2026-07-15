@@ -6,6 +6,7 @@ import { logAudit } from '../utils/auditLog'
 import { getHrEmail } from '../utils/getHrEmail'
 import { escapeHtml } from '../utils/escapeHtml'
 import { ONBOARDING_STATUS } from '../config'
+import { T } from '../ui/theme'
 
 export default function NewOnboarding({ session, userProfile, roleId, roleName, onBack, onNavigate, onComplete }) {
   const [fullName, setFullName] = useState('')
@@ -13,21 +14,32 @@ export default function NewOnboarding({ session, userProfile, roleId, roleName, 
   const [hireDate, setHireDate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [touched, setTouched] = useState({})
+
+  const emailValid = !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const nameError = touched.name && !fullName.trim() ? 'Please enter the employee\'s full name.' : ''
+  const emailError = touched.email && !emailValid ? 'Enter a valid email address.' : ''
+  const dateError = touched.hireDate && !hireDate ? 'Please choose a start date.' : ''
+  const markTouched = (field) => setTouched(t => ({ ...t, [field]: true }))
 
   const styles = {
-    header: { padding: '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #ebebe8' },
+    header: { padding: '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border}` },
     title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.4px' },
-    sub: { fontSize: '13px', color: '#8a8a86', marginTop: '2px' },
+    sub: { fontSize: '13px', color: T.muted, marginTop: '2px' },
     content: { padding: '40px', maxWidth: '480px' },
-    label: { fontSize: '12px', color: '#8a8a86', marginBottom: '6px', display: 'block' },
-    input: { width: '100%', background: '#fff', border: '1px solid #ebebe8', borderRadius: '7px', padding: '10px 14px', fontSize: '13px', color: '#1a1a1a', fontFamily: 'inherit', outline: 'none', marginBottom: '20px', display: 'block', boxSizing: 'border-box' },
-    btnPrimary: { background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
-    btnSecondary: { background: 'transparent', color: '#5f5f5c', border: '1px solid #ebebe8', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginRight: '8px' },
-    error: { fontSize: '12px', color: '#c74848', marginBottom: '16px' }
+    label: { fontSize: '12px', color: T.muted, marginBottom: '6px', display: 'block' },
+    input: { width: '100%', background: T.surface, border: `1px solid ${T.border}`, borderRadius: '7px', padding: '10px 14px', fontSize: '13px', color: T.text, fontFamily: 'inherit', outline: 'none', marginBottom: '20px', display: 'block', boxSizing: 'border-box' },
+    btnPrimary: { background: T.text, color: '#fff', border: 'none', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' },
+    btnSecondary: { background: 'transparent', color: T.muted, border: `1px solid ${T.border}`, borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginRight: '8px' },
+    error: { fontSize: '12px', color: T.danger, marginBottom: '16px' }
   }
 
 async function handleCreate() {
-  if (!fullName || !hireDate) { setError('Please fill in name and start date.'); return }
+  if (!fullName.trim() || !hireDate || !emailValid) {
+    setTouched({ name: true, email: true, hireDate: true })
+    setError('')
+    return
+  }
   setLoading(true)
   setError('')
 
@@ -140,13 +152,19 @@ async function sendOnboardingStartedEmails(name, employeeEmail, role, startDate)
         {error && <div style={styles.error}>{error}</div>}
 
         <span style={styles.label}>Full name</span>
-        <input style={styles.input} type="text" placeholder="Jane Smith" value={fullName} onChange={e => setFullName(e.target.value)} />
+        <input className={nameError ? 'il-field-error' : ''} style={{ ...styles.input, marginBottom: nameError ? '6px' : '20px' }} type="text" placeholder="Jane Smith"
+          value={fullName} onChange={e => setFullName(e.target.value)} onBlur={() => markTouched('name')} />
+        {nameError && <div className="il-field-hint" data-tone="error" style={{ marginTop: 0, marginBottom: '20px' }}>{nameError}</div>}
 
-        <span style={styles.label}>Email address</span>
-        <input style={styles.input} type="email" placeholder="jane@integratedstaffing.ca" value={email} onChange={e => setEmail(e.target.value)} />
+        <span style={styles.label}>Email address <span style={{ color: '#a4a39f', fontWeight: 400 }}>(optional)</span></span>
+        <input className={emailError ? 'il-field-error' : ''} style={{ ...styles.input, marginBottom: emailError ? '6px' : '20px' }} type="email" placeholder="jane@integratedstaffing.ca"
+          value={email} onChange={e => setEmail(e.target.value)} onBlur={() => markTouched('email')} />
+        {emailError && <div className="il-field-hint" data-tone="error" style={{ marginTop: 0, marginBottom: '20px' }}>{emailError}</div>}
 
         <span style={styles.label}>Start date</span>
-        <input style={{ ...styles.input, marginBottom: '28px' }} type="date" value={hireDate} onChange={e => setHireDate(e.target.value)} />
+        <input className={dateError ? 'il-field-error' : ''} style={{ ...styles.input, marginBottom: dateError ? '6px' : '28px' }} type="date"
+          value={hireDate} onChange={e => setHireDate(e.target.value)} onBlur={() => markTouched('hireDate')} />
+        {dateError && <div className="il-field-hint" data-tone="error" style={{ marginTop: 0, marginBottom: '28px' }}>{dateError}</div>}
 
         <div style={{ display: 'flex' }}>
           <button style={styles.btnSecondary} onClick={onBack}>Cancel</button>

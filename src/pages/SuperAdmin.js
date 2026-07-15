@@ -7,6 +7,7 @@ import { handleSupabaseError } from '../utils/handleError'
 import { logAudit } from '../utils/auditLog'
 import { useWindowSize } from '../hooks/useWindowSize'
 import { ROLE } from '../config'
+import { T } from '../ui/theme'
 
 const ACTION_LABELS = {
   onboarding_created: 'Onboarding created',
@@ -27,31 +28,31 @@ const CHANGEABLE_ROLES = [ROLE.ADMIN, ROLE.MANAGER, ROLE.EMPLOYEE]
 
 const s = {
   table: { width: '100%', borderCollapse: 'collapse' },
-  th: { fontSize: '11px', fontWeight: 600, color: '#a4a39f', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '0 12px 12px 0', textAlign: 'left', borderBottom: '1px solid #e2e1dd' },
-  td: { fontSize: '13px', color: '#18181b', padding: '13px 12px 13px 0', borderBottom: '1px solid #f0efe9', verticalAlign: 'middle' },
+  th: { fontSize: '11px', fontWeight: 600, color: T.subtle, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '0 12px 12px 0', textAlign: 'left', borderBottom: `1px solid ${T.border}` },
+  td: { fontSize: '13px', color: T.text, padding: '13px 12px 13px 0', borderBottom: '1px solid #f0efe9', verticalAlign: 'middle' },
   statusDot: (active) => ({
     display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
-    background: active ? '#1a7a4a' : '#c04040', marginRight: 6, flexShrink: 0,
+    background: active ? T.success : T.danger, marginRight: 6, flexShrink: 0,
   }),
-  select: { border: '1px solid #e2e1dd', borderRadius: '7px', padding: '5px 8px', fontSize: '12px', fontFamily: 'inherit', background: '#fff', color: '#18181b', outline: 'none', cursor: 'pointer' },
+  select: { border: `1px solid ${T.border}`, borderRadius: '7px', padding: '5px 8px', fontSize: '12px', fontFamily: 'inherit', background: T.surface, color: T.text, outline: 'none', cursor: 'pointer' },
   btnSmall: (danger) => ({
-    fontSize: '12px', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontFamily: 'inherit',
-    border: '1px solid ' + (danger ? '#f5d6d6' : '#e2e1dd'),
+    fontSize: '12px', padding: '4px 10px', borderRadius: T.radiusSm, cursor: 'pointer', fontFamily: 'inherit',
+    border: '1px solid ' + (danger ? T.dangerBorder : T.border),
     background: 'transparent',
-    color: danger ? '#c04040' : '#70706b',
+    color: danger ? T.danger : T.muted,
     transition: 'background 0.1s ease',
   }),
-  filterSelect: { border: '1px solid #e2e1dd', borderRadius: '7px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: '#fff', color: '#18181b', outline: 'none' },
-  filterInput: { border: '1px solid #e2e1dd', borderRadius: '7px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: '#fff', color: '#18181b', outline: 'none' },
-  btnSave: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, letterSpacing: '0.1px' },
-  empty: { padding: '48px 0', textAlign: 'center', color: '#a4a39f', fontSize: '13px' },
+  filterSelect: { border: `1px solid ${T.border}`, borderRadius: '7px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: T.surface, color: T.text, outline: 'none' },
+  filterInput: { border: `1px solid ${T.border}`, borderRadius: '7px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: T.surface, color: T.text, outline: 'none' },
+  btnSave: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '8px 14px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, letterSpacing: '0.1px' },
+  empty: { padding: '48px 0', textAlign: 'center', color: T.subtle, fontSize: '13px' },
   badge: (role) => {
     const colors = {
       super_admin: { bg: '#f0edff', color: '#5b3fd4' },
-      admin: { bg: '#eff6ff', color: '#0066cc' },
-      manager: { bg: '#f0faf4', color: '#1a7a4a' },
-      employee: { bg: '#f4f3ef', color: '#70706b' },
-      none: { bg: '#f4f3ef', color: '#a4a39f' },
+      admin: { bg: T.brandLight, color: T.brand },
+      manager: { bg: '#f0faf4', color: T.success },
+      employee: { bg: T.bg, color: T.muted },
+      none: { bg: T.bg, color: T.subtle },
     }
     const c = colors[role] || colors.none
     return { fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '5px', background: c.bg, color: c.color, letterSpacing: '0.1px' }

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
+import Button from '../ui/Button'
+import { T } from '../ui/theme'
 
 const AUTH_ERROR_MAP = {
   'Auth session missing':       'Your invite link has expired. Please request a new one.',
@@ -41,49 +43,49 @@ export default function SetPassword({ onComplete }) {
     }
   }
 
+  const inputStyle = { display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: `1px solid ${T.border}`, borderRadius: T.radiusMd, fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: T.text, background: T.surface, boxSizing: 'border-box' }
+  const labelStyle = { fontSize: '12px', color: T.muted, marginBottom: '6px', display: 'block', fontWeight: 500 }
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f3ef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, -apple-system, sans-serif', padding: '20px' }}>
+    <div style={{ minHeight: '100vh', background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.font, padding: '20px' }}>
       <div style={{ width: '100%', maxWidth: '380px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
-          <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, #004db3 0%, #0080ff 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 700, marginBottom: '18px', boxShadow: '0 4px 16px rgba(0,102,204,0.3)' }}>IL</div>
-          <div style={{ fontSize: '22px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.6px', marginBottom: '4px' }}>Set your password</div>
-          <div style={{ fontSize: '13px', color: '#70706b', textAlign: 'center' }}>Create a password to access your onboarding portal.</div>
+          <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, #004db3 0%, #0080ff 100%)', borderRadius: T.radiusLg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 700, marginBottom: '18px', boxShadow: '0 4px 16px rgba(0,102,204,0.3)' }}>IL</div>
+          <div style={{ fontSize: '22px', fontWeight: 600, color: T.text, letterSpacing: '-0.6px', marginBottom: '4px' }}>Set your password</div>
+          <div style={{ fontSize: '13px', color: T.muted, textAlign: 'center' }}>Create a password to access your onboarding portal.</div>
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid #e2e1dd', borderRadius: '14px', padding: '28px', boxShadow: '0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
-          <label style={{ fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 }}>New password</label>
+        <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '28px', boxShadow: '0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
+          <label htmlFor="new-password" style={labelStyle}>New password</label>
           <input
+            id="new-password"
             type="password"
             autoComplete="new-password"
             placeholder="At least 8 characters"
             value={password}
             autoFocus
             onChange={e => setPassword(e.target.value)}
-            style={{ display: 'block', width: '100%', marginBottom: '16px', padding: '10px 14px', border: '1px solid #e2e1dd', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#18181b', background: '#fff', boxSizing: 'border-box' }}
+            style={inputStyle}
           />
-          <label style={{ fontSize: '12px', color: '#70706b', marginBottom: '6px', display: 'block', fontWeight: 500 }}>Confirm password</label>
+          <label htmlFor="confirm-password" style={labelStyle}>Confirm password</label>
           <input
+            id="confirm-password"
             type="password"
             autoComplete="new-password"
             placeholder="Repeat your password"
             value={confirm}
             onChange={e => setConfirm(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !loading && handleSetPassword()}
-            style={{ display: 'block', width: '100%', marginBottom: '20px', padding: '10px 14px', border: '1px solid #e2e1dd', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', color: '#18181b', background: '#fff', boxSizing: 'border-box' }}
+            style={{ ...inputStyle, marginBottom: '20px' }}
           />
           {error && (
-            <div role="alert" style={{ fontSize: '12px', color: '#c04040', marginBottom: '16px', padding: '10px 12px', background: '#fdf0f0', border: '1px solid #f5d6d6', borderRadius: '7px' }}>
+            <div role="alert" style={{ fontSize: '12px', color: T.danger, marginBottom: '16px', padding: '10px 12px', background: T.dangerBg, border: `1px solid ${T.dangerBorder}`, borderRadius: '7px' }}>
               {error}
             </div>
           )}
-          <button
-            className="il-btn"
-            onClick={handleSetPassword}
-            disabled={loading}
-            style={{ width: '100%', background: loading ? '#9ca3af' : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '11px', fontSize: '13px', fontWeight: 500, cursor: loading ? 'default' : 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }}
-          >
-            {loading ? 'Saving…' : 'Set password'}
-          </button>
+          <Button fullWidth busy={loading} busyLabel="Saving…" onClick={handleSetPassword}>
+            Set password
+          </Button>
         </div>
       </div>
     </div>

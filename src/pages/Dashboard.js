@@ -5,26 +5,29 @@ import useToast from '../hooks/useToast'
 import { useWindowSize } from '../hooks/useWindowSize'
 import { getInitials } from '../utils/formatUtils'
 import { useDashboard, calcProgress } from '../hooks/useDashboard'
+import Button from '../ui/Button'
+import EmptyState from '../ui/EmptyState'
+import { T } from '../ui/theme'
 
 const BASE_STYLES = {
   title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px' },
-  sub: { fontSize: '13px', color: '#70706b', marginTop: '2px' },
-  btn: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', letterSpacing: '0.1px' },
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#e2e1dd', borderBottom: '1px solid #e2e1dd' },
-  statLabel: { fontSize: '11px', color: '#a4a39f', marginBottom: '5px', fontWeight: 500, letterSpacing: '0.2px', textTransform: 'uppercase' },
-  tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #eceae6', fontSize: '11px', color: '#a4a39f', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', alignItems: 'center', gap: '16px' },
+  sub: { fontSize: '13px', color: T.muted, marginTop: '2px' },
+  btn: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', letterSpacing: '0.1px' },
+  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: T.border, borderBottom: `1px solid ${T.border}` },
+  statLabel: { fontSize: '11px', color: T.subtle, marginBottom: '5px', fontWeight: 500, letterSpacing: '0.2px', textTransform: 'uppercase' },
+  tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: `1px solid ${T.borderSubtle}`, fontSize: '11px', color: T.subtle, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', alignItems: 'center', gap: '16px' },
   tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #f0efe9', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '4px' },
   avatar: { width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   avatarLg: { width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  rowName: { fontSize: '13px', fontWeight: 500, color: '#18181b' },
-  rowMeta: { fontSize: '12px', color: '#a4a39f', marginTop: '2px' },
-  rowText: { fontSize: '13px', color: '#18181b' },
-  rowTextMuted: { fontSize: '13px', color: '#a4a39f' },
+  rowName: { fontSize: '13px', fontWeight: 500, color: T.text },
+  rowMeta: { fontSize: '12px', color: T.subtle, marginTop: '2px' },
+  rowText: { fontSize: '13px', color: T.text },
+  rowTextMuted: { fontSize: '13px', color: T.subtle },
   progressWrap: { display: 'flex', alignItems: 'center', gap: '10px' },
-  progressTrack: { flex: 1, height: '5px', background: '#eceae6', borderRadius: '99px', overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: '99px', background: 'linear-gradient(90deg, #0066cc, #3d9eff)' },
-  progressText: { fontSize: '12px', fontWeight: 600, color: '#18181b', minWidth: '32px' },
-  phasePill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: '#eff6ff', color: '#0066cc', fontWeight: 600 },
+  progressTrack: { flex: 1, height: '5px', background: T.borderSubtle, borderRadius: '99px', overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: '99px', background: `linear-gradient(90deg, ${T.brand}, ${T.brandMid})` },
+  progressText: { fontSize: '12px', fontWeight: 600, color: T.text, minWidth: '32px' },
+  phasePill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: T.brandLight, color: T.brand, fontWeight: 600 },
 }
 
 function getPhase(hireDate) {
@@ -65,10 +68,10 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
           <div style={styles.title}>Dashboard</div>
           {!isMobile && <div style={styles.sub}>Overview of active employee onboardings.</div>}
         </div>
-        <button style={styles.btn} onClick={() => onNavigate('active')}>
+        <Button size="sm" onClick={() => onNavigate('active')}>
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 2v10M2 7h10"/></svg>
           {isMobile ? 'New' : 'New onboarding'}
-        </button>
+        </Button>
       </div>
 
       <div style={styles.statsRow}>
@@ -123,31 +126,33 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
         ) : fetchError ? (
           <div style={styles.errorState}>
             <div style={{ color: '#c04040', marginBottom: '12px' }}>{fetchError}</div>
-            <button onClick={fetchOnboardings} style={{ fontSize: '13px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+            <Button variant="ghost" onClick={fetchOnboardings} style={{ color: '#0066cc' }}>
               Try again
-            </button>
+            </Button>
           </div>
         ) : onboardings.length === 0 ? (
-          <div style={styles.emptyState}>
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style={{ marginBottom: '14px', color: '#d4d3cf' }}>
-              <circle cx="18" cy="12" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M5 34c0-7.2 5.8-13 13-13s13 5.8 13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <circle cx="27" cy="27" r="6" fill="#f7f6f3" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M24.5 27l1.5 1.5 3-3" stroke="#1a7a4a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.2px', marginBottom: '6px' }}>No active onboardings</div>
-            <div style={{ fontSize: '13px', color: '#6b6b67', lineHeight: '1.6', marginBottom: '20px' }}>Start a new onboarding to get someone up to speed.</div>
-            <button className="il-btn" onClick={() => onNavigate('active')} style={{ background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' }}>
-              New onboarding
-            </button>
-          </div>
+          <EmptyState
+            icon={(
+              <svg width="24" height="24" viewBox="0 0 36 36" fill="none">
+                <circle cx="18" cy="12" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M5 34c0-7.2 5.8-13 13-13s13 5.8 13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="27" cy="27" r="6" fill="#f7f6f3" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M24.5 27l1.5 1.5 3-3" stroke="#1a7a4a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+            title="No active onboardings"
+            message="Start a new onboarding to get someone up to speed."
+            action={<Button onClick={() => onNavigate('active')}>New onboarding</Button>}
+          />
         ) : isMobile ? (
           onboardings.map(o => {
             const { pct } = calcProgress(o.task_completions)
             const name = o.employees.full_name
             const phase = getPhase(o.employees.hire_date)
             return (
-              <div key={o.id} style={{ padding: '14px 16px', borderBottom: '1px solid #f0efe9', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }} onClick={() => onViewOnboarding(o.id)}>
+              <button type="button" key={o.id} className="il-row" aria-label={`View ${name}'s onboarding`}
+                style={{ width: '100%', padding: '14px 16px', border: 'none', borderBottom: '1px solid #f0efe9', background: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}
+                onClick={() => onViewOnboarding(o.id)}>
                 <div style={styles.avatarLg}>{getInitials(name)}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
@@ -163,7 +168,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                   </div>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#d4d3cf" strokeWidth="1.5" style={{ flexShrink: 0 }}><path d="M5 3l4 4-4 4"/></svg>
-              </div>
+              </button>
             )
           })
         ) : (
@@ -179,7 +184,9 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
               const phase = getPhase(o.employees.hire_date)
               const uploadedDocs = docStats[o.employees.id] || 0
               return (
-                <div key={o.id} className="il-row" style={styles.tableRow} onClick={() => onViewOnboarding(o.id)}>
+                <button type="button" key={o.id} className="il-row" aria-label={`View ${name}'s onboarding`}
+                  style={{ ...styles.tableRow, width: '100%', border: 'none', borderBottom: '1px solid #f0efe9', background: 'none', font: 'inherit', textAlign: 'left' }}
+                  onClick={() => onViewOnboarding(o.id)}>
                   <div style={styles.avatar}>{getInitials(name)}</div>
                   <div>
                     <div style={styles.rowName}>{name}</div>
@@ -198,10 +205,10 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
                     <div style={{ ...styles.progressText, color: pct === 100 ? '#1a7a4a' : '#18181b' }}>{pct}%</div>
                   </div>
                   <div><span style={styles.phasePill}>{phase}</span></div>
-                  <div style={{ ...styles.rowTextMuted, textAlign: 'right' }}>
+                  <div style={{ ...styles.rowTextMuted, textAlign: 'right' }} className="il-tabular">
                     {new Date(o.employees.hire_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>

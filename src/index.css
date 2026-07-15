@@ -133,6 +133,30 @@ input, select, textarea {
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
+/* Inline button spinner: inherits the button's text color */
+.il-spinner-sm {
+  width: 13px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  opacity: 0.9;
+  animation: spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Inline form field validation */
+.il-field-error {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(192, 64, 64, 0.12) !important;
+}
+.il-field-hint {
+  font-size: 11px;
+  margin-top: 5px;
+  line-height: 1.5;
+}
+.il-field-hint[data-tone="error"] { color: var(--danger); }
+.il-field-hint[data-tone="muted"] { color: var(--subtle); }
 
 /* Primary button */
 .il-btn {

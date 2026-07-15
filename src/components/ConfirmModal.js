@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import Button from '../ui/Button'
+import { T } from '../ui/theme'
 
 export default function ConfirmModal({ title, message, confirmLabel, confirmDanger, onConfirm, onCancel }) {
   const [confirming, setConfirming] = useState(false)
@@ -57,37 +59,33 @@ export default function ConfirmModal({ title, message, confirmLabel, confirmDang
         ref={modalRef}
         className="il-modal"
         style={{
-          background: '#fff', borderRadius: '14px',
-          border: '1px solid #e2e1dd',
+          background: T.surface, borderRadius: '14px',
+          border: `1px solid ${T.border}`,
           boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
           padding: '28px', width: '100%', maxWidth: '400px',
           margin: '0 24px',
         }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ fontSize: '16px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.3px', marginBottom: '8px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 600, color: T.text, letterSpacing: '-0.3px', marginBottom: '8px' }}>
           {title}
         </div>
-        <div style={{ fontSize: '13px', color: '#6b6b67', lineHeight: '1.6', marginBottom: '24px' }}>
+        <div style={{ fontSize: '13px', color: T.muted, lineHeight: '1.6', marginBottom: '24px' }}>
           {message}
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-          <button
-            className="il-btn-ghost"
-            onClick={onCancel}
-            disabled={confirming}
-            style={{ background: 'transparent', color: '#70706b', border: '1px solid #e2e1dd', borderRadius: '7px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: confirming ? 'default' : 'pointer', fontFamily: 'inherit', opacity: confirming ? 0.5 : 1 }}
-          >
+          <Button variant="secondary" onClick={onCancel} disabled={confirming}>
             Cancel
-          </button>
-          <button
-            className="il-btn"
+          </Button>
+          <Button
+            variant={confirmDanger ? 'danger' : 'primary'}
             onClick={handleConfirm}
-            disabled={confirming}
-            style={{ background: confirmDanger ? '#c04040' : 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '7px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: confirming ? 'default' : 'pointer', fontFamily: 'inherit', opacity: confirming ? 0.7 : 1, minWidth: '80px' }}
+            busy={confirming}
+            busyLabel="Working…"
+            style={{ minWidth: '80px' }}
           >
-            {confirming ? 'Working…' : (confirmLabel || 'Confirm')}
-          </button>
+            {confirmLabel || 'Confirm'}
+          </Button>
         </div>
       </div>
     </div>
