@@ -16,10 +16,10 @@ const BASE_STYLES = {
   title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px', color: T.text },
   sub: { fontSize: '13px', color: T.muted, marginTop: '2px' },
   input: { border: `1px solid ${T.border}`, borderRadius: T.radiusMd, padding: '9px 12px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: T.surface, color: T.text },
-  btnPrimary: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '9px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' },
+  btnPrimary: { background: T.btnPrimaryBg, color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '9px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.1px' },
   btnGhost: { background: 'none', border: 'none', color: T.subtle, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', padding: 0 },
   label: { fontSize: '12px', color: T.muted, marginBottom: '6px', display: 'block', fontWeight: 500 },
-  row: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f0efe9' },
+  row: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' },
   rowName: { fontSize: '13px', color: T.text },
   rowMuted: { fontSize: '12px', color: T.subtle },
   phaseLabel: { fontSize: '11px', fontWeight: 600, color: T.subtle, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px', marginTop: '24px' },
@@ -412,7 +412,7 @@ function renderAdminHeader(title, sub) {
     { id: 'roles', label: 'Roles' },
   ]
   return (
-    <div className="il-header" style={{ boxShadow: '0 1px 0 #e2e1dd', background: '#fff' }}>
+    <div className="il-header" style={{ boxShadow: '0 1px 0 var(--border)', background: 'var(--surface)' }}>
       <div style={{ padding: isMobile ? '16px 16px 12px' : '28px 40px 20px' }}>
         <div style={styles.title}>{title}</div>
         {sub && <div style={styles.sub}>{sub}</div>}
@@ -457,7 +457,7 @@ function renderModal() {
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
               {['ISL', 'AS', 'ADS'].map(b => (
                 <button key={b} onClick={() => { setPickedBrand(b); setPickedRoleId('') }}
-                  style={{ flex: 1, padding: '10px', borderRadius: '7px', border: pickedBrand === b ? '1px solid #18181b' : '1px solid #e2e1dd', background: pickedBrand === b ? '#18181b' : '#fff', color: pickedBrand === b ? '#fff' : '#18181b', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ flex: 1, padding: '10px', borderRadius: '7px', border: pickedBrand === b ? '1px solid #18181b' : '1px solid var(--border)', background: pickedBrand === b ? '#18181b' : '#fff', color: pickedBrand === b ? '#fff' : '#18181b', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {b}
                 </button>
               ))}
@@ -470,7 +470,7 @@ function renderModal() {
                   {brandRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
                 {brandRoles.length === 0 && (
-                  <div style={{ fontSize: '12px', color: '#a4a39f', marginBottom: '16px' }}>No roles exist for {pickedBrand} yet. Add roles from the Roles page.</div>
+                  <div style={{ fontSize: '12px', color: 'var(--subtle)', marginBottom: '16px' }}>No roles exist for {pickedBrand} yet. Add roles from the Roles page.</div>
                 )}
                 <button style={styles.btnPrimary} onClick={handleStartSelected} disabled={!pickedRoleId}>Continue</button>
               </>
@@ -505,7 +505,7 @@ function renderModal() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <span style={styles.pill}>{h.status}</span>
-                <button style={{ ...styles.btnGhost, color: '#0066cc', fontSize: '12px' }}
+                <button style={{ ...styles.btnGhost, color: 'var(--brand)', fontSize: '12px' }}
                   onClick={() => setModal({
                     title: 'Reactivate onboarding',
                     message: `This will move ${h.employees.full_name}'s onboarding back to active. Any previously completed tasks will remain checked off.`,
@@ -570,25 +570,25 @@ function renderModal() {
       <Layout session={session} userProfile={userProfile} currentPage="templates" onNavigate={onNavigate}>
         {renderAdminHeader('Task templates', '')}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: isMobile ? '10px 16px' : '12px 40px', borderBottom: '1px solid #f0efe9', background: '#fff' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: isMobile ? '10px 16px' : '12px 40px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface)' }}>
           <button
             onClick={() => setLibraryOpen(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#0066cc', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '5px 12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--brand)', background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '5px 12px', cursor: 'pointer', fontFamily: 'inherit' }}>
             Manage task library
-            <span style={{ color: '#a0a09c' }}>({taskLibrary.length})</span>
+            <span style={{ color: 'var(--subtle)' }}>({taskLibrary.length})</span>
           </button>
         </div>
 
         <div style={{ display: 'flex', minHeight: 'calc(100vh - 182px)' }}>
 
           {/* Left panel: role list */}
-          <div style={{ width: isMobile ? '140px' : '200px', flexShrink: 0, borderRight: '1px solid #e2e1dd', overflowY: 'auto', padding: '12px 0' }}>
+          <div style={{ width: isMobile ? '140px' : '200px', flexShrink: 0, borderRight: '1px solid var(--border)', overflowY: 'auto', padding: '12px 0' }}>
             {['ISL', 'AS', 'ADS'].map(brand => {
               const brandRoles = roles.filter(r => r.brand === brand)
               if (brandRoles.length === 0) return null
               return (
                 <div key={brand}>
-                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#a0a09c', textTransform: 'uppercase', letterSpacing: '0.4px', padding: '10px 16px 4px' }}>{brand}</div>
+                  <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--subtle)', textTransform: 'uppercase', letterSpacing: '0.4px', padding: '10px 16px 4px' }}>{brand}</div>
                   {brandRoles.map(r => {
                     const active = selectedRole?.id === r.id
                     return (
@@ -596,8 +596,8 @@ function renderModal() {
                         className={`il-role-item${active ? ' il-active' : ''}`}
                         onClick={() => { setSelectedRole(r); setAddingTaskToPhase(null); setBulkMode(false) }}
                         style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 16px', border: 'none', background: active ? '#f0efe9' : 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}>
-                        <div style={{ fontSize: '13px', fontWeight: active ? 500 : 400, color: '#18181b', letterSpacing: '-0.1px' }}>{r.name}</div>
-                        <div style={{ fontSize: '11px', color: '#a0a09c', marginTop: '1px' }}>{templateCounts[r.id] || 0} tasks</div>
+                        <div style={{ fontSize: '13px', fontWeight: active ? 500 : 400, color: 'var(--text)', letterSpacing: '-0.1px' }}>{r.name}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--subtle)', marginTop: '1px' }}>{templateCounts[r.id] || 0} tasks</div>
                       </button>
                     )
                   })}
@@ -605,9 +605,9 @@ function renderModal() {
               )
             })}
             {roles.length === 0 && (
-              <div style={{ padding: '16px', fontSize: '12px', color: '#a0a09c' }}>
+              <div style={{ padding: '16px', fontSize: '12px', color: 'var(--subtle)' }}>
                 No roles.{' '}
-                <button onClick={() => onNavigate('roles')} style={{ color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '12px', padding: 0 }}>Add roles</button>
+                <button onClick={() => onNavigate('roles')} style={{ color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '12px', padding: 0 }}>Add roles</button>
               </div>
             )}
           </div>
@@ -615,14 +615,14 @@ function renderModal() {
           {/* Right panel: task editor */}
           <div style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
             {!selectedRole ? (
-              <div style={{ padding: '40px', color: '#a0a09c', fontSize: '13px' }}>Select a role to manage its tasks.</div>
+              <div style={{ padding: '40px', color: 'var(--subtle)', fontSize: '13px' }}>Select a role to manage its tasks.</div>
             ) : (
               <>
                 {/* Role header */}
-                <div style={{ padding: '20px 32px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f0efe9' }}>
+                <div style={{ padding: '20px 32px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)' }}>
                   <div>
-                    <span style={{ fontSize: '15px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.2px' }}>{selectedRole.name}</span>
-                    <span style={{ fontSize: '12px', color: '#a0a09c', marginLeft: '8px' }}>{selectedRole.brand} · {templateCounts[selectedRole.id] || 0} tasks</span>
+                    <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.2px' }}>{selectedRole.name}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--subtle)', marginLeft: '8px' }}>{selectedRole.brand} · {templateCounts[selectedRole.id] || 0} tasks</span>
                   </div>
                   <button
                     onClick={() => { setBulkMode(v => !v); setAddingTaskToPhase(null) }}
@@ -635,12 +635,12 @@ function renderModal() {
 
                   {/* Bulk add */}
                   {bulkMode && (
-                    <div style={{ background: '#fafaf9', border: '1px solid #e2e1dd', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginBottom: '4px' }}>Bulk add tasks</div>
-                      <div style={{ fontSize: '12px', color: '#70706b', marginBottom: '10px' }}>One task name per line</div>
+                    <div style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>Bulk add tasks</div>
+                      <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '10px' }}>One task name per line</div>
                       <textarea
                         autoFocus
-                        style={{ width: '100%', height: '110px', resize: 'vertical', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', color: '#18181b', outline: 'none', boxSizing: 'border-box', background: '#fff' }}
+                        style={{ width: '100%', height: '110px', resize: 'vertical', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', color: 'var(--text)', outline: 'none', boxSizing: 'border-box', background: 'var(--surface)' }}
                         placeholder={'Complete tax forms\nSet up laptop\nMeet with manager'}
                         value={bulkText}
                         onChange={e => setBulkText(e.target.value)}
@@ -664,14 +664,14 @@ function renderModal() {
                     const showHeading = section.buckets.length > 1 || section.label !== section.buckets[0]
                     return (
                     <div key={section.label}>
-                      {showHeading && <div style={{ fontSize: '11px', fontWeight: 700, color: '#70706b', textTransform: 'uppercase', letterSpacing: '0.6px', margin: '18px 0 6px' }}>{section.label}</div>}
+                      {showHeading && <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.6px', margin: '18px 0 6px' }}>{section.label}</div>}
                       {section.buckets.map(phase => {
                     const phaseTasks = templates.filter(t => t.phase === phase && !t.parent_id)
                     const isAddingToThis = addingTaskToPhase === phase
                     return (
                       <div key={phase} style={{ marginBottom: '28px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: '#a0a09c', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{phase}</span>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--subtle)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{phase}</span>
                           {phaseTasks.length > 0 && <span style={{ fontSize: '11px', color: '#c8c7c3' }}>{phaseTasks.length}</span>}
                         </div>
 
@@ -700,8 +700,8 @@ function renderModal() {
                                       <span style={styles.pill}>{t.owner}</span>
                                     </div>
                                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
-                                      <button style={{ ...styles.btnGhost, color: '#0066cc' }} onClick={() => { setEditingTask(t.id); setEditingTaskName(t.task_name) }}>Edit</button>
-                                      <button style={{ ...styles.btnGhost, color: '#0066cc' }} onClick={() => { setAddingSubtaskTo(addingSubtaskTo === t.id ? null : t.id); setNewSubtaskName('') }}>+ Subtask</button>
+                                      <button style={{ ...styles.btnGhost, color: 'var(--brand)' }} onClick={() => { setEditingTask(t.id); setEditingTaskName(t.task_name) }}>Edit</button>
+                                      <button style={{ ...styles.btnGhost, color: 'var(--brand)' }} onClick={() => { setAddingSubtaskTo(addingSubtaskTo === t.id ? null : t.id); setNewSubtaskName('') }}>+ Subtask</button>
                                       <button style={styles.btnGhost} onClick={() => deleteTask(t.id, t.task_name)}>Remove</button>
                                     </div>
                                   </>
@@ -709,7 +709,7 @@ function renderModal() {
                               </div>
 
                               {subtasks.map(s => (
-                                <div key={s.id} style={{ ...styles.row, paddingLeft: '20px', background: '#fafaf9' }}>
+                                <div key={s.id} style={{ ...styles.row, paddingLeft: '20px', background: 'var(--surface-raised)' }}>
                                   {editingTask === s.id ? (
                                     <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
                                       <input style={{ ...styles.input, flex: 1 }} value={editingTaskName}
@@ -723,10 +723,10 @@ function renderModal() {
                                     <>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <span style={{ color: '#c8c7c3', fontSize: '12px' }}>↳</span>
-                                        <span style={{ ...styles.rowName, color: '#70706b' }}>{s.task_name}</span>
+                                        <span style={{ ...styles.rowName, color: 'var(--muted)' }}>{s.task_name}</span>
                                       </div>
                                       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                        <button style={{ ...styles.btnGhost, color: '#0066cc' }} onClick={() => { setEditingTask(s.id); setEditingTaskName(s.task_name) }}>Edit</button>
+                                        <button style={{ ...styles.btnGhost, color: 'var(--brand)' }} onClick={() => { setEditingTask(s.id); setEditingTaskName(s.task_name) }}>Edit</button>
                                         <button style={styles.btnGhost} onClick={() => deleteTask(s.id, s.task_name)}>Remove</button>
                                       </div>
                                     </>
@@ -735,7 +735,7 @@ function renderModal() {
                               ))}
 
                               {addingSubtaskTo === t.id && (
-                                <div style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '12px', background: '#fafaf9', borderBottom: '1px solid #f0efe9' }}>
+                                <div style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '12px', background: 'var(--surface-raised)', borderBottom: '1px solid var(--border-subtle)' }}>
                                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                                     {useLibrarySubtask ? (
                                       <select style={{ ...styles.input, flex: 1, minWidth: '160px' }} value={newSubtaskName}
@@ -763,7 +763,7 @@ function renderModal() {
 
                         {/* Per-phase add */}
                         {isAddingToThis ? (
-                          <div style={{ marginTop: '8px', padding: '12px', background: '#fafaf9', border: '1px solid #e2e1dd', borderRadius: '7px' }}>
+                          <div style={{ marginTop: '8px', padding: '12px', background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: '7px' }}>
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                               {useLibraryTask ? (
                                 <select style={{ ...styles.input, flex: 1, minWidth: '180px' }} value={newTaskName}
@@ -787,7 +787,7 @@ function renderModal() {
                               <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => { setAddingTaskToPhase(null); setUseLibraryTask(true); setNewTaskName('') }}>Cancel</button>
                             </div>
                             {!useLibraryTask && (
-                              <button style={{ ...styles.btnGhost, fontSize: '11px', color: '#a0a09c', marginTop: '6px' }}
+                              <button style={{ ...styles.btnGhost, fontSize: '11px', color: 'var(--subtle)', marginTop: '6px' }}
                                 onClick={() => { setUseLibraryTask(true); setNewTaskName('') }}>
                                 Use library instead
                               </button>
@@ -796,7 +796,7 @@ function renderModal() {
                         ) : !bulkMode && (
                           <button
                             onClick={() => { setAddingTaskToPhase(phase); setNewTaskName(''); setNewTaskOwner('HR'); setUseLibraryTask(true) }}
-                            style={{ fontSize: '12px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0', fontFamily: 'inherit', display: 'block' }}>
+                            style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0', fontFamily: 'inherit', display: 'block' }}>
                             + Add task
                           </button>
                         )}
@@ -818,21 +818,21 @@ function renderModal() {
             style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.3)', display: 'flex', justifyContent: 'flex-end', fontFamily: "'Inter', -apple-system, sans-serif" }}
             onClick={() => setLibraryOpen(false)}>
             <div
-              style={{ background: '#fff', height: '100%', width: isMobile ? '100%' : '400px', maxWidth: '100%', boxShadow: '-4px 0 24px rgba(0,0,0,0.10)', display: 'flex', flexDirection: 'column' }}
+              style={{ background: 'var(--surface)', height: '100%', width: isMobile ? '100%' : '400px', maxWidth: '100%', boxShadow: '-4px 0 24px rgba(0,0,0,0.10)', display: 'flex', flexDirection: 'column' }}
               onClick={e => e.stopPropagation()}>
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f0efe9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
                 <div>
-                  <div style={{ fontSize: '15px', fontWeight: 600, color: '#18181b', letterSpacing: '-0.2px' }}>Task library</div>
-                  <div style={{ fontSize: '12px', color: '#70706b', marginTop: '4px', lineHeight: 1.5 }}>Tasks saved here appear in the dropdown when adding tasks to a role. Remove typos or outdated entries.</div>
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.2px' }}>Task library</div>
+                  <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '4px', lineHeight: 1.5 }}>Tasks saved here appear in the dropdown when adding tasks to a role. Remove typos or outdated entries.</div>
                 </div>
-                <button onClick={() => setLibraryOpen(false)} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: '22px', lineHeight: 1, color: '#a0a09c', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>×</button>
+                <button onClick={() => setLibraryOpen(false)} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: '22px', lineHeight: 1, color: 'var(--subtle)', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>×</button>
               </div>
               <div style={{ flex: 1, overflowY: 'auto', padding: '8px 24px 24px' }}>
                 {taskLibrary.length === 0 ? (
-                  <div style={{ fontSize: '12px', color: '#a0a09c', paddingTop: '12px' }}>Library is empty. Tasks you add to a role are saved here automatically.</div>
+                  <div style={{ fontSize: '12px', color: 'var(--subtle)', paddingTop: '12px' }}>Library is empty. Tasks you add to a role are saved here automatically.</div>
                 ) : taskLibrary.map(t => (
-                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f0efe9' }}>
-                    <span style={{ fontSize: '13px', color: '#18181b' }}>{t.task_name}</span>
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--text)' }}>{t.task_name}</span>
                     <button style={styles.btnGhost} onClick={() => deleteLibraryTask(t.id)}>Remove</button>
                   </div>
                 ))}
@@ -851,8 +851,8 @@ if (initialTab === 'documents') {
     <Layout session={session} userProfile={userProfile} currentPage="documents" onNavigate={onNavigate}>
       {renderAdminHeader('Documents', '')}
       <div style={styles.content}>
-        <div style={{ marginBottom: '28px', padding: '20px', background: '#fafaf9', border: '1px solid #e2e1dd', borderRadius: '10px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginBottom: '16px' }}>Upload new document</div>
+        <div style={{ marginBottom: '28px', padding: '20px', background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: '10px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '16px' }}>Upload new document</div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
             <select
               style={{ ...styles.input, flex: 1, maxWidth: '260px' }}
@@ -889,7 +889,7 @@ if (initialTab === 'documents') {
                         <div style={styles.rowMuted}>{new Date(doc.uploaded_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                       </div>
                       <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                        <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none' }}>View</a>
+                        <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'none' }}>View</a>
                         <button style={styles.btnGhost} onClick={() => deleteDoc(doc.id, false)}>Remove</button>
                       </div>
                     </div>
@@ -910,8 +910,8 @@ if (initialTab === 'documents') {
       <Layout session={session} userProfile={userProfile} currentPage="company-resources" onNavigate={onNavigate}>
         {renderAdminHeader('Company Resources', '')}
         <div style={styles.content}>
-          <div style={{ marginBottom: '28px', padding: '20px', background: '#fafaf9', border: '1px solid #e2e1dd', borderRadius: '10px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginBottom: '16px' }}>Upload company resource</div>
+          <div style={{ marginBottom: '28px', padding: '20px', background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: '10px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '16px' }}>Upload company resource</div>
             <label style={{ ...styles.btnPrimary, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               {uploadingResource ? 'Uploading...' : '+ Upload document'}
               <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx"
@@ -934,7 +934,7 @@ if (initialTab === 'documents') {
                         if (e.key === 'Enter') renameResource(doc.id)
                         if (e.key === 'Escape') setRenamingDocId(null)
                       }}
-                      style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', border: '1px solid #c8c8c4', borderRadius: '6px', padding: '4px 8px', fontFamily: 'inherit', outline: 'none', width: '100%', maxWidth: '340px' }}
+                      style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', border: '1px solid #c8c8c4', borderRadius: '6px', padding: '4px 8px', fontFamily: 'inherit', outline: 'none', width: '100%', maxWidth: '340px' }}
                     />
                   ) : (
                     <div style={styles.rowName}>{doc.name}</div>
@@ -949,7 +949,7 @@ if (initialTab === 'documents') {
                     </>
                   ) : (
                     <>
-                      <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none' }}>View</a>
+                      <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'none' }}>View</a>
                       <button style={styles.btnGhost} onClick={() => { setRenamingDocId(doc.id); setRenameValue(doc.name) }}>Rename</button>
                       <button style={styles.btnGhost} onClick={() => deleteDoc(doc.id, true)}>Remove</button>
                     </>

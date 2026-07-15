@@ -4,19 +4,21 @@ import Toast from '../components/Toast'
 import useToast from '../hooks/useToast'
 import { useWindowSize } from '../hooks/useWindowSize'
 import { getInitials } from '../utils/formatUtils'
+import { avatarStyle } from '../utils/avatarColor'
 import { useDashboard, calcProgress } from '../hooks/useDashboard'
 import Button from '../ui/Button'
 import EmptyState from '../ui/EmptyState'
+import AnimatedNumber from '../ui/AnimatedNumber'
 import { T } from '../ui/theme'
 
 const BASE_STYLES = {
   title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px' },
   sub: { fontSize: '13px', color: T.muted, marginTop: '2px' },
-  btn: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', letterSpacing: '0.1px' },
+  btn: { background: T.btnPrimaryBg, color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', letterSpacing: '0.1px' },
   statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: T.border, borderBottom: `1px solid ${T.border}` },
   statLabel: { fontSize: '11px', color: T.subtle, marginBottom: '5px', fontWeight: 500, letterSpacing: '0.2px', textTransform: 'uppercase' },
   tableHeader: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: `1px solid ${T.borderSubtle}`, fontSize: '11px', color: T.subtle, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', alignItems: 'center', gap: '16px' },
-  tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid #f0efe9', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '4px' },
+  tableRow: { display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 100px', padding: '14px 0', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center', gap: '16px', cursor: 'pointer', borderRadius: '4px' },
   avatar: { width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   avatarLg: { width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   rowName: { fontSize: '13px', fontWeight: 500, color: T.text },
@@ -53,9 +55,9 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
 
   const styles = {
     ...BASE_STYLES,
-    header: { padding: isMobile ? '16px 16px 14px' : '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 0 #e2e1dd', background: '#fff' },
-    stat: { background: '#fff', padding: isMobile ? '14px 16px' : '22px 40px' },
-    statValue: { fontSize: isMobile ? '22px' : '26px', fontWeight: 700, letterSpacing: '-0.8px', color: '#18181b', fontVariantNumeric: 'tabular-nums' },
+    header: { padding: isMobile ? '16px 16px 14px' : '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 0 var(--border)', background: 'var(--surface)' },
+    stat: { background: 'var(--surface)', padding: isMobile ? '14px 16px' : '22px 40px' },
+    statValue: { fontSize: isMobile ? '22px' : '26px', fontWeight: 700, letterSpacing: '-0.8px', color: 'var(--text)', fontVariantNumeric: 'tabular-nums' },
     content: { padding: isMobile ? '0' : `0 ${p}`, flex: 1 },
     emptyState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center' },
     errorState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center', fontSize: '14px' },
@@ -77,25 +79,25 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
       <div style={styles.statsRow}>
         <div style={styles.stat}>
           <div style={styles.statLabel}>Active</div>
-          <div style={styles.statValue}>{onboardings.length}</div>
+          <AnimatedNumber value={onboardings.length} style={styles.statValue} />
         </div>
         <div style={styles.stat}>
           <div style={styles.statLabel}>90%+ done</div>
-          <div style={styles.statValue}>{completingThisWeek}</div>
+          <AnimatedNumber value={completingThisWeek} style={styles.statValue} />
         </div>
         <div style={styles.stat}>
           <div style={styles.statLabel}>Completed</div>
-          <div style={styles.statValue}>{completedCount}</div>
+          <AnimatedNumber value={completedCount} style={styles.statValue} />
         </div>
       </div>
 
       {offToday.length > 0 && (
-        <div style={{ background: '#f0faf4', borderBottom: '1px solid #c3e8d1', padding: `10px ${p}`, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#1a7a4a" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+        <div style={{ background: 'var(--surface-raised)', borderBottom: '1px solid var(--border)', padding: `10px ${p}`, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="var(--success)" strokeWidth="1.5" style={{ flexShrink: 0 }}>
             <rect x="1" y="3" width="12" height="10" rx="1"/><path d="M1 6h12M4 1v4M10 1v4"/>
           </svg>
-          <span style={{ fontSize: '12px', color: '#1a7a4a', fontWeight: 500 }}>Off today:</span>
-          <span style={{ fontSize: '12px', color: '#1a7a4a' }}>
+          <span style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 500 }}>Off today:</span>
+          <span style={{ fontSize: '12px', color: 'var(--success)' }}>
             {offToday.map(r => r.employees?.full_name).filter(Boolean).join(', ')}
           </span>
         </div>
@@ -105,11 +107,11 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
         {loading ? (
           isMobile ? (
             [1,2,3,4].map(i => (
-              <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid #f0efe9', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ ...styles.avatarLg, background: '#f0efe9' }} />
+              <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ ...styles.avatarLg, background: 'var(--skeleton-base)' }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ height: '13px', background: '#f0efe9', borderRadius: '4px', width: '55%', marginBottom: '8px' }} />
-                  <div style={{ height: '4px', background: '#f0efe9', borderRadius: '2px', width: '80%' }} />
+                  <div style={{ height: '13px', background: 'var(--skeleton-base)', borderRadius: '4px', width: '55%', marginBottom: '8px' }} />
+                  <div style={{ height: '4px', background: 'var(--skeleton-base)', borderRadius: '2px', width: '80%' }} />
                 </div>
               </div>
             ))
@@ -126,7 +128,7 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
         ) : fetchError ? (
           <div style={styles.errorState}>
             <div style={{ color: '#c04040', marginBottom: '12px' }}>{fetchError}</div>
-            <Button variant="ghost" onClick={fetchOnboardings} style={{ color: '#0066cc' }}>
+            <Button variant="ghost" onClick={fetchOnboardings} style={{ color: 'var(--brand)' }}>
               Try again
             </Button>
           </div>
@@ -145,21 +147,21 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
             action={<Button onClick={() => onNavigate('active')}>New onboarding</Button>}
           />
         ) : isMobile ? (
-          onboardings.map(o => {
+          onboardings.map((o, i) => {
             const { pct } = calcProgress(o.task_completions)
             const name = o.employees.full_name
             const phase = getPhase(o.employees.hire_date)
             return (
-              <button type="button" key={o.id} className="il-row" aria-label={`View ${name}'s onboarding`}
-                style={{ width: '100%', padding: '14px 16px', border: 'none', borderBottom: '1px solid #f0efe9', background: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}
+              <button type="button" key={o.id} className="il-row il-stagger" aria-label={`View ${name}'s onboarding`}
+                style={{ width: '100%', padding: '14px 16px', border: 'none', borderBottom: '1px solid var(--border-subtle)', background: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', animationDelay: `${Math.min(i, 12) * 25}ms` }}
                 onClick={() => onViewOnboarding(o.id)}>
-                <div style={styles.avatarLg}>{getInitials(name)}</div>
+                <div style={{ ...styles.avatarLg, ...avatarStyle(name) }}>{getInitials(name)}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#18181b' }}>{name}</span>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>{name}</span>
                     <span style={styles.phasePill}>{phase}</span>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#70706b', marginBottom: '8px' }}>{o.employees.roles?.name || 'Unknown role'}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '8px' }}>{o.employees.roles?.name || 'Unknown role'}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={styles.progressTrack}>
                       <div className="il-progress-fill" style={{ ...styles.progressFill, width: `${pct}%`, background: pct === 100 ? 'linear-gradient(90deg, #1a7a4a, #2ea864)' : 'linear-gradient(90deg, #0066cc, #3d9eff)' }} />
@@ -178,16 +180,16 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
               <div>Progress</div><div>Phase</div>
               <div style={{ textAlign: 'right' }}>Started</div>
             </div>
-            {onboardings.map(o => {
+            {onboardings.map((o, i) => {
               const { pct } = calcProgress(o.task_completions)
               const name = o.employees.full_name
               const phase = getPhase(o.employees.hire_date)
               const uploadedDocs = docStats[o.employees.id] || 0
               return (
-                <button type="button" key={o.id} className="il-row" aria-label={`View ${name}'s onboarding`}
-                  style={{ ...styles.tableRow, width: '100%', border: 'none', borderBottom: '1px solid #f0efe9', background: 'none', font: 'inherit', textAlign: 'left' }}
+                <button type="button" key={o.id} className="il-row il-stagger" aria-label={`View ${name}'s onboarding`}
+                  style={{ ...styles.tableRow, width: '100%', border: 'none', borderBottom: '1px solid var(--border-subtle)', background: 'none', font: 'inherit', textAlign: 'left', animationDelay: `${Math.min(i, 12) * 25}ms` }}
                   onClick={() => onViewOnboarding(o.id)}>
-                  <div style={styles.avatar}>{getInitials(name)}</div>
+                  <div style={{ ...styles.avatar, ...avatarStyle(name) }}>{getInitials(name)}</div>
                   <div>
                     <div style={styles.rowName}>{name}</div>
                     <div style={styles.rowMeta}>

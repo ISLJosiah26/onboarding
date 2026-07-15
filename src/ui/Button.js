@@ -4,7 +4,7 @@ import { T } from './theme'
 // secondary (outlined), ghost (borderless), danger (destructive). Sizes: sm|md.
 // Renders a real <button> with focus rings from index.css and a busy state.
 const VARIANTS = {
-  primary: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: '1px solid transparent' },
+  primary: { background: T.btnPrimaryBg, color: '#fff', border: '1px solid transparent' },
   secondary: { background: T.surface, color: T.muted, border: `1px solid ${T.border}` },
   ghost: { background: 'transparent', color: T.muted, border: '1px solid transparent' },
   danger: { background: T.danger, color: '#fff', border: '1px solid transparent' },

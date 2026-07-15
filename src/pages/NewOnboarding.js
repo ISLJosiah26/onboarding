@@ -156,7 +156,7 @@ async function sendOnboardingStartedEmails(name, employeeEmail, role, startDate)
           value={fullName} onChange={e => setFullName(e.target.value)} onBlur={() => markTouched('name')} />
         {nameError && <div className="il-field-hint" data-tone="error" style={{ marginTop: 0, marginBottom: '20px' }}>{nameError}</div>}
 
-        <span style={styles.label}>Email address <span style={{ color: '#a4a39f', fontWeight: 400 }}>(optional)</span></span>
+        <span style={styles.label}>Email address <span style={{ color: 'var(--subtle)', fontWeight: 400 }}>(optional)</span></span>
         <input className={emailError ? 'il-field-error' : ''} style={{ ...styles.input, marginBottom: emailError ? '6px' : '20px' }} type="email" placeholder="jane@integratedstaffing.ca"
           value={email} onChange={e => setEmail(e.target.value)} onBlur={() => markTouched('email')} />
         {emailError && <div className="il-field-hint" data-tone="error" style={{ marginTop: 0, marginBottom: '20px' }}>{emailError}</div>}

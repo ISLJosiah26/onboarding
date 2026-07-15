@@ -25,12 +25,12 @@ const STYLES = {
   sectionLabel: { fontSize: '11px', fontWeight: 600, color: T.subtle, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
   uploadLink: { fontSize: '12px', color: T.brand, cursor: 'pointer', fontWeight: 500, textTransform: 'none', letterSpacing: 0 },
   weekHeading: { fontSize: '11px', fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.6px', margin: '30px 0 10px' },
-  bucketHeader: { display: 'flex', alignItems: 'baseline', gap: '8px', padding: '6px 0 8px', borderBottom: '1px solid #f0efe9' },
+  bucketHeader: { display: 'flex', alignItems: 'baseline', gap: '8px', padding: '6px 0 8px', borderBottom: '1px solid var(--border-subtle)' },
   bucketName: (complete) => ({ fontSize: '12px', fontWeight: 600, color: complete ? T.success : T.text, letterSpacing: '-0.1px' }),
   bucketDate: { fontSize: '11px', color: T.subtle },
   bucketCount: { fontSize: '11px', color: T.subtle, marginLeft: 'auto' },
-  parentRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 6px', borderBottom: '1px solid #f0efe9', cursor: 'pointer', borderRadius: T.radiusSm },
-  subtaskRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '9px 0 9px 40px', borderBottom: '1px solid #f7f6f3', cursor: 'pointer', background: '#fafaf9' },
+  parentRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 6px', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', borderRadius: T.radiusSm },
+  subtaskRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '9px 0 9px 40px', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', background: 'var(--surface-raised)' },
   dragHandle: { color: '#c8c7c3', fontSize: '13px', lineHeight: 1, flexShrink: 0, userSelect: 'none', padding: '4px', margin: '-4px -2px' },
   checkbox: (checked) => ({ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : `1.5px solid ${T.border}`, background: checked ? T.brand : T.surface, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
   subtaskCheckbox: (checked) => ({ width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0, border: checked ? 'none' : `1.5px solid ${T.border}`, background: checked ? T.brand : T.surface, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', cursor: 'pointer' }),
@@ -40,7 +40,7 @@ const STYLES = {
   chevron: (open) => ({ fontSize: '10px', color: T.subtle, transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }),
   subtaskCount: { fontSize: '11px', color: T.subtle, flexShrink: 0 },
   rowBtn: { fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, padding: '2px 4px' },
-  expandedPanel: { background: '#fafaf9', border: `1px solid ${T.border}`, borderRadius: T.radiusMd, padding: '14px', marginTop: '2px', marginBottom: '4px' },
+  expandedPanel: { background: 'var(--surface-raised)', border: `1px solid ${T.border}`, borderRadius: T.radiusMd, padding: '14px', marginTop: '2px', marginBottom: '4px' },
   noteLabel: { fontSize: '11px', color: T.muted, marginBottom: '6px', fontWeight: 500 },
   noteInput: { width: '100%', border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: '8px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', background: T.surface, color: T.text, resize: 'vertical', minHeight: '60px', boxSizing: 'border-box' },
   noteHint: { fontSize: '11px', color: T.subtle, marginTop: '6px' },
@@ -177,7 +177,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
 
   if (loading) return (
     <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
-      <div style={{ padding: '28px 40px 24px', borderBottom: '1px solid #e2e1dd' }}>
+      <div style={{ padding: '28px 40px 24px', borderBottom: '1px solid var(--border)' }}>
         <SkeletonLine width="120px" height="12px" style={{ marginBottom: '16px' }} />
         <SkeletonLine width="220px" height="22px" style={{ marginBottom: '8px' }} />
         <SkeletonLine width="280px" height="13px" style={{ marginBottom: '20px' }} />
@@ -200,7 +200,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
     <Layout session={session} userProfile={userProfile} currentPage="dashboard" onNavigate={onNavigate}>
       <div style={{ padding: '80px 40px', textAlign: 'center', fontFamily: 'Inter, -apple-system, sans-serif' }}>
         <div style={{ color: '#c04040', fontSize: '14px', marginBottom: '12px' }}>{fetchError}</div>
-        <button onClick={fetchPlan} style={{ fontSize: '13px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+        <button onClick={fetchPlan} style={{ fontSize: '13px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
           Try again
         </button>
       </div>
@@ -225,7 +225,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
 
     if (editingId === task.id) {
       return (
-        <div key={task.id} style={{ ...STYLES.addForm, borderBottom: '1px solid #f0efe9' }}>
+        <div key={task.id} style={{ ...STYLES.addForm, borderBottom: '1px solid var(--border-subtle)' }}>
           <input style={{ ...STYLES.input, flex: 1, minWidth: '160px' }} value={editName} autoFocus
             onChange={e => setEditName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') submitEdit(task); if (e.key === 'Escape') setEditingId(null) }} />
@@ -236,7 +236,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
             {SCHEDULE_BUCKETS.map(b => <option key={b}>{b}</option>)}
           </select>
           <button style={STYLES.btnPrimary} onClick={() => submitEdit(task)}>Save</button>
-          <button style={{ ...STYLES.rowBtn, color: '#70706b' }} onClick={() => setEditingId(null)}>Cancel</button>
+          <button style={{ ...STYLES.rowBtn, color: 'var(--muted)' }} onClick={() => setEditingId(null)}>Cancel</button>
         </div>
       )
     }
@@ -272,7 +272,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
           {task.owner && <div style={STYLES.owner}>{task.owner}</div>}
           {canEdit && (
             <>
-              <button style={{ ...STYLES.rowBtn, color: '#0066cc' }} onClick={e => { e.stopPropagation(); startEdit(task) }}>Edit</button>
+              <button style={{ ...STYLES.rowBtn, color: 'var(--brand)' }} onClick={e => { e.stopPropagation(); startEdit(task) }}>Edit</button>
               <button style={{ ...STYLES.rowBtn, color: '#c04040' }} onClick={e => { e.stopPropagation(); removeTask(task.id) }}>Remove</button>
             </>
           )}
@@ -363,7 +363,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
               {OWNERS.map(o => <option key={o}>{o}</option>)}
             </select>
             <button style={STYLES.btnPrimary} onClick={() => submitAdd(bucket)}>Add</button>
-            <button style={{ ...STYLES.rowBtn, color: '#70706b' }} onClick={() => setAddingToBucket(null)}>Cancel</button>
+            <button style={{ ...STYLES.rowBtn, color: 'var(--muted)' }} onClick={() => setAddingToBucket(null)}>Cancel</button>
           </div>
         ) : (
           <button style={STYLES.addBtn} onClick={() => startAdd(bucket)}>+ Add task</button>
@@ -381,7 +381,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={STYLES.title}>{instance.employees.full_name}</div>
-          <button onClick={() => setEditingEmployee(true)} style={{ fontSize: '12px', color: '#70706b', background: 'none', border: '1px solid #e2e1dd', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+          <button onClick={() => setEditingEmployee(true)} style={{ fontSize: '12px', color: 'var(--muted)', background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
           <button onClick={handleDeleteEmployee} style={{ fontSize: '12px', color: '#c04040', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '4px 2px' }}>Delete</button>
         </div>
         <div style={STYLES.sub}>
@@ -406,7 +406,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
           </div>
 
           {visibleDocs.length === 0 && hiddenDocs.length === 0 && (
-            <div style={{ fontSize: '13px', color: '#a4a39f', padding: '12px 0' }}>No documents in the library yet.</div>
+            <div style={{ fontSize: '13px', color: 'var(--subtle)', padding: '12px 0' }}>No documents in the library yet.</div>
           )}
 
           {visibleDocs.map(doc => {
@@ -414,7 +414,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
             const signed = dc?.signed || false
             const completedFileUrl = dc?.resolvedUrl || dc?.completed_file_url || null
             return (
-              <div key={doc.id} style={{ borderBottom: '1px solid #f0efe9', paddingBottom: '12px', marginBottom: '4px' }}>
+              <div key={doc.id} style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px', marginBottom: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0 4px' }} onClick={(e) => toggleDocument(doc.id, e)}>
                   <div style={STYLES.checkbox(signed)}>
                     {signed && checkIcon()}
@@ -422,12 +422,12 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
                   <div style={STYLES.taskName(signed)}>{doc.name}</div>
                   <a href={doc.file_url} target="_blank" rel="noreferrer"
                     onClick={e => e.stopPropagation()}
-                    style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none', flexShrink: 0 }}>
+                    style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'none', flexShrink: 0 }}>
                     View
                   </a>
                   <button
                     onClick={(e) => { e.stopPropagation(); hideDocument(doc.id) }}
-                    style={{ fontSize: '11px', color: '#a4a39f', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                    style={{ fontSize: '11px', color: 'var(--subtle)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
                     Hide
                   </button>
                 </div>
@@ -435,7 +435,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
                   <div style={{ paddingLeft: '32px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '12px', color: '#1a7a4a' }}>✓ Employee uploaded</span>
                     <a href={completedFileUrl} target="_blank" rel="noreferrer"
-                      style={{ fontSize: '12px', color: '#0066cc', textDecoration: 'none' }}>
+                      style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'none' }}>
                       Download
                     </a>
                   </div>
@@ -448,15 +448,15 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
             <div style={{ marginTop: '8px' }}>
               <button
                 onClick={() => setShowHiddenDocs(prev => !prev)}
-                style={{ fontSize: '12px', color: '#70706b', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ fontSize: '12px', color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {showHiddenDocs ? `Collapse (${hiddenDocs.length} shown)` : `Show hidden (${hiddenDocs.length})`}
               </button>
               {showHiddenDocs && hiddenDocs.map(doc => (
-                <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: '1px solid #f0efe9', opacity: 0.5 }}>
-                  <div style={{ flex: 1, fontSize: '13px', color: '#70706b', textDecoration: 'line-through' }}>{doc.name}</div>
+                <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', opacity: 0.5 }}>
+                  <div style={{ flex: 1, fontSize: '13px', color: 'var(--muted)', textDecoration: 'line-through' }}>{doc.name}</div>
                   <button
                     onClick={() => restoreDocument(doc.id)}
-                    style={{ fontSize: '12px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                     Restore
                   </button>
                 </div>
@@ -467,7 +467,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
 
         <div style={STYLES.sectionLabel}>
           <span>Onboarding schedule</span>
-          {canEdit && <span style={{ fontSize: '11px', color: '#a4a39f', textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>Drag tasks to reschedule</span>}
+          {canEdit && <span style={{ fontSize: '11px', color: 'var(--subtle)', textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>Drag tasks to reschedule</span>}
         </div>
 
         {BUCKET_SECTIONS.map(section => {
@@ -491,7 +491,7 @@ export default function OnboardingPlan({ session, userProfile, instanceId, onBac
             <span style={{ fontSize: '13px', color: '#1a7a4a' }}>Invite sent</span>
           ) : (
             <button onClick={handleInviteEmployee} disabled={inviting}
-              style={{ background: 'transparent', color: '#0066cc', border: '1px solid #0066cc', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ background: 'transparent', color: 'var(--brand)', border: '1px solid #0066cc', borderRadius: '7px', padding: '9px 18px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
               {inviting ? 'Sending...' : 'Invite to portal'}
             </button>
           )}

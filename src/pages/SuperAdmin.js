@@ -29,7 +29,7 @@ const CHANGEABLE_ROLES = [ROLE.ADMIN, ROLE.MANAGER, ROLE.EMPLOYEE]
 const s = {
   table: { width: '100%', borderCollapse: 'collapse' },
   th: { fontSize: '11px', fontWeight: 600, color: T.subtle, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '0 12px 12px 0', textAlign: 'left', borderBottom: `1px solid ${T.border}` },
-  td: { fontSize: '13px', color: T.text, padding: '13px 12px 13px 0', borderBottom: '1px solid #f0efe9', verticalAlign: 'middle' },
+  td: { fontSize: '13px', color: T.text, padding: '13px 12px 13px 0', borderBottom: '1px solid var(--border-subtle)', verticalAlign: 'middle' },
   statusDot: (active) => ({
     display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
     background: active ? T.success : T.danger, marginRight: 6, flexShrink: 0,
@@ -44,7 +44,7 @@ const s = {
   }),
   filterSelect: { border: `1px solid ${T.border}`, borderRadius: '7px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: T.surface, color: T.text, outline: 'none' },
   filterInput: { border: `1px solid ${T.border}`, borderRadius: '7px', padding: '7px 10px', fontSize: '12px', fontFamily: 'inherit', background: T.surface, color: T.text, outline: 'none' },
-  btnSave: { background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '8px 14px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, letterSpacing: '0.1px' },
+  btnSave: { background: T.btnPrimaryBg, color: '#fff', border: 'none', borderRadius: T.radiusMd, padding: '8px 14px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, letterSpacing: '0.1px' },
   empty: { padding: '48px 0', textAlign: 'center', color: T.subtle, fontSize: '13px' },
   badge: (role) => {
     const colors = {
@@ -75,8 +75,8 @@ export default function SuperAdmin({ session, userProfile, currentPage, onNaviga
 
   return (
     <Layout session={session} userProfile={userProfile} currentPage={currentPage} onNavigate={onNavigate}>
-      <div className="il-header" style={{ padding: isMobile ? '16px 16px 0' : '28px 40px 0', boxShadow: '0 1px 0 #e2e1dd', background: '#fff' }}>
-        <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 600, letterSpacing: '-0.5px', marginBottom: '16px', color: '#18181b' }}>System</div>
+      <div className="il-header" style={{ padding: isMobile ? '16px 16px 0' : '28px 40px 0', boxShadow: '0 1px 0 var(--border)', background: 'var(--surface)' }}>
+        <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 600, letterSpacing: '-0.5px', marginBottom: '16px', color: 'var(--text)' }}>System</div>
         <div style={{ display: 'flex', gap: '0', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', marginBottom: '-1px' }}>
           {['Users', 'Audit Log', 'System Settings'].map(t => (
             <button
@@ -85,9 +85,9 @@ export default function SuperAdmin({ session, userProfile, currentPage, onNaviga
               style={{
                 padding: isMobile ? '10px 14px' : '10px 18px',
                 fontSize: '13px', fontWeight: tab === t ? 600 : 400,
-                color: tab === t ? '#0066cc' : '#70706b',
+                color: tab === t ? 'var(--brand)' : 'var(--muted)',
                 background: 'none', border: 'none',
-                borderBottom: tab === t ? '2px solid #0066cc' : '2px solid transparent',
+                borderBottom: tab === t ? '2px solid var(--brand)' : '2px solid transparent',
                 cursor: 'pointer', fontFamily: 'inherit',
                 whiteSpace: 'nowrap', flexShrink: 0,
                 transition: 'color 0.12s ease, border-color 0.12s ease',
@@ -198,8 +198,8 @@ function UsersTab({ isMobile }) {
 
   const inviteTabStyle = (active) => ({
     padding: '8px 14px', fontSize: '12px', fontWeight: active ? 600 : 400,
-    color: active ? '#0066cc' : '#70706b', background: 'none', border: 'none',
-    borderBottom: active ? '2px solid #0066cc' : '2px solid transparent',
+    color: active ? 'var(--brand)' : 'var(--muted)', background: 'none', border: 'none',
+    borderBottom: active ? '2px solid var(--brand)' : '2px solid transparent',
     cursor: 'pointer', fontFamily: 'inherit', marginBottom: '-1px',
     transition: 'color 0.12s ease, border-color 0.12s ease',
   })
@@ -209,25 +209,25 @@ function UsersTab({ isMobile }) {
   return (
     <>
       {/* ── Invite panel ── */}
-      <div style={{ marginBottom: '28px', border: '1px solid #e2e1dd', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04), 0 2px 10px rgba(0,0,0,0.03)' }}>
+      <div style={{ marginBottom: '28px', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04), 0 2px 10px rgba(0,0,0,0.03)' }}>
         <button
           onClick={() => setShowInvitePanel(o => !o)}
           style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', background: showInvitePanel ? '#f9f8f5' : '#fff', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '13px', fontWeight: 500, color: '#18181b' }}>Invite a user</span>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>Invite a user</span>
             {unlinkedEmployees.length > 0 && (
-              <span style={{ fontSize: '11px', fontWeight: 600, background: '#eff6ff', color: '#0066cc', padding: '1px 8px', borderRadius: '99px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 600, background: '#eff6ff', color: 'var(--brand)', padding: '1px 8px', borderRadius: '99px' }}>
                 {unlinkedEmployees.length} employee{unlinkedEmployees.length !== 1 ? 's' : ''} without login
               </span>
             )}
           </div>
-          <span style={{ fontSize: '11px', color: '#a4a39f', flexShrink: 0 }}>{showInvitePanel ? '▲' : '▼'}</span>
+          <span style={{ fontSize: '11px', color: 'var(--subtle)', flexShrink: 0 }}>{showInvitePanel ? '▲' : '▼'}</span>
         </button>
 
         {showInvitePanel && (
-          <div style={{ borderTop: '1px solid #e2e1dd' }}>
-            <div style={{ display: 'flex', padding: '0 20px', borderBottom: '1px solid #e2e1dd', overflowX: 'auto' }}>
+          <div style={{ borderTop: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', padding: '0 20px', borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
               <button style={inviteTabStyle(inviteMode === 'employees')} onClick={() => setInviteMode('employees')}>
                 Employees without login ({unlinkedEmployees.length})
               </button>
@@ -239,13 +239,13 @@ function UsersTab({ isMobile }) {
             <div style={{ padding: '16px 20px' }}>
               {inviteMode === 'employees' && (
                 unlinkedEmployees.length === 0 ? (
-                  <div style={{ fontSize: '13px', color: '#a4a39f', padding: '8px 0' }}>All employees already have a login.</div>
+                  <div style={{ fontSize: '13px', color: 'var(--subtle)', padding: '8px 0' }}>All employees already have a login.</div>
                 ) : (
                   unlinkedEmployees.map(emp => (
-                    <div key={emp.id} style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '10px' : '12px', padding: '10px 0', borderBottom: '1px solid #f0efe9' }}>
+                    <div key={emp.id} style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '10px' : '12px', padding: '10px 0', borderBottom: '1px solid var(--border-subtle)' }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b' }}>{emp.full_name}</div>
-                        <div style={{ fontSize: '12px', color: '#70706b' }}>{emp.email}{emp.brand ? ` · ${emp.brand}` : ''}</div>
+                        <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>{emp.full_name}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--muted)' }}>{emp.email}{emp.brand ? ` · ${emp.brand}` : ''}</div>
                       </div>
                       {pendingInvite === emp.id ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -253,7 +253,7 @@ function UsersTab({ isMobile }) {
                             {CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                           </select>
                           <button onClick={() => sendInviteToEmployee(emp, pendingRole)} disabled={inviting}
-                            style={{ ...s.btnSmall(false), background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none' }}>
+                            style={{ ...s.btnSmall(false), background: T.btnPrimaryBg, color: '#fff', border: 'none' }}>
                             {inviting ? 'Sending…' : 'Confirm & send'}
                           </button>
                           <button onClick={() => setPendingInvite(null)} style={s.btnSmall(false)}>Cancel</button>
@@ -271,20 +271,20 @@ function UsersTab({ isMobile }) {
               {inviteMode === 'manual' && (
                 <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '8px', flexWrap: 'wrap', alignItems: isMobile ? 'stretch' : 'flex-end' }}>
                   <div style={{ flex: isMobile ? 'none' : undefined }}>
-                    <div style={{ fontSize: '11px', color: '#70706b', marginBottom: '4px' }}>Email</div>
+                    <div style={{ fontSize: '11px', color: 'var(--muted)', marginBottom: '4px' }}>Email</div>
                     <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && sendManualInvite()}
                       placeholder="name@example.com"
-                      style={{ border: '1px solid #e2e1dd', borderRadius: '7px', padding: '7px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'none' : '220px', color: '#18181b', boxSizing: 'border-box' }} />
+                      style={{ border: '1px solid var(--border)', borderRadius: '7px', padding: '7px 10px', fontSize: '13px', fontFamily: 'inherit', outline: 'none', width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'none' : '220px', color: 'var(--text)', boxSizing: 'border-box' }} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '11px', color: '#70706b', marginBottom: '4px' }}>Role</div>
+                    <div style={{ fontSize: '11px', color: 'var(--muted)', marginBottom: '4px' }}>Role</div>
                     <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} style={{ ...s.filterSelect, width: isMobile ? '100%' : 'auto' }}>
                       {CHANGEABLE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
                   <div>
-                    <div style={{ fontSize: '11px', color: '#70706b', marginBottom: '4px' }}>Brand</div>
+                    <div style={{ fontSize: '11px', color: 'var(--muted)', marginBottom: '4px' }}>Brand</div>
                     <select value={inviteBrand} onChange={e => setInviteBrand(e.target.value)} style={{ ...s.filterSelect, width: isMobile ? '100%' : 'auto' }}>
                       <option value="">—</option>
                       <option value="ISL">ISL</option>
@@ -293,7 +293,7 @@ function UsersTab({ isMobile }) {
                     </select>
                   </div>
                   <button onClick={sendManualInvite} disabled={inviting || !inviteEmail.trim()}
-                    style={{ background: 'linear-gradient(180deg, #222 0%, #111 100%)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: inviting || !inviteEmail.trim() ? 'default' : 'pointer', fontFamily: 'inherit', opacity: inviting || !inviteEmail.trim() ? 0.5 : 1 }}>
+                    style={{ background: T.btnPrimaryBg, color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: inviting || !inviteEmail.trim() ? 'default' : 'pointer', fontFamily: 'inherit', opacity: inviting || !inviteEmail.trim() ? 0.5 : 1 }}>
                     {inviting ? 'Sending…' : 'Send invite'}
                   </button>
                 </div>
@@ -307,11 +307,11 @@ function UsersTab({ isMobile }) {
       {isMobile ? (
         <div>
           {users.map(u => (
-            <div key={u.id} style={{ border: '1px solid #e2e1dd', borderRadius: '10px', padding: '14px', marginBottom: '10px', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+            <div key={u.id} style={{ border: '1px solid var(--border)', borderRadius: '10px', padding: '14px', marginBottom: '10px', background: 'var(--surface)', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
                   <span style={s.statusDot(!u.deactivated)} />
-                  <div style={{ fontSize: '13px', color: '#18181b', wordBreak: 'break-all', lineHeight: '1.4' }}>{u.email}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text)', wordBreak: 'break-all', lineHeight: '1.4' }}>{u.email}</div>
                 </div>
                 <span style={{ fontSize: '11px', color: u.deactivated ? '#c04040' : '#1a7a4a', fontWeight: 500, flexShrink: 0 }}>
                   {u.deactivated ? 'Deactivated' : 'Active'}
@@ -334,10 +334,10 @@ function UsersTab({ isMobile }) {
                     }
                   </select>
                 )}
-                {u.brand && <span style={{ fontSize: '11px', color: '#70706b', background: '#f4f3ef', borderRadius: '4px', padding: '2px 6px' }}>{u.brand}</span>}
+                {u.brand && <span style={{ fontSize: '11px', color: 'var(--muted)', background: 'var(--bg)', borderRadius: '4px', padding: '2px 6px' }}>{u.brand}</span>}
               </div>
 
-              <div style={{ fontSize: '11px', color: '#a4a39f', marginBottom: '10px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--subtle)', marginBottom: '10px' }}>
                 Joined {u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'} · Last login {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}
               </div>
 
@@ -368,7 +368,7 @@ function UsersTab({ isMobile }) {
                 <td style={s.td}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={s.statusDot(!u.deactivated)} />
-                    <div style={{ fontSize: 13, color: '#18181b' }}>{u.email}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text)' }}>{u.email}</div>
                   </div>
                 </td>
                 <td style={s.td}>
@@ -388,9 +388,9 @@ function UsersTab({ isMobile }) {
                     </select>
                   )}
                 </td>
-                <td style={s.td}><span style={{ fontSize: 12, color: '#70706b' }}>{u.brand || '—'}</span></td>
-                <td style={s.td}><span style={{ fontSize: 12, color: '#70706b' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'}</span></td>
-                <td style={s.td}><span style={{ fontSize: 12, color: '#70706b' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}</span></td>
+                <td style={s.td}><span style={{ fontSize: 12, color: 'var(--muted)' }}>{u.brand || '—'}</span></td>
+                <td style={s.td}><span style={{ fontSize: 12, color: 'var(--muted)' }}>{u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'}</span></td>
+                <td style={s.td}><span style={{ fontSize: 12, color: 'var(--muted)' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-CA') : 'Never'}</span></td>
                 <td style={s.td}><span style={{ fontSize: 12, color: u.deactivated ? '#c04040' : '#1a7a4a', fontWeight: 500 }}>{u.deactivated ? 'Deactivated' : 'Active'}</span></td>
                 <td style={s.td}>
                   {u.role !== ROLE.SUPER_ADMIN && u.role && u.role !== 'none' && (
@@ -470,12 +470,12 @@ function AuditLogTab({ isMobile }) {
         </select>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', flex: isMobile ? '1 1 100%' : undefined }}>
           <input style={{ ...s.filterInput, flex: 1, minWidth: '120px' }} type="date" value={filterFrom} onChange={e => { setFilterFrom(e.target.value); setLogLimit(100) }} />
-          <span style={{ fontSize: 12, color: '#a4a39f', flexShrink: 0 }}>to</span>
+          <span style={{ fontSize: 12, color: 'var(--subtle)', flexShrink: 0 }}>to</span>
           <input style={{ ...s.filterInput, flex: 1, minWidth: '120px' }} type="date" value={filterTo} onChange={e => { setFilterTo(e.target.value); setLogLimit(100) }} />
         </div>
         {(filterAction || filterFrom || filterTo) && (
           <button
-            style={{ fontSize: 12, color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ fontSize: 12, color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
             onClick={() => { setFilterAction(''); setFilterFrom(''); setFilterTo(''); setLogLimit(100) }}
           >Clear</button>
         )}
@@ -490,22 +490,22 @@ function AuditLogTab({ isMobile }) {
           {logs.map(log => {
             const entity = describeEntity(log)
             return isMobile ? (
-              <div key={log.id} style={{ padding: '12px 0', borderBottom: '1px solid #f0efe9' }}>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginBottom: '3px' }}>
+              <div key={log.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '3px' }}>
                   {ACTION_LABELS[log.action] || log.action}
                 </div>
-                {entity && <div style={{ fontSize: '12px', color: '#70706b', marginBottom: '4px' }}>{entity}</div>}
-                <div style={{ fontSize: '11px', color: '#a4a39f' }}>
+                {entity && <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '4px' }}>{entity}</div>}
+                <div style={{ fontSize: '11px', color: 'var(--subtle)' }}>
                   {formatTime(log.created_at)} · {log.user_email || 'Unknown'}
                 </div>
               </div>
             ) : (
-              <div key={log.id} style={{ display: 'flex', gap: '16px', padding: '12px 0', borderBottom: '1px solid #f0efe9', alignItems: 'flex-start' }}>
-                <div style={{ fontSize: '12px', color: '#a4a39f', whiteSpace: 'nowrap', minWidth: '140px' }}>{formatTime(log.created_at)}</div>
-                <div style={{ fontSize: '12px', color: '#70706b', minWidth: '160px' }}>{log.user_email || 'Unknown'}</div>
+              <div key={log.id} style={{ display: 'flex', gap: '16px', padding: '12px 0', borderBottom: '1px solid var(--border-subtle)', alignItems: 'flex-start' }}>
+                <div style={{ fontSize: '12px', color: 'var(--subtle)', whiteSpace: 'nowrap', minWidth: '140px' }}>{formatTime(log.created_at)}</div>
+                <div style={{ fontSize: '12px', color: 'var(--muted)', minWidth: '160px' }}>{log.user_email || 'Unknown'}</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', color: '#18181b', fontWeight: 500 }}>{ACTION_LABELS[log.action] || log.action}</div>
-                  {entity && <div style={{ fontSize: '12px', color: '#70706b', marginTop: '2px' }}>{entity}</div>}
+                  <div style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 500 }}>{ACTION_LABELS[log.action] || log.action}</div>
+                  {entity && <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px' }}>{entity}</div>}
                 </div>
               </div>
             )
@@ -513,7 +513,7 @@ function AuditLogTab({ isMobile }) {
           {logs.length >= logLimit && (
             <button
               onClick={() => setLogLimit(l => l + 100)}
-              style={{ fontSize: '13px', color: '#0066cc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '16px 0', display: 'block', width: '100%', textAlign: 'center' }}>
+              style={{ fontSize: '13px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '16px 0', display: 'block', width: '100%', textAlign: 'center' }}>
               Load more
             </button>
           )}
@@ -567,13 +567,13 @@ function SystemSettingsTab({ isMobile }) {
   return (
     <>
       {settings.map(setting => (
-        <div key={setting.key} style={{ padding: '16px 0', borderBottom: '1px solid #f0efe9' }}>
-          <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginBottom: isMobile ? '10px' : '0' }}>
+        <div key={setting.key} style={{ padding: '16px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+          <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: isMobile ? '10px' : '0' }}>
             {labelFor(setting.key)}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: isMobile ? '0' : '10px', flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
             <input
-              style={{ flex: 1, border: '1px solid #e2e1dd', borderRadius: '7px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit', background: '#fff', color: '#18181b', outline: 'none', minWidth: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}
+              style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '7px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit', background: 'var(--surface)', color: 'var(--text)', outline: 'none', minWidth: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}
               type="text"
               value={values[setting.key] ?? ''}
               onChange={e => setValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
