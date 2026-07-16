@@ -82,7 +82,7 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
     })
 
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: "'Inter', -apple-system, sans-serif", color: 'var(--text)' }}>
+      <div style={{ minHeight: '100vh', background: 'transparent', fontFamily: "'Inter', -apple-system, sans-serif", color: 'var(--text)' }}>
         <div className="il-header" data-topbar="true" style={{
           position: 'sticky', top: 0, zIndex: 40,
           background: 'var(--surface)', boxShadow: '0 1px 0 var(--border)',
@@ -213,12 +213,13 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
 
   return (
     <div style={{
-      minHeight: '100vh', background: 'var(--bg)',
+      minHeight: '100vh', background: 'transparent',
       display: 'grid', gridTemplateColumns: '240px 1fr',
       fontFamily: "'Inter', -apple-system, sans-serif", color: 'var(--text)',
     }}>
       <div style={{
-        background: 'var(--surface)', borderRight: '1px solid var(--border)',
+        background: 'var(--glass)', backdropFilter: 'var(--glass-filter)', WebkitBackdropFilter: 'var(--glass-filter)',
+        borderRight: '1px solid var(--glass-border)',
         padding: '0 10px', display: 'flex', flexDirection: 'column',
         position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
       }}>

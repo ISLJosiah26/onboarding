@@ -59,9 +59,11 @@ export default function ConfirmModal({ title, message, confirmLabel, confirmDang
         ref={modalRef}
         className="il-modal"
         style={{
-          background: T.surface, borderRadius: '14px',
-          border: `1px solid ${T.border}`,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
+          background: 'var(--glass-strong)',
+          backdropFilter: 'var(--glass-filter)', WebkitBackdropFilter: 'var(--glass-filter)',
+          borderRadius: '18px',
+          border: '1px solid var(--glass-border)',
+          boxShadow: 'var(--glass-highlight), var(--shadow-lg)',
           padding: '28px', width: '100%', maxWidth: '400px',
           margin: '0 24px',
         }}

@@ -52,10 +52,19 @@
   --focus: #2563eb;
   --radius-sm: 6px;
   --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-lg: 16px;
   /* UI chrome (themeable) */
   --glass: rgba(255,255,255,0.82);
   --glass-strong: rgba(255,255,255,0.88);
+  /* Liquid-glass material: frost filter, lit edge, layered depth, and the
+     ambient ground the frost refracts. Themed in the dark blocks below. */
+  --glass-border: rgba(255,255,255,0.6);
+  --glass-highlight: inset 0 1px 0 rgba(255,255,255,0.7), inset 0 0 0 1px rgba(255,255,255,0.12);
+  --glass-filter: saturate(180%) blur(20px);
+  --glass-shadow: 0 12px 32px rgba(24,28,50,0.12), 0 2px 8px rgba(24,28,50,0.05);
+  --ground-1: rgba(0,102,204,0.09);
+  --ground-2: rgba(20,165,190,0.06);
+  --ground-3: rgba(255,176,122,0.06);
   --hover-bg: #f0efe9;
   --row-hover: #f8f7f4;
   --scrollbar-thumb: #cfceca;
@@ -92,6 +101,13 @@
   --focus: #6ba8ff;
   --glass: rgba(24,24,27,0.78);
   --glass-strong: rgba(24,24,27,0.86);
+  --glass-border: rgba(255,255,255,0.09);
+  --glass-highlight: inset 0 1px 0 rgba(255,255,255,0.09), inset 0 0 0 1px rgba(255,255,255,0.03);
+  --glass-filter: saturate(180%) blur(20px);
+  --glass-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 2px 10px rgba(0,0,0,0.38);
+  --ground-1: rgba(61,158,255,0.13);
+  --ground-2: rgba(40,200,190,0.07);
+  --ground-3: rgba(150,110,255,0.10);
   --hover-bg: #26262b;
   --row-hover: #232327;
   --scrollbar-thumb: #3a3a40;
@@ -127,6 +143,13 @@
     --focus: #6ba8ff;
     --glass: rgba(24,24,27,0.78);
     --glass-strong: rgba(24,24,27,0.86);
+    --glass-border: rgba(255,255,255,0.09);
+    --glass-highlight: inset 0 1px 0 rgba(255,255,255,0.09), inset 0 0 0 1px rgba(255,255,255,0.03);
+    --glass-filter: saturate(180%) blur(20px);
+    --glass-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 2px 10px rgba(0,0,0,0.38);
+    --ground-1: rgba(61,158,255,0.13);
+    --ground-2: rgba(40,200,190,0.07);
+    --ground-3: rgba(150,110,255,0.10);
     --hover-bg: #26262b;
     --row-hover: #232327;
     --scrollbar-thumb: #3a3a40;
@@ -152,6 +175,37 @@ body {
   letter-spacing: -0.1px;
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Ambient ground the glass panels refract. Fixed and static (cheap to paint);
+   the app shell sits transparent on top so cards frost over these soft washes. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 52% at 12% 6%, var(--ground-1), transparent 60%),
+    radial-gradient(52% 48% at 92% 16%, var(--ground-3), transparent 60%),
+    radial-gradient(66% 58% at 82% 100%, var(--ground-2), transparent 62%);
+}
+
+/* Fallbacks for the glass material. Force opaque, blur-free surfaces when the
+   viewer asks for reduced transparency or the browser lacks backdrop-filter, so
+   text never sits on a see-through wash. !important beats theme specificity. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass: var(--surface) !important;
+    --glass-strong: var(--surface-raised) !important;
+    --glass-filter: none !important;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass: var(--surface) !important;
+    --glass-strong: var(--surface-raised) !important;
+  }
 }
 
 ::selection {
@@ -336,8 +390,8 @@ input, select, textarea {
 /* Modal */
 .il-backdrop {
   animation: backdropFadeIn 0.18s ease forwards;
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(6px) saturate(140%);
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
 }
 .il-modal {
   animation: modalSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -371,8 +425,8 @@ input, select, textarea {
   top: 0;
   z-index: 30;
   background: var(--glass) !important;
-  backdrop-filter: saturate(180%) blur(12px);
-  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
 }
 /* Below 768px (useWindowSize's isMobile breakpoint) the Layout top bar is
    sticky and 54px tall, so page headers stick just beneath it */
@@ -385,8 +439,8 @@ input, select, textarea {
 /* Mobile bottom tab bar glass */
 .il-tabbar {
   background: var(--glass-strong) !important;
-  backdrop-filter: saturate(180%) blur(14px);
-  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
 }
 
 /* Auth card entrance */
@@ -404,12 +458,14 @@ input, select, textarea {
   font-variant-numeric: tabular-nums;
 }
 
-/* Elevated surface card */
+/* Elevated surface card — frosted glass over the ambient ground */
 .il-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
 }
 
 /* Interactive elevation: lift one tier on hover */
