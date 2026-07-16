@@ -797,7 +797,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                     <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--muted)', textDecoration: 'underline', flexShrink: 0 }}>View</a>
                     {signed ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                        <span style={{ fontSize: '12px', color: '#1a7a4a', fontWeight: 500 }}>✓ Received</span>
+                        <span style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 500 }}>✓ Received</span>
                         <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '11px', color: 'var(--subtle)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Undo</button>
                       </div>
                     ) : (
@@ -809,15 +809,15 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                   <div style={{ marginTop: '10px' }}>
                     {completedFileUrl ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '12px', color: '#1a7a4a' }}>✓ Uploaded</span>
+                        <span style={{ fontSize: '12px', color: 'var(--success)' }}>✓ Uploaded</span>
                         <a href={completedFileUrl} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'none' }}>View file</a>
-                        <label style={{ fontSize: '12px', color: isUploading ? '#a4a39f' : '#70706b', cursor: isUploading ? 'default' : 'pointer' }}>
+                        <label style={{ fontSize: '12px', color: isUploading ? 'var(--subtle)' : 'var(--muted)', cursor: isUploading ? 'default' : 'pointer' }}>
                           {isUploading ? 'Uploading...' : 'Replace'}
                           <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={e => handleEmployeeDocumentUpload(e, doc.id)} disabled={!!uploadingDocId} />
                         </label>
                       </div>
                     ) : (
-                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: isUploading ? '#a4a39f' : '#0066cc', cursor: isUploading ? 'default' : 'pointer', border: '1px solid ' + (isUploading ? '#e2e1dd' : '#cce0f5'), borderRadius: '6px', padding: '6px 12px', background: isUploading ? '#f7f6f4' : '#f0f7ff' }}>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: isUploading ? 'var(--subtle)' : 'var(--brand)', cursor: isUploading ? 'default' : 'pointer', border: '1px solid ' + (isUploading ? 'var(--border)' : 'var(--brand-light)'), borderRadius: '6px', padding: '6px 12px', background: isUploading ? 'var(--surface-raised)' : 'var(--brand-light)' }}>
                         {!isUploading && <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 10V4M4 7l3-3 3 3"/><path d="M2 12h10"/></svg>}
                         {isUploading ? 'Uploading...' : 'Upload completed document'}
                         <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={e => handleEmployeeDocumentUpload(e, doc.id)} disabled={!!uploadingDocId} />

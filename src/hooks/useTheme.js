@@ -11,12 +11,19 @@ function apply(theme) {
   else root.setAttribute('data-theme', theme)
 }
 
+// The persisted choice. Read fresh each time so a component that mounts after
+// the user changed the theme (e.g. ThemeToggle remounting on navigation) starts
+// from the current value, not a stale module-load snapshot.
+function readStored() {
+  return (typeof localStorage !== 'undefined' && localStorage.getItem(KEY)) || 'system'
+}
+
 // Apply immediately on module load so there's no flash before React mounts.
-const stored = (typeof localStorage !== 'undefined' && localStorage.getItem(KEY)) || 'system'
-apply(stored)
+apply(readStored())
 
 export function useTheme() {
-  const [theme, setThemeState] = useState(stored)
+  // Lazy initializer runs on every mount, reading the current persisted value.
+  const [theme, setThemeState] = useState(readStored)
 
   useEffect(() => { apply(theme) }, [theme])
 
