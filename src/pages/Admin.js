@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import Layout from '../components/Layout'
 import ConfirmModal from '../components/ConfirmModal'
@@ -11,6 +11,15 @@ import { PHASES, BUCKET_SECTIONS, ONBOARDING_STATUS } from '../config'
 import { T } from '../ui/theme'
 
 const OWNERS = ['HR', 'Manager', 'IT']
+
+// Order tasks within a phase by their saved sort_order, falling back to name so
+// unranked (sort_order 0) tasks stay stable until an admin drags them.
+function sortTemplates(a, b) {
+  const ao = a.sort_order ?? 0
+  const bo = b.sort_order ?? 0
+  if (ao !== bo) return ao - bo
+  return a.task_name.localeCompare(b.task_name)
+}
 
 const BASE_STYLES = {
   title: { fontSize: '20px', fontWeight: 600, letterSpacing: '-0.5px', color: T.text },
@@ -25,6 +34,7 @@ const BASE_STYLES = {
   phaseLabel: { fontSize: '11px', fontWeight: 600, color: T.subtle, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px', marginTop: '24px' },
   pill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: '#f0efe9', color: T.muted, fontWeight: 500 },
   emptyState: { padding: '48px 0', textAlign: 'center', color: T.subtle, fontSize: '13px' },
+  dragHandle: { color: '#c8c7c3', fontSize: '13px', lineHeight: 1, flexShrink: 0, userSelect: 'none', padding: '4px', margin: '-4px 2px -4px -4px' },
 }
 
 function tabStyle(active) {
@@ -63,8 +73,6 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const { toast, showToast, hideToast } = useToast()
   const { isMobile } = useWindowSize()
   const [taskLibrary, setTaskLibrary] = useState([])
-  const [useLibraryTask, setUseLibraryTask] = useState(true)
-  const [useLibrarySubtask, setUseLibrarySubtask] = useState(true)
   const [uploadDocRole, setUploadDocRole] = useState('')
   const [uploadingDoc, setUploadingDoc] = useState(false)
   const [historyFilter, setHistoryFilter] = useState('all')
@@ -77,6 +85,10 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [bulkOwner, setBulkOwner] = useState('HR')
   const [templateCounts, setTemplateCounts] = useState({})
   const [libraryOpen, setLibraryOpen] = useState(false)
+  const [draggingTaskId, setDraggingTaskId] = useState(null)
+  const [tplDropTarget, setTplDropTarget] = useState(null)
+  const [flashTemplateId, setFlashTemplateId] = useState(null)
+  const flashTemplateTimer = useRef(null)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchRoles is stable, mount-only fetch
   useEffect(() => { fetchRoles() }, [])
@@ -97,13 +109,37 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
     return () => window.removeEventListener('keydown', onKey)
   }, [libraryOpen])
 
+  useEffect(() => () => clearTimeout(flashTemplateTimer.current), [])
+
+  // Native HTML5 drag doesn't auto-scroll the window in every browser, and a
+  // role's task list can be long — nudge the viewport when the drag pointer
+  // nears the top or bottom edge.
+  useEffect(() => {
+    if (!draggingTaskId) return
+    const EDGE = 90
+    const onDragOver = (e) => {
+      const y = e.clientY
+      const h = window.innerHeight
+      if (y < EDGE) window.scrollBy(0, -Math.ceil((EDGE - y) / 4))
+      else if (y > h - EDGE) window.scrollBy(0, Math.ceil((y - (h - EDGE)) / 4))
+    }
+    window.addEventListener('dragover', onDragOver)
+    return () => window.removeEventListener('dragover', onDragOver)
+  }, [draggingTaskId])
+
   async function fetchRoles() {
     const { data } = await supabase.from('roles').select('*').order('name')
     if (data) setRoles(data)
   }
 
   async function fetchTemplates(roleId) {
-    const { data } = await supabase.from('onboarding_templates').select('*').eq('role_id', roleId).order('phase')
+    const { data } = await supabase
+      .from('onboarding_templates')
+      .select('*')
+      .eq('role_id', roleId)
+      .order('phase')
+      .order('sort_order')
+      .order('task_name')
     if (data) setTemplates(data)
   }
 
@@ -170,15 +206,17 @@ async function addRole() {
   async function addTask(phase) {
     if (!newTaskName.trim() || !selectedRole) return
 
+    const siblings = templates.filter(t => t.phase === phase && !t.parent_id)
+    const sortOrder = siblings.length ? Math.max(...siblings.map(s => s.sort_order ?? 0)) + 1 : 0
+
     const { data: newTask } = await supabase
       .from('onboarding_templates')
-      .insert({ role_id: selectedRole.id, task_name: newTaskName.trim(), phase, owner: newTaskOwner })
+      .insert({ role_id: selectedRole.id, task_name: newTaskName.trim(), phase, owner: newTaskOwner, sort_order: sortOrder })
       .select().single()
 
     const addedName = newTaskName.trim()
     setNewTaskName('')
     setAddingTaskToPhase(null)
-    setUseLibraryTask(true)
     fetchTemplates(selectedRole.id)
     fetchTemplateCounts()
     if (!newTask) return
@@ -213,11 +251,96 @@ async function addRole() {
     }
   }
 
+  // Briefly highlight a task row after it lands in a new spot.
+  function flashTemplate(id) {
+    clearTimeout(flashTemplateTimer.current)
+    setFlashTemplateId(id)
+    flashTemplateTimer.current = setTimeout(() => setFlashTemplateId(null), 1200)
+  }
+
+  // Drag-and-drop reordering of a role's task template. Moves `draggedId` into
+  // `targetPhase`, positioned before `beforeId` (appended when beforeId is
+  // null), and persists the new positions as sort_order so the arrangement
+  // becomes the default for that role. Only top-level tasks move between days;
+  // subtasks stay attached to their parent.
+  async function moveTemplate(draggedId, targetPhase, beforeId) {
+    const dragged = templates.find(t => t.id === draggedId)
+    if (!dragged || dragged.parent_id) return
+    if (beforeId === draggedId) return
+
+    const targetList = templates
+      .filter(t => t.id !== draggedId && !t.parent_id && t.phase === targetPhase)
+      .sort(sortTemplates)
+
+    let insertAt = beforeId ? targetList.findIndex(t => t.id === beforeId) : targetList.length
+    if (insertAt === -1) insertAt = targetList.length
+
+    const ordered = [
+      ...targetList.slice(0, insertAt),
+      { ...dragged, phase: targetPhase },
+      ...targetList.slice(insertAt),
+    ]
+
+    const orderMap = new Map(ordered.map((t, i) => [t.id, i]))
+    const noChange = dragged.phase === targetPhase && (dragged.sort_order ?? 0) === orderMap.get(draggedId)
+      && targetList.every(t => (t.sort_order ?? 0) === orderMap.get(t.id))
+    if (noChange) return
+
+    // Optimistic reorder so the list responds instantly.
+    setTemplates(prev => prev.map(t => {
+      if (t.id === draggedId) return { ...t, phase: targetPhase, sort_order: orderMap.get(t.id) }
+      if (orderMap.has(t.id)) return { ...t, sort_order: orderMap.get(t.id) }
+      return t
+    }))
+
+    const results = await Promise.all(ordered.map((t, i) =>
+      supabase.from('onboarding_templates').update({ phase: targetPhase, sort_order: i }).eq('id', t.id)
+    ))
+    const failed = results.find(r => r.error)
+    if (failed) {
+      showToast(handleSupabaseError(failed.error, 'Failed to reorder tasks. Please try again.'), 'error')
+      fetchTemplates(selectedRole.id)
+    }
+  }
+
+  function handleTaskDragStart(e, task) {
+    setDraggingTaskId(task.id)
+    e.dataTransfer.effectAllowed = 'move'
+    try { e.dataTransfer.setData('text/plain', task.id) } catch (_) { /* some browsers require this call */ }
+  }
+  function handleTaskDragEnd() { setDraggingTaskId(null); setTplDropTarget(null) }
+  function handleTaskRowDragOver(e, task, index, phaseTasks) {
+    if (!draggingTaskId) return
+    e.preventDefault(); e.stopPropagation()
+    // Top half of the row inserts before it, bottom half inserts after
+    // (i.e. before the next row, or appended when it's the last row).
+    const rect = e.currentTarget.getBoundingClientRect()
+    const after = e.clientY > rect.top + rect.height / 2
+    const beforeId = after ? (phaseTasks[index + 1]?.id ?? null) : task.id
+    setTplDropTarget({ phase: task.phase, beforeId })
+  }
+  function handlePhaseDragOver(e, phase) {
+    if (!draggingTaskId) return
+    e.preventDefault()
+    setTplDropTarget({ phase, beforeId: null })
+  }
+  function handlePhaseDrop(e, phase) {
+    if (!draggingTaskId) return
+    e.preventDefault()
+    const before = tplDropTarget && tplDropTarget.phase === phase ? tplDropTarget.beforeId : null
+    const id = draggingTaskId
+    setDraggingTaskId(null); setTplDropTarget(null)
+    moveTemplate(id, phase, before)
+    flashTemplate(id)
+  }
+
   async function addBulkTasks() {
     const lines = bulkText.split('\n').map(l => l.trim()).filter(Boolean)
     if (!lines.length || !selectedRole) return
+    const siblings = templates.filter(t => t.phase === bulkPhase && !t.parent_id)
+    const base = siblings.length ? Math.max(...siblings.map(s => s.sort_order ?? 0)) + 1 : 0
     const { error } = await supabase.from('onboarding_templates').insert(
-      lines.map(name => ({ role_id: selectedRole.id, task_name: name, phase: bulkPhase, owner: bulkOwner }))
+      lines.map((name, i) => ({ role_id: selectedRole.id, task_name: name, phase: bulkPhase, owner: bulkOwner, sort_order: base + i }))
     )
     if (error) { showToast(handleSupabaseError(error, 'Failed to add tasks.'), 'error'); return }
     const newNames = lines.filter(name => !taskLibrary.some(t => t.task_name.toLowerCase() === name.toLowerCase()))
@@ -633,6 +756,17 @@ function renderModal() {
 
                 <div style={{ padding: '20px 32px', maxWidth: '640px' }}>
 
+                  {/* Shared suggestion list for the task/subtask add fields. */}
+                  <datalist id="tpl-task-library">
+                    {taskLibrary.map(tl => <option key={tl.id} value={tl.task_name} />)}
+                  </datalist>
+
+                  {!bulkMode && templates.some(t => !t.parent_id) && (
+                    <div style={{ fontSize: '11px', color: 'var(--subtle)', marginBottom: '4px' }}>
+                      Drag the ⠿ handle to reorder tasks within a day or move them to another day. This order is the default for every new {selectedRole.name}.
+                    </div>
+                  )}
+
                   {/* Bulk add */}
                   {bulkMode && (
                     <div style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
@@ -666,25 +800,47 @@ function renderModal() {
                     <div key={section.label}>
                       {showHeading && <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.6px', margin: '18px 0 6px' }}>{section.label}</div>}
                       {section.buckets.map(phase => {
-                    const phaseTasks = templates.filter(t => t.phase === phase && !t.parent_id)
+                    const phaseTasks = templates.filter(t => t.phase === phase && !t.parent_id).sort(sortTemplates)
                     const isAddingToThis = addingTaskToPhase === phase
+                    const isPhaseDropTarget = draggingTaskId && tplDropTarget && tplDropTarget.phase === phase
                     return (
-                      <div key={phase} style={{ marginBottom: '28px' }}>
+                      <div key={phase}
+                        onDragOver={e => handlePhaseDragOver(e, phase)}
+                        onDrop={e => handlePhaseDrop(e, phase)}
+                        style={{
+                          marginBottom: '28px', borderRadius: '8px',
+                          // While a drag is in flight, faintly outline every day so all
+                          // valid drop zones are visible; the hovered one gets the bold cue.
+                          outline: isPhaseDropTarget ? '2px dashed #0066cc' : draggingTaskId ? '1px dashed #d8d7d3' : 'none',
+                          outlineOffset: '2px',
+                          background: isPhaseDropTarget ? '#f7fbff' : 'transparent',
+                          transition: 'background 0.12s',
+                        }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px' }}>
                           <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--subtle)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{phase}</span>
                           {phaseTasks.length > 0 && <span style={{ fontSize: '11px', color: '#c8c7c3' }}>{phaseTasks.length}</span>}
                         </div>
 
                         {phaseTasks.length === 0 && !isAddingToThis && (
-                          <div style={{ fontSize: '12px', color: '#c8c7c3', paddingBottom: '6px' }}>No tasks</div>
+                          <div style={{ fontSize: '12px', color: '#c8c7c3', paddingBottom: '6px' }}>{draggingTaskId ? 'Drop here' : 'No tasks'}</div>
                         )}
 
-                        {phaseTasks.map(t => {
+                        {phaseTasks.map((t, idx) => {
                           const subtasks = templates.filter(s => s.parent_id === t.id)
+                          const isDragging = draggingTaskId === t.id
+                          const isEditingThis = editingTask === t.id
+                          const showInsertLine = draggingTaskId && draggingTaskId !== t.id && tplDropTarget && tplDropTarget.phase === phase && tplDropTarget.beforeId === t.id
                           return (
                             <div key={t.id}>
-                              <div style={styles.row}>
-                                {editingTask === t.id ? (
+                              {showInsertLine && <div style={{ height: '2px', background: '#0066cc', borderRadius: '2px', margin: '0 6px' }} />}
+                              <div
+                                className={`il-row${flashTemplateId === t.id ? ' il-row-flash' : ''}`}
+                                draggable={!isEditingThis}
+                                onDragStart={e => handleTaskDragStart(e, t)}
+                                onDragEnd={handleTaskDragEnd}
+                                onDragOver={e => handleTaskRowDragOver(e, t, idx, phaseTasks)}
+                                style={{ ...styles.row, opacity: isDragging ? 0.4 : 1, background: isDragging ? '#f0f7ff' : undefined }}>
+                                {isEditingThis ? (
                                   <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
                                     <input style={{ ...styles.input, flex: 1 }} value={editingTaskName}
                                       onChange={e => setEditingTaskName(e.target.value)}
@@ -695,6 +851,7 @@ function renderModal() {
                                   </div>
                                 ) : (
                                   <>
+                                    <span className="il-drag-handle" style={styles.dragHandle} title="Drag to reorder or move to another day">⠿</span>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
                                       <span style={styles.rowName}>{t.task_name}</span>
                                       <span style={styles.pill}>{t.owner}</span>
@@ -737,23 +894,11 @@ function renderModal() {
                               {addingSubtaskTo === t.id && (
                                 <div style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '12px', background: 'var(--surface-raised)', borderBottom: '1px solid var(--border-subtle)' }}>
                                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                    {useLibrarySubtask ? (
-                                      <select style={{ ...styles.input, flex: 1, minWidth: '160px' }} value={newSubtaskName}
-                                        onChange={e => {
-                                          if (e.target.value === '__custom__') { setUseLibrarySubtask(false); setNewSubtaskName('') }
-                                          else setNewSubtaskName(e.target.value)
-                                        }}>
-                                        <option value="">Select from library...</option>
-                                        {taskLibrary.map(tl => <option key={tl.id} value={tl.task_name}>{tl.task_name}</option>)}
-                                        <option value="__custom__">+ Custom subtask</option>
-                                      </select>
-                                    ) : (
-                                      <input style={{ ...styles.input, flex: 1, minWidth: '160px' }} placeholder="Subtask name"
-                                        value={newSubtaskName} onChange={e => setNewSubtaskName(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && addSubtask(t.id)} autoFocus />
-                                    )}
+                                    <input list="tpl-task-library" style={{ ...styles.input, flex: 1, minWidth: '160px' }} placeholder="Type a subtask name…"
+                                      value={newSubtaskName} onChange={e => setNewSubtaskName(e.target.value)}
+                                      onKeyDown={e => e.key === 'Enter' && addSubtask(t.id)} autoFocus />
                                     <button style={styles.btnPrimary} onClick={() => addSubtask(t.id)}>Add</button>
-                                    <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => { setAddingSubtaskTo(null); setUseLibrarySubtask(true) }}>Cancel</button>
+                                    <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => setAddingSubtaskTo(null)}>Cancel</button>
                                   </div>
                                 </div>
                               )}
@@ -761,41 +906,29 @@ function renderModal() {
                           )
                         })}
 
+                        {/* trailing insert line when appending to the end of this day */}
+                        {draggingTaskId && tplDropTarget && tplDropTarget.phase === phase && tplDropTarget.beforeId === null && phaseTasks.length > 0 && (
+                          <div style={{ height: '2px', background: '#0066cc', borderRadius: '2px', margin: '0 6px' }} />
+                        )}
+
                         {/* Per-phase add */}
                         {isAddingToThis ? (
                           <div style={{ marginTop: '8px', padding: '12px', background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: '7px' }}>
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                              {useLibraryTask ? (
-                                <select style={{ ...styles.input, flex: 1, minWidth: '180px' }} value={newTaskName}
-                                  onChange={e => {
-                                    if (e.target.value === '__custom__') { setUseLibraryTask(false); setNewTaskName('') }
-                                    else setNewTaskName(e.target.value)
-                                  }}>
-                                  <option value="">Select from library...</option>
-                                  {taskLibrary.map(tl => <option key={tl.id} value={tl.task_name}>{tl.task_name}</option>)}
-                                  <option value="__custom__">+ Custom task</option>
-                                </select>
-                              ) : (
-                                <input style={{ ...styles.input, flex: 1, minWidth: '180px' }} placeholder="Task name"
-                                  value={newTaskName} onChange={e => setNewTaskName(e.target.value)}
-                                  onKeyDown={e => e.key === 'Enter' && addTask(phase)} autoFocus />
-                              )}
+                              <input list="tpl-task-library" style={{ ...styles.input, flex: 1, minWidth: '180px' }} placeholder="Type a task name…"
+                                value={newTaskName} onChange={e => setNewTaskName(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && addTask(phase)} autoFocus />
                               <select style={styles.input} value={newTaskOwner} onChange={e => setNewTaskOwner(e.target.value)}>
                                 {OWNERS.map(o => <option key={o}>{o}</option>)}
                               </select>
                               <button style={styles.btnPrimary} onClick={() => addTask(phase)}>Add</button>
-                              <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => { setAddingTaskToPhase(null); setUseLibraryTask(true); setNewTaskName('') }}>Cancel</button>
+                              <button style={{ ...styles.btnGhost, padding: '0 8px' }} onClick={() => { setAddingTaskToPhase(null); setNewTaskName('') }}>Cancel</button>
                             </div>
-                            {!useLibraryTask && (
-                              <button style={{ ...styles.btnGhost, fontSize: '11px', color: 'var(--subtle)', marginTop: '6px' }}
-                                onClick={() => { setUseLibraryTask(true); setNewTaskName('') }}>
-                                Use library instead
-                              </button>
-                            )}
+                            <div style={{ ...styles.rowMuted, marginTop: '6px' }}>Just start typing to add a custom task, or pick a saved one from the suggestions.</div>
                           </div>
                         ) : !bulkMode && (
                           <button
-                            onClick={() => { setAddingTaskToPhase(phase); setNewTaskName(''); setNewTaskOwner('HR'); setUseLibraryTask(true) }}
+                            onClick={() => { setAddingTaskToPhase(phase); setNewTaskName(''); setNewTaskOwner('HR') }}
                             style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0', fontFamily: 'inherit', display: 'block' }}>
                             + Add task
                           </button>
