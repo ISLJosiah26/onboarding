@@ -57,6 +57,9 @@ vi.mock('../supabaseClient', () => ({
       templates: [
         { id: 't1', role_id: 'r1', task_name: 'Zebra task', phase: 'Day 1', owner: 'HR', parent_id: null, sort_order: 0 },
         { id: 't2', role_id: 'r1', task_name: 'Apple task', phase: 'Day 1', owner: 'HR', parent_id: null, sort_order: 1 },
+        // Two subtasks under Zebra whose saved order also disagrees with A–Z.
+        { id: 's1', role_id: 'r1', task_name: 'Zzz sub', phase: 'Day 1', owner: 'HR', parent_id: 't1', sort_order: 0 },
+        { id: 's2', role_id: 'r1', task_name: 'Aaa sub', phase: 'Day 1', owner: 'HR', parent_id: 't1', sort_order: 1 },
       ],
     },
     updates
@@ -87,17 +90,21 @@ async function openRole() {
   await screen.findByText('Zebra task')
 }
 
+// The draggable row that owns a given task/subtask name.
+const rowFor = (name) => screen.getByText(name).closest('[draggable="true"]')
+const precedes = (a, b) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+
 beforeEach(() => { updates.length = 0 })
 
-test('renders a role\'s tasks in saved sort_order, not alphabetically', async () => {
+test('renders tasks and subtasks in saved sort_order, not alphabetically', async () => {
   renderTemplates()
   await openRole()
 
-  const zebra = screen.getByText('Zebra task')
-  const apple = screen.getByText('Apple task')
-  // sort_order 0 (Zebra) must precede sort_order 1 (Apple), even though "Apple"
+  // sort_order 0 (Zebra) precedes sort_order 1 (Apple), even though "Apple"
   // sorts first alphabetically.
-  expect(zebra.compareDocumentPosition(apple) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(precedes(screen.getByText('Zebra task'), screen.getByText('Apple task'))).toBe(true)
+  // Subtasks follow the same rule under their parent.
+  expect(precedes(screen.getByText('Zzz sub'), screen.getByText('Aaa sub'))).toBe(true)
 })
 
 test('add-task field defaults to a free-text custom entry with library suggestions', async () => {
@@ -122,20 +129,45 @@ test('task rows are draggable and dropping persists a new sort_order', async () 
   renderTemplates()
   await openRole()
 
-  const rows = document.querySelectorAll('[draggable="true"]')
-  expect(rows.length).toBe(2)
+  const zebraRow = rowFor('Zebra task')
+  const appleRow = rowFor('Apple task')
+  expect(zebraRow).toBeTruthy()
+  expect(appleRow).toBeTruthy()
 
   const dataTransfer = { setData: vi.fn(), effectAllowed: '' }
   // Drag the second task (Apple) and drop it above the first (Zebra) — a real
   // reorder. The drop bubbles to the day's drop zone.
-  fireEvent.dragStart(rows[1], { dataTransfer })
-  fireEvent.dragOver(rows[0], { dataTransfer, clientY: 0 })
-  fireEvent.drop(rows[0], { dataTransfer })
+  fireEvent.dragStart(appleRow, { dataTransfer })
+  fireEvent.dragOver(zebraRow, { dataTransfer, clientY: 0 })
+  fireEvent.drop(zebraRow, { dataTransfer })
 
-  // Both tasks in the day get their sort_order rewritten to the new positions.
+  // Both tasks in the day get phase + sort_order rewritten to the new positions.
   await waitFor(() => {
-    const templateUpdates = updates.filter(u => u.table === 'onboarding_templates')
-    expect(templateUpdates.length).toBeGreaterThan(0)
-    expect(templateUpdates.every(u => typeof u.payload.sort_order === 'number')).toBe(true)
+    const taskUpdates = updates.filter(u => u.filters.id === 't1' || u.filters.id === 't2')
+    expect(taskUpdates.length).toBe(2)
+    expect(taskUpdates.every(u => typeof u.payload.sort_order === 'number' && 'phase' in u.payload)).toBe(true)
+  })
+})
+
+test('subtask rows are draggable and dropping reorders them under their parent', async () => {
+  renderTemplates()
+  await openRole()
+
+  const zzzRow = rowFor('Zzz sub')
+  const aaaRow = rowFor('Aaa sub')
+  expect(zzzRow).toBeTruthy()
+  expect(aaaRow).toBeTruthy()
+
+  const dataTransfer = { setData: vi.fn(), effectAllowed: '' }
+  // Drag the second subtask (Aaa, sort 1) above the first (Zzz, sort 0).
+  fireEvent.dragStart(aaaRow, { dataTransfer })
+  fireEvent.dragOver(zzzRow, { dataTransfer, clientY: 0 })
+  fireEvent.drop(zzzRow, { dataTransfer })
+
+  await waitFor(() => {
+    const subUpdates = updates.filter(u => u.filters.id === 's1' || u.filters.id === 's2')
+    expect(subUpdates.length).toBe(2)
+    // A subtask reorder rewrites sort_order only — it never touches the phase.
+    expect(subUpdates.every(u => typeof u.payload.sort_order === 'number' && !('phase' in u.payload))).toBe(true)
   })
 })

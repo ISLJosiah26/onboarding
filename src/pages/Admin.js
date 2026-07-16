@@ -87,6 +87,8 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [draggingTaskId, setDraggingTaskId] = useState(null)
   const [tplDropTarget, setTplDropTarget] = useState(null)
+  const [draggingSubtaskId, setDraggingSubtaskId] = useState(null)
+  const [subDropTarget, setSubDropTarget] = useState(null)
   const [flashTemplateId, setFlashTemplateId] = useState(null)
   const flashTemplateTimer = useRef(null)
 
@@ -115,7 +117,7 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
   // role's task list can be long — nudge the viewport when the drag pointer
   // nears the top or bottom edge.
   useEffect(() => {
-    if (!draggingTaskId) return
+    if (!draggingTaskId && !draggingSubtaskId) return
     const EDGE = 90
     const onDragOver = (e) => {
       const y = e.clientY
@@ -125,7 +127,7 @@ export default function Admin({ session, userProfile, initialTab, onBack, onNavi
     }
     window.addEventListener('dragover', onDragOver)
     return () => window.removeEventListener('dragover', onDragOver)
-  }, [draggingTaskId])
+  }, [draggingTaskId, draggingSubtaskId])
 
   async function fetchRoles() {
     const { data } = await supabase.from('roles').select('*').order('name')
@@ -334,6 +336,70 @@ async function addRole() {
     flashTemplate(id)
   }
 
+  // Drag-and-drop reordering of a task's subtasks. A subtask stays attached to
+  // its parent; only its position among its siblings changes, persisted as
+  // sort_order so it becomes the default order for that role.
+  async function moveSubtask(draggedId, parentId, beforeId) {
+    const dragged = templates.find(t => t.id === draggedId)
+    if (!dragged || dragged.parent_id !== parentId) return
+    if (beforeId === draggedId) return
+
+    const targetList = templates
+      .filter(t => t.id !== draggedId && t.parent_id === parentId)
+      .sort(sortTemplates)
+
+    let insertAt = beforeId ? targetList.findIndex(t => t.id === beforeId) : targetList.length
+    if (insertAt === -1) insertAt = targetList.length
+
+    const ordered = [
+      ...targetList.slice(0, insertAt),
+      dragged,
+      ...targetList.slice(insertAt),
+    ]
+
+    const orderMap = new Map(ordered.map((t, i) => [t.id, i]))
+    const noChange = (dragged.sort_order ?? 0) === orderMap.get(draggedId)
+      && targetList.every(t => (t.sort_order ?? 0) === orderMap.get(t.id))
+    if (noChange) return
+
+    // Optimistic reorder so the list responds instantly.
+    setTemplates(prev => prev.map(t => orderMap.has(t.id) ? { ...t, sort_order: orderMap.get(t.id) } : t))
+
+    const results = await Promise.all(ordered.map((t, i) =>
+      supabase.from('onboarding_templates').update({ sort_order: i }).eq('id', t.id)
+    ))
+    const failed = results.find(r => r.error)
+    if (failed) {
+      showToast(handleSupabaseError(failed.error, 'Failed to reorder subtasks. Please try again.'), 'error')
+      fetchTemplates(selectedRole.id)
+    }
+  }
+
+  function handleSubtaskDragStart(e, sub) {
+    e.stopPropagation()
+    setDraggingSubtaskId(sub.id)
+    e.dataTransfer.effectAllowed = 'move'
+    try { e.dataTransfer.setData('text/plain', sub.id) } catch (_) { /* some browsers require this call */ }
+  }
+  function handleSubtaskDragEnd() { setDraggingSubtaskId(null); setSubDropTarget(null) }
+  function handleSubtaskRowDragOver(e, sub, index, siblingSubs) {
+    if (!draggingSubtaskId) return
+    e.preventDefault(); e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    const after = e.clientY > rect.top + rect.height / 2
+    const beforeId = after ? (siblingSubs[index + 1]?.id ?? null) : sub.id
+    setSubDropTarget({ parentId: sub.parent_id, beforeId })
+  }
+  function handleSubtaskDrop(e, parentId) {
+    if (!draggingSubtaskId) return
+    e.preventDefault(); e.stopPropagation()
+    const before = subDropTarget && subDropTarget.parentId === parentId ? subDropTarget.beforeId : null
+    const id = draggingSubtaskId
+    setDraggingSubtaskId(null); setSubDropTarget(null)
+    moveSubtask(id, parentId, before)
+    flashTemplate(id)
+  }
+
   async function addBulkTasks() {
     const lines = bulkText.split('\n').map(l => l.trim()).filter(Boolean)
     if (!lines.length || !selectedRole) return
@@ -394,12 +460,15 @@ async function saveTaskEdit(id) {
 async function addSubtask(parentId) {
   if (!newSubtaskName.trim()) return
   const parent = templates.find(t => t.id === parentId)
+  const siblings = templates.filter(t => t.parent_id === parentId)
+  const sortOrder = siblings.length ? Math.max(...siblings.map(s => s.sort_order ?? 0)) + 1 : 0
   const { error } = await supabase.from('onboarding_templates').insert({
     role_id: selectedRole.id,
     task_name: newSubtaskName.trim(),
     phase: parent?.phase || 'Day 1',
     owner: parent?.owner,
-    parent_id: parentId
+    parent_id: parentId,
+    sort_order: sortOrder
   })
   if (error) {
     showToast(handleSupabaseError(error, 'Failed to add subtask.'), 'error')
@@ -763,7 +832,7 @@ function renderModal() {
 
                   {!bulkMode && templates.some(t => !t.parent_id) && (
                     <div style={{ fontSize: '11px', color: 'var(--subtle)', marginBottom: '4px' }}>
-                      Drag the ⠿ handle to reorder tasks within a day or move them to another day. This order is the default for every new {selectedRole.name}.
+                      Drag the ⠿ handle to reorder tasks within a day, move them to another day, or reorder a task's subtasks. This order is the default for every new {selectedRole.name}.
                     </div>
                   )}
 
@@ -826,7 +895,7 @@ function renderModal() {
                         )}
 
                         {phaseTasks.map((t, idx) => {
-                          const subtasks = templates.filter(s => s.parent_id === t.id)
+                          const subtasks = templates.filter(s => s.parent_id === t.id).sort(sortTemplates)
                           const isDragging = draggingTaskId === t.id
                           const isEditingThis = editingTask === t.id
                           const showInsertLine = draggingTaskId && draggingTaskId !== t.id && tplDropTarget && tplDropTarget.phase === phase && tplDropTarget.beforeId === t.id
@@ -865,9 +934,22 @@ function renderModal() {
                                 )}
                               </div>
 
-                              {subtasks.map(s => (
-                                <div key={s.id} style={{ ...styles.row, paddingLeft: '20px', background: 'var(--surface-raised)' }}>
-                                  {editingTask === s.id ? (
+                              {subtasks.map((s, sIdx) => {
+                                const isSubDragging = draggingSubtaskId === s.id
+                                const isEditingSub = editingTask === s.id
+                                const showSubInsert = draggingSubtaskId && draggingSubtaskId !== s.id && subDropTarget && subDropTarget.parentId === t.id && subDropTarget.beforeId === s.id
+                                return (
+                                <div key={s.id}>
+                                  {showSubInsert && <div style={{ height: '2px', background: '#0066cc', borderRadius: '2px', margin: '0 6px 0 26px' }} />}
+                                  <div
+                                    className={`il-row${flashTemplateId === s.id ? ' il-row-flash' : ''}`}
+                                    draggable={!isEditingSub}
+                                    onDragStart={e => handleSubtaskDragStart(e, s)}
+                                    onDragEnd={handleSubtaskDragEnd}
+                                    onDragOver={e => handleSubtaskRowDragOver(e, s, sIdx, subtasks)}
+                                    onDrop={e => handleSubtaskDrop(e, t.id)}
+                                    style={{ ...styles.row, paddingLeft: '20px', background: isSubDragging ? '#f0f7ff' : 'var(--surface-raised)', opacity: isSubDragging ? 0.4 : 1 }}>
+                                  {isEditingSub ? (
                                     <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
                                       <input style={{ ...styles.input, flex: 1 }} value={editingTaskName}
                                         onChange={e => setEditingTaskName(e.target.value)}
@@ -878,18 +960,25 @@ function renderModal() {
                                     </div>
                                   ) : (
                                     <>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <span className="il-drag-handle" style={styles.dragHandle} title="Drag to reorder">⠿</span>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
                                         <span style={{ color: '#c8c7c3', fontSize: '12px' }}>↳</span>
                                         <span style={{ ...styles.rowName, color: 'var(--muted)' }}>{s.task_name}</span>
                                       </div>
-                                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
                                         <button style={{ ...styles.btnGhost, color: 'var(--brand)' }} onClick={() => { setEditingTask(s.id); setEditingTaskName(s.task_name) }}>Edit</button>
                                         <button style={styles.btnGhost} onClick={() => deleteTask(s.id, s.task_name)}>Remove</button>
                                       </div>
                                     </>
                                   )}
+                                  </div>
+                                  {/* trailing insert line when appending to the end of this task's subtasks */}
+                                  {sIdx === subtasks.length - 1 && draggingSubtaskId && draggingSubtaskId !== s.id && subDropTarget && subDropTarget.parentId === t.id && subDropTarget.beforeId === null && (
+                                    <div style={{ height: '2px', background: '#0066cc', borderRadius: '2px', margin: '0 6px 0 26px' }} />
+                                  )}
                                 </div>
-                              ))}
+                                )
+                              })}
 
                               {addingSubtaskTo === t.id && (
                                 <div style={{ paddingLeft: '20px', paddingTop: '8px', paddingBottom: '12px', background: 'var(--surface-raised)', borderBottom: '1px solid var(--border-subtle)' }}>
