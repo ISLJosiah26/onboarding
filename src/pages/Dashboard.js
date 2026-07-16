@@ -56,7 +56,8 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
   const styles = {
     ...BASE_STYLES,
     header: { padding: isMobile ? '16px 16px 14px' : '28px 40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 0 var(--border)', background: 'var(--surface)' },
-    stat: { background: 'var(--surface)', padding: isMobile ? '14px 16px' : '22px 40px' },
+    statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: isMobile ? '8px' : '12px', padding: isMobile ? '14px 16px 4px' : '20px 40px 6px' },
+    stat: { padding: isMobile ? '13px 14px' : '18px 22px', borderRadius: T.radiusLg },
     statValue: { fontSize: isMobile ? '22px' : '26px', fontWeight: 700, letterSpacing: '-0.8px', color: 'var(--text)', fontVariantNumeric: 'tabular-nums' },
     content: { padding: isMobile ? '0' : `0 ${p}`, flex: 1 },
     emptyState: { padding: isMobile ? '60px 16px' : '80px 40px', textAlign: 'center' },
@@ -77,15 +78,15 @@ export default function Dashboard({ session, userProfile, onStartOnboarding, onV
       </div>
 
       <div style={styles.statsRow}>
-        <div style={styles.stat}>
+        <div className="il-tile" style={styles.stat}>
           <div style={styles.statLabel}>Active</div>
           <AnimatedNumber value={onboardings.length} style={styles.statValue} />
         </div>
-        <div style={styles.stat}>
+        <div className="il-tile" style={styles.stat}>
           <div style={styles.statLabel}>90%+ done</div>
           <AnimatedNumber value={completingThisWeek} style={styles.statValue} />
         </div>
-        <div style={styles.stat}>
+        <div className="il-tile" style={styles.stat}>
           <div style={styles.statLabel}>Completed</div>
           <AnimatedNumber value={completedCount} style={styles.statValue} />
         </div>

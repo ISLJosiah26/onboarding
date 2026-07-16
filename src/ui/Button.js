@@ -6,6 +6,7 @@ import { T } from './theme'
 const VARIANTS = {
   primary: { background: T.btnPrimaryBg, color: '#fff', border: '1px solid transparent' },
   secondary: { background: T.surface, color: T.muted, border: `1px solid ${T.border}` },
+  glass: { background: 'var(--glass-strong)', color: T.text, border: '1px solid var(--glass-border)', boxShadow: 'var(--glass-highlight)' },
   ghost: { background: 'transparent', color: T.muted, border: '1px solid transparent' },
   danger: { background: T.danger, color: '#fff', border: '1px solid transparent' },
 }

@@ -688,7 +688,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
           <button style={styles.tab(activeTab === 'documents')} onClick={() => setActiveTab('documents')}>
             My Documents
             {unsignedDocCount > 0 && (
-              <span className="il-tab-badge" style={{ background: activeTab === 'documents' ? '#e2e1dd' : '#f0efe9', color: activeTab === 'documents' ? '#18181b' : '#6b6b67' }}>
+              <span className="il-tab-badge" style={{ background: activeTab === 'documents' ? 'var(--border)' : 'var(--hover-bg)', color: activeTab === 'documents' ? 'var(--text)' : 'var(--muted)' }}>
                 {unsignedDocCount}
               </span>
             )}
@@ -879,7 +879,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                               {doc.name}
                             </div>
                             <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                              <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', background: '#f0efe9', borderRadius: '3px', padding: '1px 5px' }}>{typeLabel}</span>
+                              <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', background: 'var(--hover-bg)', borderRadius: '3px', padding: '1px 5px' }}>{typeLabel}</span>
                               <span style={{ fontSize: '11px', color: 'var(--subtle)' }}>Open ↗</span>
                             </div>
                           </a>
@@ -936,8 +936,8 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                     </div>
                     {torTotal > 0 && (
                       <div style={{ marginTop: '14px', borderTop: '1px solid var(--border-subtle)', paddingTop: '14px' }}>
-                        <div style={{ height: '5px', borderRadius: '3px', background: '#f0efe9', overflow: 'hidden', display: 'flex' }}>
-                          {torUsed > 0 && <div style={{ width: `${Math.min(100, (torUsed / torTotal) * 100)}%`, background: '#18181b', transition: 'width 0.3s ease' }} />}
+                        <div style={{ height: '5px', borderRadius: '3px', background: 'var(--border-subtle)', overflow: 'hidden', display: 'flex' }}>
+                          {torUsed > 0 && <div style={{ width: `${Math.min(100, (torUsed / torTotal) * 100)}%`, background: 'var(--text)', transition: 'width 0.3s ease' }} />}
                           {torPending > 0 && <div style={{ width: `${Math.min(100 - (torUsed / torTotal) * 100, (torPending / torTotal) * 100)}%`, background: '#d4901a', transition: 'width 0.3s ease' }} />}
                         </div>
                       </div>

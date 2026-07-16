@@ -33,7 +33,7 @@ export const T = {
   // Radii
   radiusSm: '6px',
   radiusMd: '8px',
-  radiusLg: '12px',
+  radiusLg: '16px',
 
   font: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 
