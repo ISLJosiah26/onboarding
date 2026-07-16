@@ -975,7 +975,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                       <label style={styles.fieldLabel}>End date</label>
                       <input
                         type="date"
-                        style={{ ...styles.fieldInput, background: torDayPortion !== 'full' ? '#f4f3ef' : '#fff', color: torDayPortion !== 'full' ? '#a4a39f' : '#18181b' }}
+                        style={{ ...styles.fieldInput, ...(torDayPortion !== 'full' ? { background: 'var(--surface-raised)', color: 'var(--subtle)' } : {}) }}
                         value={torEndDate}
                         min={torStartDate || undefined}
                         disabled={torDayPortion !== 'full'}
