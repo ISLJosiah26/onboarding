@@ -210,7 +210,7 @@ if (!session) {
 
   if (profileLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f4f3ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Loading">
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Loading">
         <div className="il-spinner" />
       </div>
     )

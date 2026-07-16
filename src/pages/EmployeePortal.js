@@ -24,7 +24,7 @@ import AnimatedNumber from '../ui/AnimatedNumber'
 import { avatarStyle } from '../utils/avatarColor'
 
 const BASE_STYLES = {
-  app: { minHeight: '100vh', background: T.bg, fontFamily: 'Inter, -apple-system, sans-serif', color: T.text },
+  app: { minHeight: '100vh', background: 'transparent', fontFamily: 'Inter, -apple-system, sans-serif', color: T.text },
   logo: { fontSize: '14px', fontWeight: 600, color: T.brand, letterSpacing: '-0.2px' },
   signout: { fontSize: '12px', color: T.muted, background: 'none', border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: '5px 12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 },
   sub: { fontSize: '13px', color: T.muted },
@@ -586,9 +586,9 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
     tab: (active) => ({ fontSize: '13px', fontWeight: active ? 600 : 400, color: active ? 'var(--brand)' : 'var(--muted)', padding: '12px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: active ? '2px solid var(--brand)' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.12s ease, border-color 0.12s ease' }),
     tabDisabled: { fontSize: '13px', fontWeight: 400, color: '#c4c3bf', padding: '12px 0', marginRight: isMobile ? '18px' : '24px', background: 'none', border: 'none', borderBottom: '2px solid transparent', cursor: 'default', fontFamily: 'inherit', pointerEvents: 'none', whiteSpace: 'nowrap', flexShrink: 0 },
     content: { padding: isMobile ? '20px 16px' : '28px 40px', maxWidth: isMobile ? 'none' : '720px', margin: '0 auto' },
-    balCard: { background: 'var(--surface)', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
+    balCard: { background: 'var(--glass)', backdropFilter: 'var(--glass-filter)', WebkitBackdropFilter: 'var(--glass-filter)', border: '1px solid var(--glass-border)', borderRadius: T.radiusLg, padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: 'var(--glass-highlight), var(--glass-shadow)' },
     balGrid: { display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '12px' : '16px' },
-    formCard: { background: 'var(--surface)', border: '1px solid #e8e7e3', borderRadius: '12px', padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04)' },
+    formCard: { background: 'var(--glass)', backdropFilter: 'var(--glass-filter)', WebkitBackdropFilter: 'var(--glass-filter)', border: '1px solid var(--glass-border)', borderRadius: T.radiusLg, padding: isMobile ? '16px' : '22px', marginBottom: '24px', boxShadow: 'var(--glass-highlight), var(--glass-shadow)' },
   }
 
   if (loading) return (
@@ -706,6 +706,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
       <div style={styles.content}>
         {activeTab === 'checklist' && (
           <div className="il-tab-content">
+            <div className="il-card" style={{ padding: isMobile ? '4px 16px 12px' : '6px 24px 16px' }}>
             {(() => {
               const parentsByBucket = groupParentsByBucket(tasks)
               return SCHEDULE_BUCKETS.map(bucket => {
@@ -773,11 +774,13 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 )
               })
             })()}
+            </div>
           </div>
         )}
 
         {activeTab === 'documents' && (
           <div className="il-tab-content">
+            <div className="il-card" style={{ padding: isMobile ? '4px 16px 8px' : '6px 24px 10px' }}>
             {documents.filter(doc => !docCompletions[doc.id]?.hidden).length === 0 && (
               <EmptyState icon={EmptyIcons.doc} title="No documents yet"
                 message="When HR assigns documents for you to review or sign, they'll appear here." />
@@ -794,7 +797,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                     <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--muted)', textDecoration: 'underline', flexShrink: 0 }}>View</a>
                     {signed ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                        <span style={{ fontSize: '12px', color: '#1a7a4a', fontWeight: 500 }}>✓ Received</span>
+                        <span style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 500 }}>✓ Received</span>
                         <button onClick={() => toggleDocument(doc.id)} style={{ fontSize: '11px', color: 'var(--subtle)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Undo</button>
                       </div>
                     ) : (
@@ -806,15 +809,15 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                   <div style={{ marginTop: '10px' }}>
                     {completedFileUrl ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '12px', color: '#1a7a4a' }}>✓ Uploaded</span>
+                        <span style={{ fontSize: '12px', color: 'var(--success)' }}>✓ Uploaded</span>
                         <a href={completedFileUrl} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'none' }}>View file</a>
-                        <label style={{ fontSize: '12px', color: isUploading ? '#a4a39f' : '#70706b', cursor: isUploading ? 'default' : 'pointer' }}>
+                        <label style={{ fontSize: '12px', color: isUploading ? 'var(--subtle)' : 'var(--muted)', cursor: isUploading ? 'default' : 'pointer' }}>
                           {isUploading ? 'Uploading...' : 'Replace'}
                           <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={e => handleEmployeeDocumentUpload(e, doc.id)} disabled={!!uploadingDocId} />
                         </label>
                       </div>
                     ) : (
-                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: isUploading ? '#a4a39f' : '#0066cc', cursor: isUploading ? 'default' : 'pointer', border: '1px solid ' + (isUploading ? '#e2e1dd' : '#cce0f5'), borderRadius: '6px', padding: '6px 12px', background: isUploading ? '#f7f6f4' : '#f0f7ff' }}>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: isUploading ? 'var(--subtle)' : 'var(--brand)', cursor: isUploading ? 'default' : 'pointer', border: '1px solid ' + (isUploading ? 'var(--border)' : 'var(--brand-light)'), borderRadius: '6px', padding: '6px 12px', background: isUploading ? 'var(--surface-raised)' : 'var(--brand-light)' }}>
                         {!isUploading && <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 10V4M4 7l3-3 3 3"/><path d="M2 12h10"/></svg>}
                         {isUploading ? 'Uploading...' : 'Upload completed document'}
                         <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={e => handleEmployeeDocumentUpload(e, doc.id)} disabled={!!uploadingDocId} />
@@ -824,6 +827,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 </div>
               )
             })}
+            </div>
           </div>
         )}
 
@@ -869,7 +873,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                         const iconStroke = ext === 'pdf' ? '#c04040' : ext === 'docx' || ext === 'doc' ? '#0066cc' : ext === 'xlsx' || ext === 'xls' ? '#1a7a4a' : ext === 'pptx' || ext === 'ppt' ? '#c27a30' : '#6b6b67'
                         return (
                           <a key={doc.id} href={doc.file_url} target="_blank" rel="noreferrer" className="il-resource-tile"
-                            style={{ display: 'flex', flexDirection: 'column', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '14px', textDecoration: 'none', color: 'var(--text)' }}>
+                            style={{ display: 'flex', flexDirection: 'column', background: 'var(--glass)', backdropFilter: 'var(--glass-filter)', WebkitBackdropFilter: 'var(--glass-filter)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--glass-highlight)', padding: '14px', textDecoration: 'none', color: 'var(--text)' }}>
                             <div style={{ width: '34px', height: '34px', borderRadius: '7px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', flexShrink: 0 }}>
                               <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke={iconStroke} strokeWidth="1.5">
                                 <path d="M3 2h6l3 3v7H3z"/><path d="M9 2v3h3"/>
@@ -971,7 +975,7 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                       <label style={styles.fieldLabel}>End date</label>
                       <input
                         type="date"
-                        style={{ ...styles.fieldInput, background: torDayPortion !== 'full' ? '#f4f3ef' : '#fff', color: torDayPortion !== 'full' ? '#a4a39f' : '#18181b' }}
+                        style={{ ...styles.fieldInput, ...(torDayPortion !== 'full' ? { background: 'var(--surface-raised)', color: 'var(--subtle)' } : {}) }}
                         value={torEndDate}
                         min={torStartDate || undefined}
                         disabled={torDayPortion !== 'full'}
