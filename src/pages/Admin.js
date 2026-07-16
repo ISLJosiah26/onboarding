@@ -32,7 +32,7 @@ const BASE_STYLES = {
   rowName: { fontSize: '13px', color: T.text },
   rowMuted: { fontSize: '12px', color: T.subtle },
   phaseLabel: { fontSize: '11px', fontWeight: 600, color: T.subtle, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px', marginTop: '24px' },
-  pill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: '#f0efe9', color: T.muted, fontWeight: 500 },
+  pill: { fontSize: '11px', padding: '2px 8px', borderRadius: '5px', background: 'var(--hover-bg)', color: T.muted, fontWeight: 500 },
   emptyState: { padding: '48px 0', textAlign: 'center', color: T.subtle, fontSize: '13px' },
   dragHandle: { color: '#c8c7c3', fontSize: '13px', lineHeight: 1, flexShrink: 0, userSelect: 'none', padding: '4px', margin: '-4px 2px -4px -4px' },
 }
@@ -787,7 +787,7 @@ function renderModal() {
                       <button key={r.id}
                         className={`il-role-item${active ? ' il-active' : ''}`}
                         onClick={() => { setSelectedRole(r); setAddingTaskToPhase(null); setBulkMode(false) }}
-                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 16px', border: 'none', background: active ? '#f0efe9' : 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 16px', border: 'none', background: active ? 'var(--hover-bg)' : 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}>
                         <div style={{ fontSize: '13px', fontWeight: active ? 500 : 400, color: 'var(--text)', letterSpacing: '-0.1px' }}>{r.name}</div>
                         <div style={{ fontSize: '11px', color: 'var(--subtle)', marginTop: '1px' }}>{templateCounts[r.id] || 0} tasks</div>
                       </button>

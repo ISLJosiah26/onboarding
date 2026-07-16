@@ -76,7 +76,7 @@ export default function ConfirmModal({ title, message, confirmLabel, confirmDang
           {message}
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-          <Button variant="secondary" onClick={onCancel} disabled={confirming}>
+          <Button variant="glass" onClick={onCancel} disabled={confirming}>
             Cancel
           </Button>
           <Button
