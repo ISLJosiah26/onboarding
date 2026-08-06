@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { useWindowSize } from '../hooks/useWindowSize'
 import { ROLE } from '../config'
+import { isSalesRep, getClientPortalUrl, CLIENT_PORTAL_URL } from '../utils/clientPortal'
 import ThemeToggle from '../ui/ThemeToggle'
 
 const NAV_ITEMS = [
@@ -50,6 +51,37 @@ function Icon({ type, size = 14 }) {
 export default function Layout({ session, userProfile, currentPage, onNavigate, children }) {
   const { isMobile } = useWindowSize()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [portalOpening, setPortalOpening] = useState(false)
+  const [portalError, setPortalError] = useState('')
+
+  // The client portal is a separate app on its own Supabase project. This
+  // trades the rep's Integrated Launch session for a one-time sign-in link so
+  // they never keep a second password.
+  async function openClientPortal() {
+    if (portalOpening) return
+    setPortalOpening(true)
+    setPortalError('')
+    // Opened before the await so the browser does not treat it as a popup.
+    const tab = window.open('', '_blank', 'noopener')
+    try {
+      const url = await getClientPortalUrl()
+      if (tab) tab.location = url
+      else window.location.assign(url)
+    } catch (err) {
+      // A failed handoff should not be a dead end — send them to the portal's
+      // own sign-in page unless they are genuinely not permitted.
+      if (err.status === 403) {
+        if (tab) tab.close()
+        setPortalError(err.message)
+      } else if (tab) {
+        tab.location = CLIENT_PORTAL_URL
+      } else {
+        window.location.assign(CLIENT_PORTAL_URL)
+      }
+    } finally {
+      setPortalOpening(false)
+    }
+  }
 
   const email = session?.user?.email || ''
   const name = email.split('@')[0]
@@ -266,6 +298,21 @@ export default function Layout({ session, userProfile, currentPage, onNavigate, 
                   <Icon type="person" />
                   My portal
                 </button>
+              )}
+              {/* A sales rep may sit anywhere on the role ladder, so this is
+                  gated on the capability flag rather than on role. */}
+              {isSalesRep(userProfile) && (
+                <>
+                  <button className="il-nav-item" style={navItem(false)} onClick={openClientPortal} disabled={portalOpening}>
+                    <Icon type="doc" />
+                    {portalOpening ? 'Opening…' : 'Client Packages'}
+                  </button>
+                  {portalError && (
+                    <div style={{ fontSize: '11px', color: 'var(--danger)', padding: '2px 12px 4px', lineHeight: 1.4 }}>
+                      {portalError}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </>

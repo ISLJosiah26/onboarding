@@ -22,6 +22,7 @@ import ThemeToggle from '../ui/ThemeToggle'
 import ProgressRing from '../ui/ProgressRing'
 import AnimatedNumber from '../ui/AnimatedNumber'
 import { avatarStyle } from '../utils/avatarColor'
+import { isSalesRep, getClientPortalUrl } from '../utils/clientPortal'
 
 const BASE_STYLES = {
   app: { minHeight: '100vh', background: 'transparent', fontFamily: 'Inter, -apple-system, sans-serif', color: T.text },
@@ -86,6 +87,7 @@ export default function EmployeePortal({ session, userProfile, onSwitchToAdmin }
   const { toast, showToast, hideToast } = useToast()
   const { isMobile } = useWindowSize()
   const [uploadingDocId, setUploadingDocId] = useState(null)
+  const [portalOpening, setPortalOpening] = useState(false)
   const celebrationTimer = useRef(null)
   // Recomputed each render so a long-lived tab doesn't stick to last year.
   const CURRENT_YEAR = getCurrentYear()
@@ -701,6 +703,9 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
         {FEATURES.techSupport
           ? <button style={styles.tab(activeTab === 'technical-tickets')} onClick={() => setActiveTab('technical-tickets')}>Tech Support</button>
           : <button style={styles.tabDisabled} title="Coming soon">Tech Support</button>}
+        {isSalesRep(userProfile) && (
+          <button style={styles.tab(activeTab === 'client-packages')} onClick={() => setActiveTab('client-packages')}>Client Packages</button>
+        )}
       </div>
 
       <div style={styles.content}>
@@ -1228,6 +1233,47 @@ ${overlapList ? `<p><strong>Others approved off during this period:</strong><br/
                 ))}
               </>
             )}
+          </div>
+        )}
+
+        {activeTab === 'client-packages' && (
+          <div className="il-tab-content">
+            <div style={{ border: `1px solid ${T.border}`, borderRadius: T.radiusMd, padding: '24px', background: T.surface, maxWidth: '520px' }}>
+              <div style={{ ...T.type.h2, marginBottom: '8px' }}>Client onboarding packages</div>
+              <p style={{ ...T.type.body, color: T.muted, margin: '0 0 20px' }}>
+                Send a new client company their contract, health &amp; safety questionnaire, and
+                staffing request form — then track what they've filled in and signed. This opens
+                the client portal in a new tab; you'll be signed in automatically.
+              </p>
+              <button
+                style={{
+                  fontSize: '13px', fontWeight: 500, color: '#fff', background: T.brand,
+                  border: 'none', borderRadius: T.radiusSm, padding: '9px 16px',
+                  cursor: portalOpening ? 'default' : 'pointer', fontFamily: 'inherit',
+                  opacity: portalOpening ? 0.6 : 1
+                }}
+                disabled={portalOpening}
+                onClick={async () => {
+                  if (portalOpening) return
+                  setPortalOpening(true)
+                  // Opened up front so the handoff isn't treated as a popup.
+                  const tab = window.open('', '_blank', 'noopener')
+                  try {
+                    const url = await getClientPortalUrl()
+                    if (tab) tab.location = url
+                    else window.location.assign(url)
+                    logAudit('client_portal_opened', 'client_portal', null, null)
+                  } catch (err) {
+                    if (tab) tab.close()
+                    showToast(err.message || 'Could not open the client portal.', 'error')
+                  } finally {
+                    setPortalOpening(false)
+                  }
+                }}
+              >
+                {portalOpening ? 'Opening…' : 'Open client portal'}
+              </button>
+            </div>
           </div>
         )}
       </div>
